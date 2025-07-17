@@ -48,4 +48,6 @@ output/
 .env
 .env.local
 .env.production
+# Configuration files
+config.ini
 config.py

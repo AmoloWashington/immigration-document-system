@@ -231,3 +231,22 @@ class DocumentProcessor:
         except Exception as e:
             st.error(f"Error reading Excel file {file_path}: {e}")
             return ""
+
+    def get_file_content_bytes(self, file_path: str) -> Optional[bytes]:
+        """Reads a file from the given path and returns its content as bytes."""
+        try:
+            if not os.path.exists(file_path):
+                st.error(f"File not found for download: {file_path}")
+                return None
+            with open(file_path, 'rb') as f:
+                return f.read()
+        except Exception as e:
+            st.error(f"Error reading file for download: {e}")
+            return None
+
+    def get_extracted_text_bytes(self, file_path: str) -> Optional[bytes]:
+        """Extracts text from a document and returns it as UTF-8 encoded bytes."""
+        extracted_text = self.extract_text(file_path)
+        if extracted_text:
+            return extracted_text.encode('utf-8')
+        return None

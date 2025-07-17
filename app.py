@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import traceback
 import psycopg2 # Import psycopg2 for direct connection test
+import mimetypes
 
 # Import our services
 from config import config
@@ -367,6 +368,48 @@ def document_viewer_page(db, processor, ai_service):
                 for warning in selected_form['validation_warnings']:
                     st.warning(warning)
             
+            # --- NEW: Download Buttons for Original Document and Extracted Text ---
+            st.subheader("Download Options")
+            downloaded_file_path = selected_form.get('downloaded_file_path')
+            original_filename = Path(downloaded_file_path).name if downloaded_file_path else "document"
+            original_file_format = selected_form.get('document_format', 'UNKNOWN').lower()
+            
+            col_dl1, col_dl2 = st.columns(2)
+
+            if downloaded_file_path and Path(downloaded_file_path).exists():
+                # Download Original Document
+                original_file_content = processor.get_file_content_bytes(downloaded_file_path)
+                if original_file_content:
+                    with col_dl1:
+                        st.download_button(
+                            label=f"Download Original ({original_file_format.upper()})",
+                            data=original_file_content,
+                            file_name=original_filename,
+                            mime=mimetypes.guess_type(original_filename)[0] or "application/octet-stream",
+                            key=f"download_original_{selected_form['id']}"
+                        )
+                else:
+                    with col_dl1:
+                        st.warning("Original file content not available for download.")
+
+                # Download Extracted Text
+                extracted_text_content = processor.get_extracted_text_bytes(downloaded_file_path)
+                if extracted_text_content:
+                    with col_dl2:
+                        st.download_button(
+                            label="Download Extracted Text (.txt)",
+                            data=extracted_text_content,
+                            file_name=f"{Path(original_filename).stem}_extracted.txt",
+                            mime="text/plain",
+                            key=f"download_extracted_text_{selected_form['id']}"
+                        )
+                else:
+                    with col_dl2:
+                        st.warning("Extracted text content not available for download.")
+            else:
+                st.info("No downloaded file path available or file does not exist for this document.")
+            # --- END NEW ---
+
             # Raw JSON data
             with st.expander("View Raw JSON Data"):
                 st.json(selected_form.get('structured_data', {}))
@@ -606,40 +649,64 @@ def export_panel_page(db, export_service):
         with col1:
             if st.button("📄 Export as JSON"):
                 if len(filtered_forms) == 1:
-                    # Single form export
                     form_data = filtered_forms[0].get('structured_data', {})
-                    file_path = export_service.export_json(form_data)
-                    if file_path:
-                        st.success(f"Exported to: {file_path}")
-                else:
-                    # Multiple forms - export each separately
-                    exported_files = []
+                    file_path, file_content = export_service.export_json(form_data)
+                    if file_content:
+                        st.download_button(
+                            label="Download JSON",
+                            data=file_content,
+                            file_name=Path(file_path).name,
+                            mime="application/json",
+                            key="download_json_single"
+                        )
+                elif len(filtered_forms) > 1:
+                    st.info("Exporting multiple JSON files to the server. Individual download buttons are not provided for batch exports.")
+                    exported_files_count = 0
                     for form in filtered_forms:
-                        file_path = export_service.export_json(form.get('structured_data', {}))
+                        file_path, _ = export_service.export_json(form.get('structured_data', {}))
                         if file_path:
-                            exported_files.append(file_path)
-                    
-                    if exported_files:
-                        st.success(f"Exported {len(exported_files)} JSON files")
-        
+                            exported_files_count += 1
+                    if exported_files_count > 0:
+                        st.success(f"Exported {exported_files_count} JSON files to server.")
+                else:
+                    st.warning("No forms selected for JSON export.")
+    
         with col2:
             if st.button("📊 Export as Excel"):
-                forms_data = [form.get('structured_data', {}) for form in filtered_forms]
-                file_path = export_service.export_excel(forms_data)
-                if file_path:
-                    st.success(f"Exported to: {file_path}")
-        
+                if filtered_forms:
+                    forms_data = [form.get('structured_data', {}) for form in filtered_forms]
+                    file_path, file_content = export_service.export_excel(forms_data)
+                    if file_content:
+                        st.download_button(
+                            label="Download Excel",
+                            data=file_content,
+                            file_name=Path(file_path).name,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key="download_excel"
+                        )
+                else:
+                    st.warning("No forms selected for Excel export.")
+    
         with col3:
             if st.button("📋 Export Summaries"):
-                exported_files = []
-                for form in filtered_forms:
-                    file_path = export_service.export_summary_pdf(form.get('structured_data', {}))
-                    if file_path:
-                        exported_files.append(file_path)
-                
-                if exported_files:
-                    st.success(f"Exported {len(exported_files)} summary files")
-        
+                if filtered_forms:
+                    exported_files_count = 0
+                    for form in filtered_forms:
+                        file_path, file_content = export_service.export_summary_pdf(form.get('structured_data', {}))
+                        if file_content:
+                            st.download_button(
+                                label=f"Download {Path(file_path).name}",
+                                data=file_content,
+                                file_name=Path(file_path).name,
+                                mime="text/plain", # Mime type for TXT
+                                key=f"download_summary_{form['id']}" # Unique key for each button
+                            )
+                            exported_files_count += 1
+                    if exported_files_count > 0:
+                        st.success(f"Exported {exported_files_count} summary files.")
+                else:
+                    st.warning("No forms selected for summary export.")
+    
         # Preview selected forms
         if filtered_forms:
             st.subheader("Preview of Forms to Export")

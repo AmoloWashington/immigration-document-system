@@ -1,7 +1,7 @@
 import json
 import pandas as pd
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple, Optional
 import streamlit as st
 from datetime import datetime
 
@@ -10,8 +10,8 @@ class ExportService:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
     
-    def export_json(self, form_data: Dict[str, Any], filename: str = None) -> str:
-        """Export form data as JSON"""
+    def export_json(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes]]:
+        """Export form data as JSON and return file path and content."""
         
         if not filename:
             country = form_data.get('country', 'unknown').lower()
@@ -25,18 +25,19 @@ class ExportService:
         file_path = country_dir / filename
         
         try:
+            json_content = json.dumps(form_data, indent=2, ensure_ascii=False)
             with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(form_data, f, indent=2, ensure_ascii=False)
+                f.write(json_content)
             
-            st.success(f"JSON exported: {file_path}")
-            return str(file_path)
+            st.success(f"JSON exported to server: {file_path}")
+            return str(file_path), json_content.encode('utf-8') # Return content as bytes
             
         except Exception as e:
             st.error(f"Error exporting JSON: {e}")
-            return ""
+            return "", None
     
-    def export_excel(self, forms_data: List[Dict[str, Any]], filename: str = None) -> str:
-        """Export multiple forms as Excel spreadsheet"""
+    def export_excel(self, forms_data: List[Dict[str, Any]], filename: str = None) -> Tuple[str, Optional[bytes]]:
+        """Export multiple forms as Excel spreadsheet and return file path and content."""
         
         if not filename:
             filename = f"immigration_forms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
@@ -67,33 +68,39 @@ class ExportService:
             
             df = pd.DataFrame(df_data)
             
-            # Export to Excel
-            with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-                df.to_excel(writer, sheet_name='Immigration Forms', index=False)
-                
-                # Add supporting documents sheet if available
-                support_docs = []
-                for form in forms_data:
-                    form_id = form.get('form_id', 'Unknown')
-                    for doc in form.get('supporting_documents', []):
-                        support_docs.append({
-                            'Form ID': form_id,
-                            'Supporting Document': doc
-                        })
-                
-                if support_docs:
-                    support_df = pd.DataFrame(support_docs)
-                    support_df.to_excel(writer, sheet_name='Supporting Documents', index=False)
+            # Export to Excel in memory first to get bytes
+            excel_buffer = pd.io.excel.ExcelWriter(file_path, engine='openpyxl')
+            df.to_excel(excel_buffer, sheet_name='Immigration Forms', index=False)
             
-            st.success(f"Excel exported: {file_path}")
-            return str(file_path)
+            # Add supporting documents sheet if available
+            support_docs = []
+            for form in forms_data:
+                form_id = form.get('form_id', 'Unknown')
+                for doc in form.get('supporting_documents', []):
+                    support_docs.append({
+                        'Form ID': form_id,
+                        'Supporting Document': doc
+                    })
+            
+            if support_docs:
+                support_df = pd.DataFrame(support_docs)
+                support_df.to_excel(excel_buffer, sheet_name='Supporting Documents', index=False)
+            
+            excel_buffer.close() # Save the file to disk
+            
+            # Read the saved file content as bytes
+            with open(file_path, 'rb') as f:
+                excel_content = f.read()
+
+            st.success(f"Excel exported to server: {file_path}")
+            return str(file_path), excel_content
             
         except Exception as e:
             st.error(f"Error exporting Excel: {e}")
-            return ""
+            return "", None
     
-    def export_summary_pdf(self, form_data: Dict[str, Any], filename: str = None) -> str:
-        """Export form summary as PDF (simplified version)"""
+    def export_summary_pdf(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes]]:
+        """Export form summary as PDF (simplified to TXT) and return file path and content."""
         
         if not filename:
             country = form_data.get('country', 'unknown').lower()
@@ -103,49 +110,54 @@ class ExportService:
         file_path = self.output_dir / filename
         
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write("IMMIGRATION FORM SUMMARY\n")
-                f.write("=" * 50 + "\n\n")
-                
-                f.write(f"Country: {form_data.get('country', 'N/A')}\n")
-                f.write(f"Visa Category: {form_data.get('visa_category', 'N/A')}\n")
-                f.write(f"Form Name: {form_data.get('form_name', 'N/A')}\n")
-                f.write(f"Form ID: {form_data.get('form_id', 'N/A')}\n")
-                f.write(f"Governing Authority: {form_data.get('governing_authority', 'N/A')}\n\n")
-                
-                f.write("DESCRIPTION:\n")
-                f.write(f"{form_data.get('description', 'N/A')}\n\n")
-                
-                f.write("TARGET APPLICANTS:\n")
-                f.write(f"{form_data.get('target_applicants', 'N/A')}\n\n")
-                
-                f.write("SUBMISSION METHOD:\n")
-                f.write(f"{form_data.get('submission_method', 'N/A')}\n\n")
-                
-                f.write("PROCESSING TIME:\n")
-                f.write(f"{form_data.get('processing_time', 'N/A')}\n\n")
-                
-                f.write("FEES:\n")
-                f.write(f"{form_data.get('fees', 'N/A')}\n\n")
-                
-                if form_data.get('supporting_documents'):
-                    f.write("SUPPORTING DOCUMENTS:\n")
-                    for doc in form_data.get('supporting_documents', []):
-                        f.write(f"- {doc}\n")
-                    f.write("\n")
-                
-                if form_data.get('validation_warnings'):
-                    f.write("VALIDATION WARNINGS:\n")
-                    for warning in form_data.get('validation_warnings', []):
-                        f.write(f"⚠️ {warning}\n")
-                    f.write("\n")
-                
-                f.write(f"Source: {form_data.get('official_source_url', 'N/A')}\n")
-                f.write(f"Last Updated: {form_data.get('last_fetched', 'N/A')}\n")
+            summary_content_lines = []
+            summary_content_lines.append("IMMIGRATION FORM SUMMARY\n")
+            summary_content_lines.append("=" * 50 + "\n\n")
             
-            st.success(f"Summary exported: {file_path}")
-            return str(file_path)
+            summary_content_lines.append(f"Country: {form_data.get('country', 'N/A')}\n")
+            summary_content_lines.append(f"Visa Category: {form_data.get('visa_category', 'N/A')}\n")
+            summary_content_lines.append(f"Form Name: {form_data.get('form_name', 'N/A')}\n")
+            summary_content_lines.append(f"Form ID: {form_data.get('form_id', 'N/A')}\n")
+            summary_content_lines.append(f"Governing Authority: {form_data.get('governing_authority', 'N/A')}\n\n")
+            
+            summary_content_lines.append("DESCRIPTION:\n")
+            summary_content_lines.append(f"{form_data.get('description', 'N/A')}\n\n")
+            
+            summary_content_lines.append("TARGET APPLICANTS:\n")
+            summary_content_lines.append(f"{form_data.get('target_applicants', 'N/A')}\n\n")
+            
+            summary_content_lines.append("SUBMISSION METHOD:\n")
+            summary_content_lines.append(f"{form_data.get('submission_method', 'N/A')}\n\n")
+            
+            summary_content_lines.append("PROCESSING TIME:\n")
+            summary_content_lines.append(f"{form_data.get('processing_time', 'N/A')}\n\n")
+            
+            summary_content_lines.append("FEES:\n")
+            summary_content_lines.append(f"{form_data.get('fees', 'N/A')}\n\n")
+            
+            if form_data.get('supporting_documents'):
+                summary_content_lines.append("SUPPORTING DOCUMENTS:\n")
+                for doc in form_data.get('supporting_documents', []):
+                    summary_content_lines.append(f"- {doc}\n")
+                summary_content_lines.append("\n")
+            
+            if form_data.get('validation_warnings'):
+                summary_content_lines.append("VALIDATION WARNINGS:\n")
+                for warning in form_data.get('validation_warnings', []):
+                    summary_content_lines.append(f"⚠️ {warning}\n")
+                summary_content_lines.append("\n")
+            
+            summary_content_lines.append(f"Source: {form_data.get('official_source_url', 'N/A')}\n")
+            summary_content_lines.append(f"Last Updated: {form_data.get('last_fetched', 'N/A')}\n")
+
+            summary_content = "".join(summary_content_lines)
+            
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(summary_content)
+            
+            st.success(f"Summary exported to server: {file_path}")
+            return str(file_path), summary_content.encode('utf-8') # Return content as bytes
             
         except Exception as e:
             st.error(f"Error exporting summary: {e}")
-            return ""
+            return "", None
