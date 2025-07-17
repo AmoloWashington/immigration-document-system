@@ -142,7 +142,7 @@ class DocumentDiscoveryService:
         for ext in ['.pdf', '.docx', '.doc', '.xlsx', '.xls']:
             if ext in url.lower() or ext in title.lower():
                 return ext.replace('.', '').upper()
-        return "PDF"  # Default assumption
+        return "PDF"  
     
     def _deduplicate_and_filter_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Remove duplicates and filter for best results"""
@@ -151,9 +151,9 @@ class DocumentDiscoveryService:
         
         # Sort by relevance (prefer direct PDF links)
         results.sort(key=lambda x: (
-            x['url'].lower().endswith('.pdf'),  # PDF files first
-            'form' in x['title'].lower(),       # Forms second
-            len(x['description'])               # More description is better
+            x['url'].lower().endswith('.pdf'),  
+            'form' in x['title'].lower(),       
+            len(x['description'])              
         ), reverse=True)
         
         for result in results:

@@ -5,9 +5,9 @@ Run this script to set up your NeonDB database with the required tables.
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import streamlit as st # Keep for st.secrets, but won't display in terminal
+import streamlit as st 
 import sys
-import os # For os.getenv
+import os 
 
 def create_database_url(host, database, username, password, port=5432):
     """Create a PostgreSQL connection URL"""

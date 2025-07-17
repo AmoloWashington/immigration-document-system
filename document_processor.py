@@ -3,7 +3,7 @@ import requests
 from pathlib import Path
 import PyPDF2
 import pdfplumber
-import fitz  # PyMuPDF
+import fitz  
 import docx
 import pandas as pd
 from typing import Dict, Any, Optional

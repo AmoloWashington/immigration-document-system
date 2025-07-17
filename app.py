@@ -4,10 +4,9 @@ from datetime import datetime
 import json
 from pathlib import Path
 import traceback
-import psycopg2 # Import psycopg2 for direct connection test
+import psycopg2 
 import mimetypes
 
-# Import our services
 from config import config
 from database import DatabaseManager
 from discovery_service import DocumentDiscoveryService
@@ -15,13 +14,12 @@ from document_processor import DocumentProcessor
 from ai_service import AIExtractionService
 from export_service import ExportService
 
-# Initialize services
-# @st.cache_resource # REMOVE THIS LINE TEMPORARILY
+
 def init_services():
     db = DatabaseManager(config.DATABASE_URL)
     discovery = DocumentDiscoveryService(config.TAVILY_API_KEY)
     processor = DocumentProcessor(config.DOWNLOADS_DIR)
-    # Pass both API keys to AI Extraction Service
+   
     ai_service = AIExtractionService(config.OPENAI_API_KEY, config.OPENROUTER_API_KEY)
     export_service = ExportService(config.OUTPUTS_DIR)
     
@@ -37,16 +35,15 @@ def main():
     st.title("🌍 Immigration Document Intelligence System")
     st.markdown("**Automated discovery, processing, and validation of official immigration documents**")
     
-    # Add a button to clear Streamlit's cache for debugging
     if st.button("Clear all caches"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.rerun()
     
-    # Initialize services
+  
     db, discovery, processor, ai_service, export_service = init_services()
     
-    # Sidebar navigation
+    
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page:",
@@ -64,7 +61,7 @@ def main():
         export_panel_page(db, export_service)
     elif page == "🗄️ Database Viewer":
         database_viewer_page(db)
-    elif page == "🩺 Database Health Check": # New page function call
+    elif page == "🩺 Database Health Check": 
         database_health_check_page(config.DATABASE_URL)
 
 def discovery_page(discovery, processor, ai_service, db):
@@ -169,16 +166,16 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             "country": country,
             "visa_category": visa_type,
             "form_name": doc.get('title', 'Unknown Form'),
-            "form_id": "N/A", # Will be updated by AI
+            "form_id": "N/A", 
             "description": doc.get('description', ''),
             "official_source_url": doc.get('url', ''),
             "discovered_by_query": doc.get('discovered_by_query', ''),
             "validation_warnings": [],
-            "structured_data": {}, # Will be populated by AI
+            "structured_data": {}, 
             "downloaded_file_path": None,
             "document_format": doc.get('file_type', 'UNKNOWN'),
             "last_fetched": datetime.now().isoformat(),
-            "processing_status": "failed" # Default to failed, update on success
+            "processing_status": "failed" 
         }
 
         try:
