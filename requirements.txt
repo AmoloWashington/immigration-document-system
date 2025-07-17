@@ -1,0 +1,12 @@
+streamlit>=1.28.0
+openai>=1.3.0
+requests>=2.31.0
+PyPDF2>=3.0.1
+python-docx>=0.8.11
+pandas>=2.0.0
+openpyxl>=3.1.0
+psycopg2-binary>=2.9.0
+pathlib2
+pdfplumber>=0.9.0
+pymupdf>=1.23.0
+pycryptodome>=3.19.0

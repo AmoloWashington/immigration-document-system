@@ -1,0 +1,244 @@
+import psycopg2
+from psycopg2.extras import RealDictCursor, Json
+import json
+from datetime import datetime
+from typing import Dict, List, Optional, Any
+import streamlit as st
+
+class DatabaseManager:
+    def __init__(self, database_url: str):
+        self.database_url = database_url
+        if not self.database_url:
+            st.warning("Database URL not configured. Database operations will be skipped.")
+        self.init_tables()
+    
+    def get_connection(self):
+        if not self.database_url:
+            raise Exception("Database URL is not configured.")
+        return psycopg2.connect(self.database_url, cursor_factory=RealDictCursor)
+    
+    def init_tables(self):
+        """Initialize database tables"""
+        if not self.database_url:
+            return
+            
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    # Forms table
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.forms (
+                            id SERIAL PRIMARY KEY,
+                            country VARCHAR(100) NOT NULL,
+                            visa_category VARCHAR(200),
+                            form_name VARCHAR(300),
+                            form_id VARCHAR(100),
+                            description TEXT,
+                            governing_authority VARCHAR(200),
+                            structured_data JSONB,
+                            validation_warnings JSONB,
+                            lawyer_review JSONB,
+                            official_source_url TEXT,
+                            discovered_by_query TEXT,
+                            downloaded_file_path TEXT,
+                            document_format VARCHAR(20),
+                            processing_status VARCHAR(50),
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    
+                    # Documents table (for file metadata, if needed separately from forms)
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.documents (
+                            id SERIAL PRIMARY KEY,
+                            form_id INTEGER REFERENCES public.forms(id) ON DELETE CASCADE,
+                            filename VARCHAR(300),
+                            file_path TEXT,
+                            file_format VARCHAR(20),
+                            file_size_bytes INTEGER,
+                            mime_type VARCHAR(100),
+                            download_url TEXT,
+                            downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+                    
+                    # Sources table
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.sources (
+                            id SERIAL PRIMARY KEY,
+                            domain VARCHAR(200),
+                            url TEXT UNIQUE,
+                            title TEXT,
+                            description TEXT,
+                            discovered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        )
+                    """)
+
+                    # Export logs table
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS public.export_logs (
+                            id SERIAL PRIMARY KEY,
+                            export_id VARCHAR(100) UNIQUE NOT NULL,
+                            document_ids JSONB NOT NULL,
+                            export_formats JSONB NOT NULL,
+                            exported_by VARCHAR(200),
+                            export_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            file_path TEXT
+                        )
+                    """)
+                    
+                    # Create indexes
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country ON public.forms(country)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_visa_category ON public.forms(visa_category)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_form_name ON public.forms(form_name)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_documents_form_id ON public.documents(form_id)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
+                    
+                    # Create JSONB indexes
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_structured_data ON public.forms USING GIN(structured_data)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_validation_warnings ON public.forms USING GIN(validation_warnings)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_lawyer_review ON public.forms USING GIN(lawyer_review)")
+                    
+                    # Create function to update updated_at timestamp
+                    cur.execute("""
+                        CREATE OR REPLACE FUNCTION update_updated_at_column()
+                        RETURNS TRIGGER AS $$
+                        BEGIN
+                            NEW.updated_at = CURRENT_TIMESTAMP;
+                            RETURN NEW;
+                        END;
+                        $$ language 'plpgsql';
+                    """)
+                    
+                    # Create trigger
+                    cur.execute("""
+                        DROP TRIGGER IF EXISTS update_forms_updated_at ON public.forms;
+                        CREATE TRIGGER update_forms_updated_at 
+                            BEFORE UPDATE ON public.forms
+                            FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+                    """)
+                    
+                    conn.commit()
+                    st.success("Database tables and indexes initialized successfully.")
+        except Exception as e:
+            st.error(f"Database initialization error: {e}")
+    
+    def insert_form(self, form_data: Dict[str, Any]) -> Optional[int]:
+        """Insert a new form record"""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping form insertion.")
+            return None
+            
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.forms (
+                            country, visa_category, form_name, form_id, description,
+                            governing_authority, structured_data, validation_warnings,
+                            lawyer_review, official_source_url, discovered_by_query,
+                            downloaded_file_path, document_format, processing_status
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        form_data.get('country'),
+                        form_data.get('visa_category'),
+                        form_data.get('form_name'),
+                        form_data.get('form_id'),
+                        form_data.get('description'),
+                        form_data.get('governing_authority'),
+                        Json(form_data.get('structured_data', {})),
+                        Json(form_data.get('validation_warnings', [])),
+                        Json(form_data.get('lawyer_review', {})),
+                        form_data.get('official_source_url'),
+                        form_data.get('discovered_by_query'),
+                        form_data.get('downloaded_file_path'),
+                        form_data.get('document_format'),
+                        form_data.get('processing_status')
+                    ))
+                    inserted_id = cur.fetchone()['id']
+                    conn.commit()
+                    st.success(f"Form '{form_data.get('form_name', 'Unknown')}' inserted with ID: {inserted_id}")
+                    return inserted_id
+        except Exception as e:
+            st.error(f"Error inserting form: {e}")
+            return None
+    
+    def get_forms(self, country: str = None, visa_category: str = None) -> List[Dict]:
+        """Retrieve forms with optional filtering"""
+        if not self.database_url:
+            return []
+            
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    query = "SELECT * FROM public.forms WHERE 1=1"
+                    params = []
+                    
+                    if country:
+                        query += " AND country = %s"
+                        params.append(country)
+                    
+                    if visa_category:
+                        query += " AND visa_category = %s"
+                        params.append(visa_category)
+                    
+                    query += " ORDER BY created_at DESC"
+                    
+                    cur.execute(query, params)
+                    return cur.fetchall()
+        except Exception as e:
+            st.error(f"Error retrieving forms: {e}")
+            return []
+    
+    def update_lawyer_review(self, form_id: int, review_data: Dict[str, Any]) -> bool:
+        """Update lawyer review for a form"""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping lawyer review update.")
+            return False
+            
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE public.forms 
+                        SET lawyer_review = %s, updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (Json(review_data), form_id))
+                    conn.commit()
+                    return cur.rowcount > 0
+        except Exception as e:
+            st.error(f"Error updating lawyer review: {e}")
+            return False
+
+    def update_form_fields(self, form_id: int, fields_to_update: Dict[str, Any]) -> bool:
+        """Update specific fields for a form record."""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping form update.")
+            return False
+        
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    set_clauses = []
+                    params = []
+                    for key, value in fields_to_update.items():
+                        set_clauses.append(f"{key} = %s")
+                        if isinstance(value, (dict, list)):
+                            params.append(Json(value))
+                        else:
+                            params.append(value)
+                    
+                    set_clauses.append("updated_at = CURRENT_TIMESTAMP")
+                    
+                    query = f"UPDATE public.forms SET {', '.join(set_clauses)} WHERE id = %s"
+                    params.append(form_id)
+                    
+                    cur.execute(query, params)
+                    conn.commit()
+                    return cur.rowcount > 0
+        except Exception as e:
+            st.error(f"Error updating form fields for ID {form_id}: {e}")
+            return False
