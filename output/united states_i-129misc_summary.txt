@@ -1,0 +1,31 @@
+IMMIGRATION FORM SUMMARY
+==================================================
+
+Country: United States
+Visa Category: Nonimmigrant Worker
+Form Name: Petition for Nonimmigrant Worker
+Form ID: I-129MISC
+Governing Authority: U.S. Citizenship and Immigration Services (USCIS)
+
+DESCRIPTION:
+This form is used by an employer to petition USCIS for an alien beneficiary to come temporarily to the United States as a nonimmigrant to perform services or labor, or to receive training.
+
+TARGET APPLICANTS:
+U.S. employers, U.S. agents, or U.S. sponsors filing for nonimmigrant classifications.
+
+SUBMISSION METHOD:
+Submit the completed form and supporting documents to USCIS by mail.
+
+PROCESSING TIME:
+None
+
+FEES:
+Filing fee as specified in the instructions.
+
+SUPPORTING DOCUMENTS:
+- Evidence required by statute and regulations
+- Legible photocopies of required documents
+- Full English translation of any foreign language documents
+
+Source: https://www.uscis.gov/sites/default/files/document/forms/i-129miscinstr-feerule.pdf
+Last Updated: 2025-07-17T12:40:37.744640
