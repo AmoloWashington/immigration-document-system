@@ -48,3 +48,4 @@ output/
 .env
 .env.local
 .env.production
+config.py
