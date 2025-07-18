@@ -10,3 +10,5 @@ pathlib2
 pdfplumber>=0.9.0
 pymupdf>=1.23.0
 pycryptodome>=3.19.0
+
+google-generativeai
