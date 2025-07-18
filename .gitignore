@@ -39,16 +39,9 @@ ENV/
 Thumbs.db
 
 # Application specific
-config.py
 *.log
 
 # Environment variables
 .env
 .env.local
 .env.production
-# Configuration files
-C:\Users\Amolo Washington\OneDrive\Desktop\immigration-document-system\config.py
-\config.py
-# Streamlit secrets
-C:\Users\Amolo Washington\OneDrive\Desktop\immigration-document-system\.streamlit\secrets.toml
-\.streamlit\secrets.toml
