@@ -3,10 +3,10 @@ import requests
 from pathlib import Path
 import PyPDF2
 import pdfplumber
-import fitz  
+import fitz  # PyMuPDF
 import docx
 import pandas as pd
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
 import streamlit as st
 from urllib.parse import urlparse
 import mimetypes
@@ -15,7 +15,36 @@ import time
 class DocumentProcessor:
     def __init__(self, downloads_dir: str):
         self.downloads_dir = downloads_dir
-        
+    
+    def validate_url(self, url: str) -> Tuple[bool, Optional[int], Optional[str]]:
+        """
+        Validates a URL by making a HEAD request to check its accessibility and status code.
+        Returns (is_valid, status_code, error_message).
+        """
+        try:
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,*/*'
+            }
+            response = requests.head(url, headers=headers, timeout=10, allow_redirects=True)
+            
+            if 200 <= response.status_code < 400: # Success or redirection
+                # Optionally, check content-type if it's a direct document link
+                content_type = response.headers.get('content-type', '').lower()
+                if 'html' in content_type and 'pdf' not in content_type and 'xml' not in content_type:
+                    return False, response.status_code, "URL points to an HTML page, not a direct document."
+                return True, response.status_code, None
+            else:
+                return False, response.status_code, f"HTTP Error: {response.status_code}"
+        except requests.exceptions.Timeout:
+            return False, None, "Request timed out."
+        except requests.exceptions.ConnectionError:
+            return False, None, "Connection error (DNS, network unreachable, etc.)."
+        except requests.exceptions.RequestException as e:
+            return False, None, f"Network error: {e}"
+        except Exception as e:
+            return False, None, f"Unexpected error during URL validation: {e}"
+
     def download_document(self, url: str, country: str, category: str) -> Optional[Dict[str, Any]]:
         """Download document and return file info"""
         
@@ -245,8 +274,9 @@ class DocumentProcessor:
             return None
 
     def get_extracted_text_bytes(self, file_path: str) -> Optional[bytes]:
-        """Extracts text from a document and returns it as UTF-8 encoded bytes."""
+        """Extracts text from a document and returns it as UTF-8 encoded bytes (for Markdown/TXT)."""
         extracted_text = self.extract_text(file_path)
         if extracted_text:
+            # We assume the extracted text can be directly presented as Markdown or plain text
             return extracted_text.encode('utf-8')
         return None

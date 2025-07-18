@@ -4,9 +4,10 @@ from datetime import datetime
 import json
 from pathlib import Path
 import traceback
-import psycopg2 
+import psycopg2 # Import psycopg2 for direct connection test
 import mimetypes
 
+# Import our services
 from config import config
 from database import DatabaseManager
 from discovery_service import DocumentDiscoveryService
@@ -14,13 +15,14 @@ from document_processor import DocumentProcessor
 from ai_service import AIExtractionService
 from export_service import ExportService
 
-
+# Initialize services
+# @st.cache_resource # REMOVE THIS LINE TEMPORARILY
 def init_services():
     db = DatabaseManager(config.DATABASE_URL)
-    discovery = DocumentDiscoveryService(config.TAVILY_API_KEY)
-    processor = DocumentProcessor(config.DOWNLOADS_DIR)
-   
-    ai_service = AIExtractionService(config.OPENAI_API_KEY, config.OPENROUTER_API_KEY)
+    processor = DocumentProcessor(config.DOWNLOADS_DIR) # Initialize processor first
+    discovery = DocumentDiscoveryService(config.TAVILY_API_KEY, processor) # Pass processor to discovery
+    # Pass all API keys to AI Extraction Service
+    ai_service = AIExtractionService(config.OPENAI_API_KEY, config.OPENROUTER_API_KEY, config.GEMINI_API_KEY)
     export_service = ExportService(config.OUTPUTS_DIR)
     
     return db, discovery, processor, ai_service, export_service
@@ -35,15 +37,18 @@ def main():
     st.title("🌍 Immigration Document Intelligence System")
     st.markdown("**Automated discovery, processing, and validation of official immigration documents**")
     
+    # Add a button to clear Streamlit's cache for debugging
     if st.button("Clear all caches"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.rerun()
+
+    st.warning("⚠️ **Important for Deployment:** For downloads to work reliably on deployed versions (e.g., on Streamlit Cloud, Vercel), the `downloads` directory must be replaced with a persistent cloud storage solution (like AWS S3, Google Cloud Storage, or Vercel Blob if applicable for Python apps) and the `file_path`s in the database should be URLs to these persistent storage locations, not local file paths. This application currently uses local file storage, which is ephemeral on most cloud deployments.")
     
-  
+    # Initialize services
     db, discovery, processor, ai_service, export_service = init_services()
     
-    
+    # Sidebar navigation
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page:",
@@ -61,7 +66,7 @@ def main():
         export_panel_page(db, export_service)
     elif page == "🗄️ Database Viewer":
         database_viewer_page(db)
-    elif page == "🩺 Database Health Check": 
+    elif page == "🩺 Database Health Check": # New page function call
         database_health_check_page(config.DATABASE_URL)
 
 def discovery_page(discovery, processor, ai_service, db):
@@ -101,6 +106,22 @@ def discovery_page(discovery, processor, ai_service, db):
     with col2:
         save_to_db = st.checkbox("Save to database", value=True)
         validate_with_ai = st.checkbox("AI validation", value=True)
+
+    # Added a section to preview the full AI prompt before starting discovery.
+    # This helps in debugging and understanding what is sent to the LLM.
+    if st.checkbox("Show AI Prompt Preview"):
+        if ai_service.openai_client or ai_service.openrouter_client or ai_service.gemini_model:
+            dummy_doc_info = {
+                'filename': 'example.pdf',
+                'download_url': 'http://example.com/example.pdf',
+                'file_format': 'PDF',
+                'file_path': '/tmp/example.pdf',
+                'discovered_by_query': 'dummy query'
+            }
+            # This is a simplified preview and won't be dynamic for every step
+            st.json(ai_service.extract_form_data("dummy text content", dummy_doc_info))
+        else:
+            st.info("AI service not initialized to show prompt preview.")
     
     if st.button("🚀 Start Discovery", type="primary"):
         if country and visa_type:
@@ -123,7 +144,7 @@ def discovery_page(discovery, processor, ai_service, db):
                             st.write(f"**Source:** {doc['source_domain']}")
                             st.write(f"**Type:** {doc['file_type']}")
                             st.write(f"**Description:** {doc['description'][:200]}...")
-                    
+                
                     # Auto-process if enabled
                     if auto_process:
                         st.subheader("Step 2: Processing Documents")
@@ -162,20 +183,23 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         with status_container:
             st.write(f"**Processing {i+1}/{total_docs}:** {doc['title'][:80]}...")
         
+        # Initialize form_data_to_save with default values and info from discovery
         form_data_to_save = {
             "country": country,
             "visa_category": visa_type,
             "form_name": doc.get('title', 'Unknown Form'),
-            "form_id": "N/A", 
+            "form_id": "N/A", # Will be updated by AI if available
             "description": doc.get('description', ''),
+            "governing_authority": "N/A", # Will be updated by AI
             "official_source_url": doc.get('url', ''),
             "discovered_by_query": doc.get('discovered_by_query', ''),
             "validation_warnings": [],
-            "structured_data": {}, 
+            "structured_data": {}, # Will be populated by AI (includes full_markdown_summary)
             "downloaded_file_path": None,
             "document_format": doc.get('file_type', 'UNKNOWN'),
+            "processing_status": "failed", # Default to failed, update on success
             "last_fetched": datetime.now().isoformat(),
-            "processing_status": "failed" 
+            "lawyer_review": {} # Initialize lawyer review for new forms
         }
 
         try:
@@ -206,36 +230,42 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             doc_info_for_ai = {**doc, **file_info}
             
             if validate_with_ai:
-                status_text.text(f"Step 3/4: AI processing...")
+                status_text.text(f"Step 3/4: AI processing (Extraction & Validation)...")
                 progress_bar.progress(current_progress * 0.75)
                 
-                # Step 3: AI extraction
+                # Step 3: AI extraction (now returns comprehensive JSON including markdown)
                 ai_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
                 
                 if not ai_extracted_data:
-                    failed_docs.append({"doc": doc, "error": "AI extraction failed", "step": "ai_extraction"})
-                    # Still try to save basic info
-                    form_data_to_save["validation_warnings"].append("AI extraction failed")
-                    form_data_to_save["processing_status"] = "partial_ai_failure"
+                    failed_docs.append({"doc": doc, "error": "AI extraction failed or returned invalid data", "step": "ai_extraction"})
+                    form_data_to_save["validation_warnings"].append("AI extraction failed or returned invalid data")
+                    form_data_to_save["processing_status"] = "ai_extraction_failed"
                 else:
-                    # Update form_data_to_save with AI results
-                    form_data_to_save.update(ai_extracted_data)
-                    form_data_to_save["form_id"] = ai_extracted_data.get('form_id', 'N/A')
-                    form_data_to_save["structured_data"] = ai_extracted_data # Store full AI output
+                    # Update structured_data with the full AI output
+                    form_data_to_save["structured_data"] = ai_extracted_data 
                     
-                    # Step 4: AI validation
-                    validation_warnings = ai_service.validate_form_data(form_data_to_save)
+                    # Also populate direct columns from AI output for easier querying
+                    form_data_to_save['form_name'] = ai_extracted_data.get('form_name', form_data_to_save['form_name'])
+                    form_data_to_save['form_id'] = ai_extracted_data.get('form_id', form_data_to_save['form_id'])
+                    form_data_to_save['description'] = ai_extracted_data.get('description', form_data_to_save['description'])
+                    form_data_to_save['governing_authority'] = ai_extracted_data.get('governing_authority', form_data_to_save['governing_authority'])
+                    form_data_to_save['country'] = ai_extracted_data.get('country', form_data_to_save['country'])
+                    form_data_to_save['visa_category'] = ai_extracted_data.get('visa_category', form_data_to_save['visa_category'])
+
+                    # Step 4: AI validation (uses the full structured_data, including markdown summary)
+                    validation_warnings = ai_service.validate_form_data(form_data_to_save["structured_data"]) # Pass structured_data directly
                     form_data_to_save['validation_warnings'] = validation_warnings
                     form_data_to_save["processing_status"] = "validated" if not validation_warnings else "validated_with_warnings"
             else:
                 # Create basic form data without AI processing
-                form_data_to_save["validation_warnings"].append("AI validation skipped")
+                form_data_to_save["validation_warnings"].append("AI processing skipped")
                 form_data_to_save["processing_status"] = "downloaded_only"
                 form_data_to_save["structured_data"] = {
                     "extracted_text_length": len(extracted_text),
-                    "file_info": file_info
+                    "file_info": file_info,
+                    "full_markdown_summary": f"Document text extracted:\n\n```\n{extracted_text[:1000]}...\n```" # Basic summary
                 }
-            
+        
             if save_to_db:
                 status_text.text(f"Step 4/4: Saving to database...")
                 
@@ -244,12 +274,12 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                 if form_id:
                     form_data_to_save['id'] = form_id
                     processed_forms.append(form_data_to_save)
-                    st.success(f"✅ Processed and Saved: {doc['title'][:50]}...")
+                    st.success(f"✅ Processed and Saved: {form_data_to_save.get('form_name', 'Unknown Form')[:50]}...")
                 else:
                     failed_docs.append({"doc": doc, "error": "Database save failed", "step": "database"})
             else:
                 processed_forms.append(form_data_to_save)
-                st.success(f"✅ Processed (not saved to DB): {doc['title'][:50]}...")
+                st.success(f"✅ Processed (not saved to DB): {form_data_to_save.get('form_name', 'Unknown Form')[:50]}...")
             
         except Exception as e:
             error_msg = f"Unexpected error during processing: {str(e)}"
@@ -259,10 +289,10 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             # Log full error for debugging
             with st.expander(f"Debug Info for {doc['title'][:50]}..."):
                 st.code(traceback.format_exc())
-        
-        progress_bar.progress(current_progress)
     
-    # Final results
+    progress_bar.progress(current_progress)
+
+# Final results
     with results_container:
         st.subheader("📊 Processing Results")
         
@@ -341,22 +371,22 @@ def document_viewer_page(db, processor, ai_service):
             
             with col2:
                 st.subheader("Processing Details")
-                structured_data = selected_form.get('structured_data', {})
+                structured_data_full = selected_form.get('structured_data', {}) # Get the full JSONB object
                 st.write(f"**Processing Status:** {selected_form.get('processing_status', 'N/A')}")
                 st.write(f"**Downloaded Path:** {selected_form.get('downloaded_file_path', 'N/A')}")
-                st.write(f"**Processing Time:** {structured_data.get('processing_time', 'N/A')}")
-                st.write(f"**Fees:** {structured_data.get('fees', 'N/A')}")
-                st.write(f"**Submission Method:** {structured_data.get('submission_method', 'N/A')}")
+                st.write(f"**Processing Time:** {structured_data_full.get('processing_time', 'N/A')}")
+                st.write(f"**Fees:** {structured_data_full.get('fees', 'N/A')}")
+                st.write(f"**Submission Method:** {structured_data_full.get('submission_method', 'N/A')}")
                 st.write(f"**Last Updated:** {selected_form['created_at']}")
             
-            # Description
+            # Description (can still use the description field for concise display)
             st.subheader("Description")
             st.write(selected_form.get('description', 'No description available'))
             
             # Supporting documents
-            if structured_data.get('supporting_documents'):
+            if structured_data_full.get('supporting_documents'):
                 st.subheader("Supporting Documents")
-                for doc in structured_data['supporting_documents']:
+                for doc in structured_data_full['supporting_documents']:
                     st.write(f"• {doc}")
             
             # Validation warnings
@@ -364,16 +394,26 @@ def document_viewer_page(db, processor, ai_service):
                 st.subheader("⚠️ Validation Warnings")
                 for warning in selected_form['validation_warnings']:
                     st.warning(warning)
+
+            # --- NEW: Display Full Markdown Summary ---
+            full_markdown = structured_data_full.get('full_markdown_summary')
+            if full_markdown:
+                st.subheader("Comprehensive Document Summary (Markdown)")
+                st.markdown(full_markdown) # Render Markdown directly
+            else:
+                st.info("No comprehensive Markdown summary available for this document.")
+            # --- END NEW ---
             
-            # --- NEW: Download Buttons for Original Document and Extracted Text ---
+            # --- NEW: Download Buttons for Original Document and Extracted Markdown ---
             st.subheader("Download Options")
             downloaded_file_path = selected_form.get('downloaded_file_path')
-            original_filename = Path(downloaded_file_path).name if downloaded_file_path else "document"
-            original_file_format = selected_form.get('document_format', 'UNKNOWN').lower()
             
             col_dl1, col_dl2 = st.columns(2)
 
             if downloaded_file_path and Path(downloaded_file_path).exists():
+                original_filename = Path(downloaded_file_path).name
+                original_file_format = selected_form.get('document_format', 'UNKNOWN').lower()
+                
                 # Download Original Document
                 original_file_content = processor.get_file_content_bytes(downloaded_file_path)
                 if original_file_content:
@@ -387,29 +427,29 @@ def document_viewer_page(db, processor, ai_service):
                         )
                 else:
                     with col_dl1:
-                        st.warning("Original file content not available for download.")
+                        st.warning("Original file content not available locally for download.")
 
-                # Download Extracted Text
-                extracted_text_content = processor.get_extracted_text_bytes(downloaded_file_path)
-                if extracted_text_content:
+                # Download Extracted Markdown Summary
+                if full_markdown:
+                    markdown_bytes = full_markdown.encode('utf-8')
                     with col_dl2:
                         st.download_button(
-                            label="Download Extracted Text (.txt)",
-                            data=extracted_text_content,
-                            file_name=f"{Path(original_filename).stem}_extracted.txt",
-                            mime="text/plain",
-                            key=f"download_extracted_text_{selected_form['id']}"
+                            label="Download Markdown Summary (.md)",
+                            data=markdown_bytes,
+                            file_name=f"{Path(original_filename).stem}_summary.md",
+                            mime="text/markdown",
+                            key=f"download_markdown_summary_{selected_form['id']}"
                         )
                 else:
                     with col_dl2:
-                        st.warning("Extracted text content not available for download.")
+                        st.warning("No Markdown summary to download.")
             else:
-                st.info("No downloaded file path available or file does not exist for this document.")
+                st.info("No downloaded file path available or file does not exist locally for this document. Downloads are unavailable in this environment (likely a cloud deployment with ephemeral storage).")
             # --- END NEW ---
 
-            # Raw JSON data
-            with st.expander("View Raw JSON Data"):
-                st.json(selected_form.get('structured_data', {}))
+            # Raw JSON data (includes full_markdown_summary now)
+            with st.expander("View Raw Structured Data (Full AI Output)"):
+                st.json(structured_data_full)
     else:
         st.info("No documents found. Use the Document Discovery page to find and process documents first.")
 
@@ -425,7 +465,7 @@ def validation_panel_page(db, processor, ai_service): # Updated signature
         # Filter forms by review status
         review_filter = st.selectbox(
             "Filter by review status:",
-            ["All", "Pending Review", "Approved", "Approved with Comments", "Needs Revision", "Downloaded Only", "Partial AI Failure"]
+            ["All", "Pending Review", "Approved", "Approved with Comments", "Needs Revision", "Downloaded Only", "Partial AI Failure", "AI Extraction Failed"] # Added AI Extraction Failed
         )
         
         filtered_forms = forms
@@ -440,15 +480,21 @@ def validation_panel_page(db, processor, ai_service): # Updated signature
                     form for form in forms 
                     if form.get('processing_status') == 'downloaded_only'
                 ]
-            elif review_filter == "Partial AI Failure":
+            elif review_filter == "Partial AI Failure": # Renamed for clarity in filter
                 filtered_forms = [
                     form for form in forms 
-                    if form.get('processing_status') == 'partial_ai_failure'
+                    if form.get('processing_status') == 'validated_with_warnings'
+                ]
+            elif review_filter == "AI Extraction Failed": # New filter
+                 filtered_forms = [
+                    form for form in forms 
+                    if form.get('processing_status') == 'ai_extraction_failed'
                 ]
             else:
+                # FIX: Changed status_filter to review_filter
                 filtered_forms = [
                     form for form in forms 
-                    if (form.get('lawyer_review') or {}).get('approval_status') == review_filter
+                    if (form.get('lawyer_review') or {}).get('approval_status', 'Pending Review') == review_filter 
                 ]
         
         if filtered_forms:
@@ -466,7 +512,16 @@ def validation_panel_page(db, processor, ai_service): # Updated signature
                             st.subheader("⚠️ AI Validation Warnings")
                             for warning in form['validation_warnings']:
                                 st.warning(warning)
-                    
+                        
+                        # Display AI's Markdown summary here for quick review
+                        full_markdown = form.get('structured_data', {}).get('full_markdown_summary')
+                        if full_markdown:
+                            st.subheader("AI's Comprehensive Summary")
+                            st.markdown(full_markdown[:500] + "..." if len(full_markdown) > 500 else full_markdown)
+                            with st.expander("View Full Summary"):
+                                st.markdown(full_markdown)
+
+
                     with col2:
                         st.subheader("Lawyer Review")
                         
@@ -510,10 +565,10 @@ def validation_panel_page(db, processor, ai_service): # Updated signature
                             
                             with col_buttons_ai:
                                 if st.form_submit_button("✨ Re-run AI Validation"):
-                                    if not form.get('downloaded_file_path'):
-                                        st.error("Cannot re-run AI validation: Document file path is missing.")
+                                    if not form.get('downloaded_file_path') or not Path(form.get('downloaded_file_path', '')).exists():
+                                        st.error("Cannot re-run AI validation: Document file path is missing or file does not exist locally. (This is common in cloud deployments with ephemeral storage).")
                                     else:
-                                        with st.spinner("Re-running AI validation..."):
+                                        with st.spinner("Re-running AI processing and validation..."):
                                             try:
                                                 # Re-extract text
                                                 extracted_text = processor.extract_text(form['downloaded_file_path'])
@@ -521,62 +576,47 @@ def validation_panel_page(db, processor, ai_service): # Updated signature
                                                 if not extracted_text or len(extracted_text.strip()) < 100:
                                                     st.error("Insufficient text content for AI re-validation (min 100 chars required).")
                                                 else:
-                                                    # Use the existing structured_data as a base for validation context
-                                                    temp_form_data = form.get('structured_data', {})
-                                                    temp_form_data.update({
-                                                        "country": form.get('country'),
-                                                        "visa_category": form.get('visa_category'),
-                                                        "form_name": form.get('form_name'),
-                                                        "form_id": form.get('form_id'),
-                                                        "description": form.get('description'),
-                                                        "governing_authority": form.get('governing_authority'),
-                                                        "official_source_url": form.get('official_source_url'),
-                                                        "discovered_by_query": form.get('discovered_by_query'),
-                                                        "downloaded_file_path": form.get('downloaded_file_path'),
-                                                        "document_format": form.get('document_format'),
-                                                        "processing_status": form.get('processing_status'),
-                                                        "last_fetched": form.get('last_fetched') # Keep original fetched date
-                                                    })
+                                                    doc_info_for_ai = {
+                                                        'filename': Path(form['downloaded_file_path']).name,
+                                                        'download_url': form['official_source_url'],
+                                                        'file_format': form['document_format'],
+                                                        'file_path': form['downloaded_file_path'],
+                                                        'discovered_by_query': form['discovered_by_query']
+                                                    }
+                                                    
+                                                    # Re-run AI extraction for fresh structured data (including markdown)
+                                                    re_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
 
-                                                    # If structured_data is empty, try to re-extract first
-                                                    if not temp_form_data.get('form_id') or not temp_form_data.get('form_name'):
-                                                        st.info("Structured data is incomplete, attempting full AI re-extraction before validation.")
-                                                        doc_info_for_ai = {
-                                                            'filename': Path(form['downloaded_file_path']).name,
-                                                            'download_url': form['official_source_url'],
-                                                            'file_format': form['document_format'],
-                                                            'file_path': form['downloaded_file_path'],
-                                                            'discovered_by_query': form['discovered_by_query']
-                                                        }
-                                                        re_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
-                                                        if re_extracted_data:
-                                                            temp_form_data.update(re_extracted_data)
-                                                            temp_form_data['form_id'] = re_extracted_data.get('form_id', 'N/A')
-                                                            temp_form_data['structured_data'] = re_extracted_data # Update structured_data
-                                                        else:
-                                                            st.error("Full AI re-extraction failed. Cannot proceed with validation.")
+                                                    if re_extracted_data:
+                                                        # Use the newly extracted data for validation
+                                                        validation_warnings = ai_service.validate_form_data(re_extracted_data)
+                                                        
+                                                        new_processing_status = "validated" if not validation_warnings else "validated_with_warnings"
+                                                        
+                                                        # Update the database with the new structured data and validation warnings
+                                                        update_success = db.update_form_fields(
+                                                            form['id'],
+                                                            {
+                                                                "structured_data": re_extracted_data, # Store the full new JSON output
+                                                                "validation_warnings": validation_warnings,
+                                                                "processing_status": new_processing_status,
+                                                                # Update direct columns from the new extraction
+                                                                "form_name": re_extracted_data.get('form_name', form['form_name']),
+                                                                "form_id": re_extracted_data.get('form_id', form['form_id']),
+                                                                "description": re_extracted_data.get('description', form['description']),
+                                                                "country": re_extracted_data.get('country', form['country']),
+                                                                "visa_category": re_extracted_data.get('visa_category', form['visa_category']),
+                                                                "governing_authority": re_extracted_data.get('governing_authority', form['governing_authority'])
+                                                            }
+                                                        )
+                                                        
+                                                        if update_success:
+                                                            st.success("AI extraction and validation re-run successfully!")
                                                             st.rerun()
-                                                            continue
-
-                                                    validation_warnings = ai_service.validate_form_data(temp_form_data)
-                                                    
-                                                    new_processing_status = "validated" if not validation_warnings else "validated_with_warnings"
-                                                    
-                                                    # Update the database
-                                                    update_success = db.update_form_fields(
-                                                        form['id'],
-                                                        {
-                                                            "validation_warnings": validation_warnings,
-                                                            "processing_status": new_processing_status,
-                                                            "structured_data": temp_form_data.get('structured_data', {}) # Save updated structured data if re-extracted
-                                                        }
-                                                    )
-                                                    
-                                                    if update_success:
-                                                        st.success("AI validation re-run successfully!")
-                                                        st.rerun()
+                                                        else:
+                                                            st.error("Failed to update form with new AI results.")
                                                     else:
-                                                        st.error("Failed to update form with new AI validation results.")
+                                                        st.error("AI re-extraction failed. Cannot proceed with validation.")
                                             except Exception as e:
                                                 st.error(f"Error during AI re-validation: {e}")
                                                 st.code(traceback.format_exc())
@@ -608,7 +648,7 @@ def export_panel_page(db, export_service):
         with col2:
             status_filter = st.selectbox(
                 "Filter by Review Status:",
-                ["All", "Approved", "Pending Review", "Needs Revision", "Downloaded Only", "Partial AI Failure"]
+                ["All", "Approved", "Pending Review", "Needs Revision", "Downloaded Only", "Partial AI Failure", "AI Extraction Failed"]
             )
         
         # Apply filters
@@ -627,12 +667,18 @@ def export_panel_page(db, export_service):
                     form for form in filtered_forms 
                     if form.get('processing_status') == 'downloaded_only'
                 ]
-            elif status_filter == "Partial AI Failure":
+            elif status_filter == "Partial AI Failure": # Renamed for clarity in filter
                 filtered_forms = [
                     form for form in filtered_forms 
-                    if form.get('processing_status') == 'partial_ai_failure'
+                    if form.get('processing_status') == 'validated_with_warnings'
+                ]
+            elif status_filter == "AI Extraction Failed":
+                filtered_forms = [
+                    form for form in filtered_forms
+                    if form.get('processing_status') == 'ai_extraction_failed'
                 ]
             else:
+                # FIX: Corrected typo from 'lawwer_review' to 'lawyer_review'
                 filtered_forms = [
                     form for form in filtered_forms 
                     if (form.get('lawyer_review') or {}).get('approval_status', 'Pending Review') == status_filter
@@ -671,8 +717,17 @@ def export_panel_page(db, export_service):
         with col2:
             if st.button("📊 Export as Excel"):
                 if filtered_forms:
-                    forms_data = [form.get('structured_data', {}) for form in filtered_forms]
-                    file_path, file_content = export_service.export_excel(forms_data)
+                    # Excel export works with the top-level form data, not structured_data
+                    # It extracts relevant fields from the full form object, including structured_data
+                    forms_data_for_excel = []
+                    for form in filtered_forms:
+                        # Reconstruct a flattened dictionary including main fields and structured data fields
+                        flat_form = {**form}
+                        if 'structured_data' in form and form['structured_data'] is not None:
+                            flat_form.update(form['structured_data'])
+                        forms_data_for_excel.append(flat_form)
+
+                    file_path, file_content = export_service.export_excel(forms_data_for_excel)
                     if file_content:
                         st.download_button(
                             label="Download Excel",
@@ -689,7 +744,9 @@ def export_panel_page(db, export_service):
                 if filtered_forms:
                     exported_files_count = 0
                     for form in filtered_forms:
-                        file_path, file_content = export_service.export_summary_pdf(form.get('structured_data', {}))
+                        # Pass the full structured_data, which contains 'full_markdown_summary'
+                        summary_data_to_export = form.get('structured_data', {})
+                        file_path, file_content = export_service.export_summary_pdf(summary_data_to_export)
                         if file_content:
                             st.download_button(
                                 label=f"Download {Path(file_path).name}",
@@ -771,7 +828,7 @@ def database_viewer_page(db):
         with col3:
             processing_status_filter = st.selectbox(
                 "Filter by Processing Status:",
-                ["All", "validated", "validated_with_warnings", "downloaded_only", "partial_ai_failure", "failed"]
+                ["All", "validated", "validated_with_warnings", "downloaded_only", "ai_extraction_failed", "failed"] # Added ai_extraction_failed
             )
         
         # Apply filters
@@ -824,8 +881,8 @@ def database_viewer_page(db):
                     for warning in form['validation_warnings']:
                         st.write(f"• {warning}")
                 
-                # Show raw structured data
-                with st.expander("View Raw Structured Data"):
+                # Show raw structured data (full AI output)
+                with st.expander("View Raw Structured Data (Full AI Output)"):
                     st.json(form.get('structured_data', {}))
     else:
         st.info("No documents in database. Use the Document Discovery page to find and process documents.")

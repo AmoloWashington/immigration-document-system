@@ -4,11 +4,13 @@ import streamlit as st
 from urllib.parse import urlparse
 import os
 import time
+from document_processor import DocumentProcessor # New import
 
 class DocumentDiscoveryService:
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, processor: DocumentProcessor): # Added processor
         self.api_key = api_key
         self.base_url = "https://api.tavily.com/search"
+        self.processor = processor # Store processor instance
     
     def discover_documents(self, country: str, visa_type: str) -> List[Dict[str, Any]]:
         """Discover immigration documents using Tavily API"""
@@ -27,7 +29,7 @@ class DocumentDiscoveryService:
                 st.info(f"Searching: {query}")
                 results = self._search_tavily(query)
                 
-                # Filter for document links
+                # Filter for document links and validate URLs
                 document_results = self._filter_document_results(results, query)
                 all_results.extend(document_results)
                 
@@ -56,7 +58,7 @@ class DocumentDiscoveryService:
         
         return base_queries[:4]  # Limit to 4 queries to save API calls
     
-    def _search_tavily(self, query: str) -> List[Dict[str, Any]]:
+    def _search_tavily(self, query: str) -> List[Dict]:
         """Execute search using Tavily API"""
         
         headers = {
@@ -86,7 +88,7 @@ class DocumentDiscoveryService:
         return response.json().get("results", [])
     
     def _filter_document_results(self, results: List[Dict], query: str) -> List[Dict[str, Any]]:
-        """Filter results to find downloadable documents"""
+        """Filter results to find downloadable documents and validate their URLs."""
         
         document_results = []
         
@@ -99,6 +101,13 @@ class DocumentDiscoveryService:
             if not self._is_likely_document(url, title, content):
                 continue
             
+            # --- NEW: Validate URL before adding to results ---
+            is_valid, status_code, error_msg = self.processor.validate_url(url)
+            if not is_valid:
+                st.warning(f"Skipping invalid URL '{url}' (Status: {status_code}, Error: {error_msg})")
+                continue
+            # --- END NEW ---
+
             document_results.append({
                 "id": f"doc_{abs(hash(url))}",
                 "title": title,
@@ -142,7 +151,7 @@ class DocumentDiscoveryService:
         for ext in ['.pdf', '.docx', '.doc', '.xlsx', '.xls']:
             if ext in url.lower() or ext in title.lower():
                 return ext.replace('.', '').upper()
-        return "PDF"  
+        return "PDF"  # Default assumption
     
     def _deduplicate_and_filter_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Remove duplicates and filter for best results"""
@@ -151,9 +160,9 @@ class DocumentDiscoveryService:
         
         # Sort by relevance (prefer direct PDF links)
         results.sort(key=lambda x: (
-            x['url'].lower().endswith('.pdf'),  
-            'form' in x['title'].lower(),       
-            len(x['description'])              
+            x['url'].lower().endswith('.pdf'),  # PDF files first
+            'form' in x['title'].lower(),       # Forms second
+            len(x['description'])               # More description is better
         ), reverse=True)
         
         for result in results:
