@@ -39,7 +39,7 @@ ENV/
 Thumbs.db
 
 # Application specific
-
+/config.py
 *.log
 
 # Environment variables
@@ -47,3 +47,4 @@ Thumbs.db
 .env.local
 .env.production
 # Configuration files
+C:\Users\Amolo Washington\OneDrive\Desktop\immigration-document-system\config.py
