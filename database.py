@@ -173,6 +173,37 @@ class DatabaseManager:
             st.error(f"Error inserting form: {e}")
             return None
     
+    def insert_document(self, form_id: int, file_info: Dict[str, Any]) -> Optional[int]:
+        """Insert a new document record linked to a form."""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping document insertion.")
+            return None
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO public.documents (
+                            form_id, filename, file_path, file_format, file_size_bytes, mime_type, download_url, downloaded_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (
+                        form_id,
+                        file_info.get('filename'),
+                        file_info.get('file_path'),
+                        file_info.get('file_format'),
+                        file_info.get('file_size_bytes'),
+                        file_info.get('mime_type'),
+                        file_info.get('download_url'),
+                        datetime.now()
+                    ))
+                    inserted_id = cur.fetchone()['id']
+                    conn.commit()
+                    st.success(f"Document '{file_info.get('filename', 'Unknown')}' inserted with ID: {inserted_id} for Form ID: {form_id}")
+                    return inserted_id
+        except Exception as e:
+            st.error(f"Error inserting document: {e}")
+            return None
+
     def get_forms(self, country: str = None, visa_category: str = None) -> List[Dict]:
         """Retrieve forms with optional filtering"""
         if not self.database_url:

@@ -113,8 +113,8 @@ class AIExtractionService:
             st.info(f"Substring JSON parse failed: {e}")
             pass # Continue to next attempt
 
-        # 3. Try to find JSON within a markdown code block (```json ... ```)
-        match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
+        # 3. Try to find JSON within a markdown code block (\`\`\`json ... \`\`\`)
+        match = re.search(r"\`\`\`json\s*(\{.*?\})\s*\`\`\`", text, re.DOTALL)
         if match:
             try:
                 json.loads(match.group(1)) # Validate it's actual JSON
@@ -132,10 +132,6 @@ class AIExtractionService:
         
         if not self.openai_client and not self.openrouter_client and not self.gemini_model:
             st.error("AI service not initialized due to missing API keys.")
-            return {}
-        
-        if not document_text or len(document_text.strip()) < 50:
-            st.error("Insufficient text content for AI processing (min 50 chars required).")
             return {}
         
         json_schema = {
@@ -166,8 +162,15 @@ JSON Schema:
 Be thorough, accurate, and comprehensive. If information is not available for a specific structured field, use null or empty values, but ensure the 'full_markdown_summary' is always populated with meaningful content about the document. Ensure the entire output is a valid JSON object."""
 
         max_text_length = 6000
-        if len(document_text) > max_text_length:
-            document_text = document_text[:max_text_length] + "\n... [Document text truncated due to length]"
+
+        # Prepare document text for AI, handling empty/low content gracefully
+        ai_document_text = document_text
+        if not document_text or len(document_text.strip()) < 50:
+            st.warning("AI: Document text is very short or empty. AI will attempt to infer from metadata and provide a summary indicating text was unavailable.")
+            ai_document_text = f"**Note:** Text extraction from the original document failed or yielded very little content. The following information is based primarily on the document's filename, URL, and any other available metadata. The 'full_markdown_summary' will reflect this limitation.\n\n" + ai_document_text
+        
+        if len(ai_document_text) > max_text_length:
+            ai_document_text = ai_document_text[:max_text_length] + "\n... [Document text truncated due to length]"
 
         user_prompt = f"""Analyze this immigration document and extract structured information and a comprehensive Markdown summary:
 
@@ -177,9 +180,9 @@ Document Info:
 - File Type: {document_info.get('file_format', 'Unknown')}
 
 Document Text:
-{document_text}
+{ai_document_text}
 
-Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'full_markdown_summary' field with all details from the document, using proper Markdown formatting."""
+Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'full_markdown_summary' field with all details from the document, using proper Markdown formatting. If the 'Document Text' explicitly states that text extraction failed, ensure the 'full_markdown_summary' clearly communicates this and provides any summary based on available metadata."""
 
         response_content = None
         error_message = None
@@ -219,7 +222,11 @@ Extract all relevant information according to the JSON schema provided in the sy
 
         if not response_content:
             st.error(f"AI extraction failed after trying all available services. Last error: {error_message}")
-            return {}
+            # Even if AI fails completely, return a minimal structure with an error in summary
+            return {
+                "full_markdown_summary": f"AI extraction failed: {error_message}. No structured data could be extracted.",
+                "validation_warnings": [f"AI extraction failed: {error_message}"]
+            }
 
         extracted_json_str = self._extract_json_from_text(response_content)
         if not extracted_json_str:
@@ -244,10 +251,16 @@ Extract all relevant information according to the JSON schema provided in the sy
         except json.JSONDecodeError as e:
             st.error(f"Error parsing AI response as JSON after extraction attempt: {e}")
             st.error(f"Problematic JSON string (first 500 chars): {extracted_json_str[:500]}...")
-            return {}
+            return {
+                "full_markdown_summary": f"AI response parsing failed: Could not extract valid JSON. Raw response (first 500 chars): {response_content[:500]}...",
+                "validation_warnings": ["AI response parsing failed: Could not extract valid JSON."]
+            }
         except Exception as e:
             st.error(f"Error processing extracted data: {e}")
-            return {}
+            return {
+                "full_markdown_summary": f"Error processing extracted data: {e}.",
+                "validation_warnings": [f"Error processing extracted data: {str(e)}"]
+            }
     
     def validate_form_data(self, form_data: Dict[str, Any]) -> List[str]:
         """Validate extracted form data and return warnings using AI with fallback."""
