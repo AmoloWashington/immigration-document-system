@@ -4,11 +4,13 @@ from pathlib import Path
 from typing import Dict, Any, List, Tuple, Optional
 import streamlit as st
 from datetime import datetime
+from database import DatabaseManager # New import
 
 class ExportService:
-    def __init__(self, output_dir: str):
+    def __init__(self, output_dir: str, db_manager: DatabaseManager): # Added db_manager
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
+        self.db_manager = db_manager # Store db_manager instance
     
     def export_json(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes]]:
         """Export form data as JSON and return file path and content."""
@@ -30,6 +32,16 @@ class ExportService:
                 f.write(json_content)
             
             st.success(f"JSON exported to server: {file_path}")
+            
+            # --- NEW: Log export ---
+            if self.db_manager and form_data.get('id'):
+                self.db_manager.insert_export_log(
+                    document_ids=[form_data['id']],
+                    export_formats=["json"],
+                    file_path=str(file_path)
+                )
+            # --- END NEW ---
+
             return str(file_path), json_content.encode('utf-8') # Return content as bytes
             
         except Exception as e:
@@ -93,6 +105,17 @@ class ExportService:
                 excel_content = f.read()
 
             st.success(f"Excel exported to server: {file_path}")
+
+            # --- NEW: Log export ---
+            if self.db_manager:
+                exported_form_ids = [form.get('id') for form in forms_data if form.get('id')]
+                self.db_manager.insert_export_log(
+                    document_ids=exported_form_ids,
+                    export_formats=["excel"],
+                    file_path=str(file_path)
+                )
+            # --- END NEW ---
+
             return str(file_path), excel_content
             
         except Exception as e:
@@ -156,6 +179,16 @@ class ExportService:
                 f.write(summary_content)
             
             st.success(f"Summary exported to server: {file_path}")
+
+            # --- NEW: Log export ---
+            if self.db_manager and form_data.get('id'):
+                self.db_manager.insert_export_log(
+                    document_ids=[form_data['id']],
+                    export_formats=["summary_txt"], # Changed from pdf to txt
+                    file_path=str(file_path)
+                )
+            # --- END NEW ---
+
             return str(file_path), summary_content.encode('utf-8') # Return content as bytes
             
         except Exception as e:

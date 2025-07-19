@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import streamlit as st
+import uuid # For generating unique export IDs
 
 class DatabaseManager:
     def __init__(self, database_url: str):
@@ -38,7 +39,7 @@ class DatabaseManager:
                             structured_data JSONB,
                             validation_warnings JSONB,
                             lawyer_review JSONB,
-                            official_source_url TEXT,
+                            official_source_url TEXT UNIQUE, -- Added UNIQUE constraint
                             discovered_by_query TEXT,
                             downloaded_file_path TEXT,
                             document_format VARCHAR(20),
@@ -49,6 +50,8 @@ class DatabaseManager:
                     """)
                     
                     # Documents table (for file metadata, if needed separately from forms)
+                    # Note: Current logic stores primary document path in 'forms' table.
+                    # This table is here for potential future expansion (e.g., multiple supporting docs).
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS public.documents (
                             id SERIAL PRIMARY KEY,
@@ -95,7 +98,8 @@ class DatabaseManager:
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_documents_form_id ON public.documents(form_id)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
-                    
+                    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_forms_official_source_url ON public.forms(official_source_url)") # New index for URL
+
                     # Create JSONB indexes
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_structured_data ON public.forms USING GIN(structured_data)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_validation_warnings ON public.forms USING GIN(validation_warnings)")
@@ -162,6 +166,9 @@ class DatabaseManager:
                     conn.commit()
                     st.success(f"Form '{form_data.get('form_name', 'Unknown')}' inserted with ID: {inserted_id}")
                     return inserted_id
+        except psycopg2.errors.UniqueViolation:
+            st.warning(f"Form with URL '{form_data.get('official_source_url')}' already exists. Skipping insertion.")
+            return None
         except Exception as e:
             st.error(f"Error inserting form: {e}")
             return None
@@ -192,6 +199,19 @@ class DatabaseManager:
         except Exception as e:
             st.error(f"Error retrieving forms: {e}")
             return []
+
+    def get_form_by_url(self, url: str) -> Optional[Dict]:
+        """Retrieve a single form by its official source URL."""
+        if not self.database_url:
+            return None
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM public.forms WHERE official_source_url = %s", (url,))
+                    return cur.fetchone()
+        except Exception as e:
+            st.error(f"Error retrieving form by URL: {e}")
+            return None
     
     def update_lawyer_review(self, form_id: int, review_data: Dict[str, Any]) -> bool:
         """Update lawyer review for a form"""
@@ -242,3 +262,55 @@ class DatabaseManager:
         except Exception as e:
             st.error(f"Error updating form fields for ID {form_id}: {e}")
             return False
+
+    def insert_source(self, url: str, title: str, description: str, domain: str) -> Optional[int]:
+        """Insert a new source record if it doesn't already exist."""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping source insertion.")
+            return None
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM public.sources WHERE url = %s", (url,))
+                    if cur.fetchone():
+                        # st.info(f"Source URL '{url}' already exists. Skipping insertion.")
+                        return None # Source already exists
+                    
+                    cur.execute("""
+                        INSERT INTO public.sources (url, title, description, domain, discovered_at)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (url, title, description, domain, datetime.now()))
+                    inserted_id = cur.fetchone()['id']
+                    conn.commit()
+                    st.success(f"Source '{title}' inserted with ID: {inserted_id}")
+                    return inserted_id
+        except psycopg2.errors.UniqueViolation:
+            # This can happen if two processes try to insert the same URL concurrently
+            st.warning(f"Source with URL '{url}' already exists (concurrent insert).")
+            return None
+        except Exception as e:
+            st.error(f"Error inserting source: {e}")
+            return None
+
+    def insert_export_log(self, document_ids: List[int], export_formats: List[str], file_path: str, exported_by: str = "System") -> Optional[int]:
+        """Log an export operation."""
+        if not self.database_url:
+            st.warning("Database URL not configured. Skipping export log insertion.")
+            return None
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    export_id = str(uuid.uuid4())
+                    cur.execute("""
+                        INSERT INTO public.export_logs (export_id, document_ids, export_formats, exported_by, export_timestamp, file_path)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        RETURNING id
+                    """, (export_id, Json(document_ids), Json(export_formats), exported_by, datetime.now(), file_path))
+                    inserted_id = cur.fetchone()['id']
+                    conn.commit()
+                    st.success(f"Export log recorded with ID: {inserted_id}")
+                    return inserted_id
+        except Exception as e:
+            st.error(f"Error inserting export log: {e}")
+            return None

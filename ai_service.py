@@ -10,7 +10,7 @@ class AIExtractionService:
     def __init__(self, openai_api_key: str, openrouter_api_key: str = None, gemini_api_key: str = None):
         self.openai_client = None
         self.openrouter_client = None
-        self.gemini_model = None # Using model directly for Gemini
+        self.gemini_model = None
 
         if openai_api_key:
             self.openai_client = openai.OpenAI(api_key=openai_api_key)
@@ -30,7 +30,7 @@ class AIExtractionService:
         if gemini_api_key:
             try:
                 genai.configure(api_key=gemini_api_key)
-                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest') # Use a capable Gemini model
+                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
                 st.success("Gemini client initialized.")
             except Exception as e:
                 st.error(f"Error configuring Gemini API: {e}. Gemini service will be unavailable.")
@@ -68,16 +68,14 @@ class AIExtractionService:
         if not model:
             return None, "Gemini model not initialized."
         try:
-            # Gemini's system instructions are part of the prompt in earlier versions
-            # Or can be set using tools, but for simple text, often combined or set in prompt.
-            # For JSON output, it's best to guide it strongly in the prompt.
+            # Gemini's system instructions are often best integrated into the prompt for JSON output
+            # when using response_mime_type.
             combined_prompt = f"System Instruction: {system_prompt}\n\nUser Query: {user_prompt}"
             
-            # Use generation_config for max_tokens and response_mime_type (for JSON)
             generation_config = {
                 "temperature": 0.1,
                 "max_output_tokens": max_tokens,
-                "response_mime_type": "application/json" # Explicitly request JSON for Gemini
+                "response_mime_type": "application/json" # Enforce JSON output
             }
 
             response = model.generate_content(
@@ -87,6 +85,47 @@ class AIExtractionService:
             return response.text, None
         except Exception as e:
             return None, f"Gemini error: {e}"
+
+    def _extract_json_from_text(self, text: str) -> Optional[str]:
+        """
+        Attempts to extract a JSON string from a given text, handling various formats.
+        Prioritizes direct parsing, then substring extraction, then markdown blocks.
+        """
+        # 1. Attempt to parse the entire text directly
+        try:
+            json.loads(text)
+            st.info("Extracted JSON: Parsed entire response directly.")
+            return text
+        except json.JSONDecodeError as e:
+            st.info(f"Direct JSON parse failed: {e}")
+            pass # Continue to next attempt
+
+        # 2. Try to find the first and last curly braces and parse the substring
+        try:
+            start_index = text.find('{')
+            end_index = text.rfind('}')
+            if start_index != -1 and end_index != -1 and end_index > start_index:
+                potential_json_str = text[start_index : end_index + 1]
+                json.loads(potential_json_str) # Validate it's actual JSON
+                st.info("Extracted JSON: Found first and last curly braces.")
+                return potential_json_str
+        except json.JSONDecodeError as e:
+            st.info(f"Substring JSON parse failed: {e}")
+            pass # Continue to next attempt
+
+        # 3. Try to find JSON within a markdown code block (```json ... ```)
+        match = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
+        if match:
+            try:
+                json.loads(match.group(1)) # Validate it's actual JSON
+                st.info("Extracted JSON: Found markdown code block.")
+                return match.group(1)
+            except json.JSONDecodeError as e:
+                st.info(f"Markdown block JSON parse failed: {e}")
+                pass # Continue to next attempt
+
+        st.error(f"Could not extract valid JSON from AI response after all attempts. Raw response (first 500 chars): {text[:500]}...")
+        return None # No valid JSON string found
 
     def extract_form_data(self, document_text: str, document_info: Dict[str, Any]) -> Dict[str, Any]:
         """Extract structured form data and a detailed Markdown summary using AI."""
@@ -99,8 +138,6 @@ class AIExtractionService:
             st.error("Insufficient text content for AI processing (min 50 chars required).")
             return {}
         
-        # Define the desired JSON schema for the AI's output
-        # It includes both structured fields AND a full_markdown_summary
         json_schema = {
             "country": "Country name (e.g., USA, Canada)",
             "visa_category": "Type of visa/immigration category (e.g., Work Visa, Student Visa)",
@@ -128,7 +165,6 @@ JSON Schema:
 
 Be thorough, accurate, and comprehensive. If information is not available for a specific structured field, use null or empty values, but ensure the 'full_markdown_summary' is always populated with meaningful content about the document. Ensure the entire output is a valid JSON object."""
 
-        # Truncate text to avoid token limits
         max_text_length = 6000
         if len(document_text) > max_text_length:
             document_text = document_text[:max_text_length] + "\n... [Document text truncated due to length]"
@@ -164,7 +200,7 @@ Extract all relevant information according to the JSON schema provided in the sy
             st.info("Attempting AI extraction with OpenRouter...")
             response_content, error_message = self._call_openai_compatible_service(
                 self.openrouter_client, system_prompt, user_prompt, model_name="openai/gpt-4o-mini", max_tokens=2500, response_format={"type": "json_object"}
-            ) # Use OpenRouter's model name convention
+            )
             if response_content:
                 st.success("AI extraction successful using OpenRouter fallback.")
             else:
@@ -175,7 +211,7 @@ Extract all relevant information according to the JSON schema provided in the sy
             st.info("Attempting AI extraction with Gemini...")
             response_content, error_message = self._call_gemini_service(
                 self.gemini_model, system_prompt, user_prompt, max_tokens=2500
-            ) # Gemini handles JSON response directly via generation_config
+            )
             if response_content:
                 st.success("AI extraction successful using Gemini fallback.")
             else:
@@ -185,10 +221,14 @@ Extract all relevant information according to the JSON schema provided in the sy
             st.error(f"AI extraction failed after trying all available services. Last error: {error_message}")
             return {}
 
+        extracted_json_str = self._extract_json_from_text(response_content)
+        if not extracted_json_str:
+            # Error message already logged by _extract_json_from_text
+            return {}
+
         try:
-            extracted_data = json.loads(response_content)
+            extracted_data = json.loads(extracted_json_str) # Use the extracted string
             
-            # Add metadata
             extracted_data.update({
                 "official_source_url": document_info.get('download_url'),
                 "downloaded_file_path": document_info.get('file_path'),
@@ -202,8 +242,8 @@ Extract all relevant information according to the JSON schema provided in the sy
             return extracted_data
             
         except json.JSONDecodeError as e:
-            st.error(f"Error parsing AI response as JSON: {e}")
-            st.error(f"Raw response (first 500 chars): {response_content[:500]}...")
+            st.error(f"Error parsing AI response as JSON after extraction attempt: {e}")
+            st.error(f"Problematic JSON string (first 500 chars): {extracted_json_str[:500]}...")
             return {}
         except Exception as e:
             st.error(f"Error processing extracted data: {e}")
@@ -215,7 +255,6 @@ Extract all relevant information according to the JSON schema provided in the sy
         if not self.openai_client and not self.openrouter_client and not self.gemini_model:
             return ["AI validation skipped due to missing API keys."]
         
-        # Use the full_markdown_summary if available for comprehensive validation context
         context_data = form_data.get('full_markdown_summary', json.dumps(form_data, indent=2))
 
         validation_prompt = f"""Review this extracted immigration form data for completeness and accuracy:
@@ -241,7 +280,7 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
             st.info("Attempting AI validation with OpenAI...")
             response_content, error_message = self._call_openai_compatible_service(
                 self.openai_client, 
-                "You are an expert immigration document validator. Respond only with a JSON array named 'validation_warnings'.", 
+                "You are an expert immigration document validator. Respond only with a JSON object containing a 'validation_warnings' array.", 
                 validation_prompt, 
                 model_name="gpt-4o-mini", 
                 max_tokens=800,
@@ -257,7 +296,7 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
             st.info("Attempting AI validation with OpenRouter...")
             response_content, error_message = self._call_openai_compatible_service(
                 self.openrouter_client, 
-                "You are an expert immigration document validator. Respond only with a JSON array named 'validation_warnings'.", 
+                "You are an expert immigration document validator. Respond only with a JSON object containing a 'validation_warnings' array.", 
                 validation_prompt, 
                 model_name="openai/gpt-4o-mini", 
                 max_tokens=800,
@@ -276,7 +315,7 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
                 "You are an expert immigration document validator. Respond only with a JSON object containing a 'validation_warnings' array.", 
                 validation_prompt, 
                 max_tokens=800
-            ) # Gemini explicitly requests JSON via response_mime_type
+            )
             if response_content:
                 st.success("AI validation successful using Gemini fallback.")
             else:
@@ -286,8 +325,13 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
             st.error(f"AI validation failed after trying all available services. Last error: {error_message}")
             return [f"AI validation failed: {error_message}"]
 
+        extracted_json_str = self._extract_json_from_text(response_content)
+        if not extracted_json_str:
+            # Error message already logged by _extract_json_from_text
+            return [f"Validation parsing error: Could not extract JSON from AI response."]
+
         try:
-            warnings_dict = json.loads(response_content)
+            warnings_dict = json.loads(extracted_json_str) # Use the extracted string
             warnings = warnings_dict.get('validation_warnings', [])
             
             if isinstance(warnings, list):
@@ -298,8 +342,8 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
                 return [f"Validation response format error: {str(warnings_dict)}"]
             
         except json.JSONDecodeError as e:
-            st.error(f"Error parsing validation response as JSON: {e}")
-            st.error(f"Raw validation response (first 500 chars): {response_content[:500]}...")
+            st.error(f"Error parsing validation response as JSON after extraction attempt: {e}")
+            st.error(f"Problematic JSON string (first 500 chars): {extracted_json_str[:500]}...")
             return [f"Validation parsing error: {str(e)}"]
         except Exception as e:
             st.error(f"Error processing validation data: {e}")

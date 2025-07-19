@@ -5,12 +5,14 @@ from urllib.parse import urlparse
 import os
 import time
 from document_processor import DocumentProcessor # New import
+from database import DatabaseManager # New import
 
 class DocumentDiscoveryService:
-    def __init__(self, api_key: str, processor: DocumentProcessor): # Added processor
+    def __init__(self, api_key: str, processor: DocumentProcessor, db_manager: DatabaseManager): # Added db_manager
         self.api_key = api_key
         self.base_url = "https://api.tavily.com/search"
-        self.processor = processor # Store processor instance
+        self.processor = processor
+        self.db_manager = db_manager # Store db_manager instance
     
     def discover_documents(self, country: str, visa_type: str) -> List[Dict[str, Any]]:
         """Discover immigration documents using Tavily API"""
@@ -101,13 +103,11 @@ class DocumentDiscoveryService:
             if not self._is_likely_document(url, title, content):
                 continue
             
-            # --- NEW: Validate URL before adding to results ---
             is_valid, status_code, error_msg = self.processor.validate_url(url)
             if not is_valid:
                 st.warning(f"Skipping invalid URL '{url}' (Status: {status_code}, Error: {error_msg})")
                 continue
-            # --- END NEW ---
-
+            
             document_results.append({
                 "id": f"doc_{abs(hash(url))}",
                 "title": title,
@@ -117,6 +117,11 @@ class DocumentDiscoveryService:
                 "discovered_by_query": query,
                 "file_type": self._extract_file_type(url, title)
             })
+            
+            # --- NEW: Insert into sources table ---
+            if self.db_manager:
+                self.db_manager.insert_source(url, title, content, urlparse(url).netloc)
+            # --- END NEW ---
         
         return document_results
     
