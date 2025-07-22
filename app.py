@@ -50,7 +50,7 @@ def main():
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page:",
-        ["🔍 Document Discovery", "📄 Document Viewer", "✅ Validation Panel", "📊 Export Panel", "🗄️ Database Viewer", "🩺 Database Health Check"]
+        ["🔍 Document Discovery", "📄 Document Viewer", "✅ Validation Panel", "📊 Export Panel", "🗄️ Database Viewer", "☁️ Cloudinary Document Browser", "🩺 Database Health Check"] # ADDED: Cloudinary Document Browser
     )
     
     if page == "🔍 Document Discovery":
@@ -63,6 +63,8 @@ def main():
         export_panel_page(db, export_service)
     elif page == "🗄️ Database Viewer":
         database_viewer_page(db)
+    elif page == "☁️ Cloudinary Document Browser": # ADDED: New page call
+        cloudinary_browser_page(db)
     elif page == "🩺 Database Health Check":
         database_health_check_page(config.DATABASE_URL)
 
@@ -400,6 +402,16 @@ def document_viewer_page(db, processor, ai_service):
                 st.write(f"**Submission Method:** {structured_data_full.get('submission_method', 'N/A')}")
                 st.write(f"**Last Updated:** {selected_form['created_at']}")
             
+            with st.expander("Debug: Raw Database Data for Selected Document"):
+                st.write("**Selected Form Data:**")
+                st.json(selected_form)
+                st.write("**Associated Document Data (from documents table):**")
+                st.json(document_info_from_db)
+                if document_info_from_db and document_info_from_db.get('cloudinary_url'):
+                    st.markdown(f"**Direct Cloudinary URL (copy and paste into browser):** `{document_info_from_db['cloudinary_url']}`")
+                    st.markdown("If this URL doesn't work in your browser, the issue is with Cloudinary access/permissions, not the app.")
+                else:
+                    st.info("No Cloudinary URL found in database for this document.")
             st.subheader("Description")
             st.write(selected_form.get('description', 'No description available'))
             
@@ -744,6 +756,10 @@ def export_panel_page(db, export_service):
                         st.success(f"Exported {exported_files_count} JSON files to server and Cloudinary.") # Updated message
                 else:
                     st.warning("No forms/pages selected for JSON export.") # Updated message
+                if cloudinary_export_url:
+                    st.info(f"Debug: Cloudinary URL for JSON export: {cloudinary_export_url}")
+                else:
+                    st.warning("Debug: No Cloudinary URL returned for JSON export.")
     
         with col2:
             if st.button("📊 Export as Excel"):
@@ -770,6 +786,10 @@ def export_panel_page(db, export_service):
                             )
                 else:
                     st.warning("No forms/pages selected for Excel export.") # Updated message
+                if cloudinary_export_url:
+                    st.info(f"Debug: Cloudinary URL for Excel export: {cloudinary_export_url}")
+                else:
+                    st.warning("Debug: No Cloudinary URL returned for Excel export.")
     
         with col3:
             if st.button("📋 Export Summaries"):
@@ -796,6 +816,10 @@ def export_panel_page(db, export_service):
                         st.success(f"Exported {exported_files_count} summary files.")
                 else:
                     st.warning("No forms/pages selected for summary export.") # Updated message
+                if cloudinary_export_url:
+                    st.info(f"Debug: Cloudinary URL for Summary export: {cloudinary_export_url}")
+                else:
+                    st.warning("Debug: No Cloudinary URL returned for Summary export.")
     
         if filtered_forms:
             st.subheader("Preview of Forms/Pages to Export") # Updated message
@@ -922,6 +946,56 @@ def database_viewer_page(db):
                     st.json(form.get('structured_data', {}))
     else:
         st.info("No documents/pages in database. Use the Document Discovery page to find and process documents/pages.") # Updated message
+
+def cloudinary_browser_page(db): # NEW FUNCTION
+    st.header("☁️ Cloudinary Document Browser")
+    st.markdown("Browse documents stored on Cloudinary, organized by country and visa type.")
+
+    all_forms = db.get_forms()
+    
+    # Filter forms to only include those with a Cloudinary URL
+    cloudinary_docs = []
+    for form in all_forms:
+        document_info = db.get_document_by_form_id(form['id'])
+        if document_info and document_info.get('cloudinary_url'):
+            cloudinary_docs.append({
+                "form_id": form['id'],
+                "country": form['country'],
+                "visa_category": form['visa_category'],
+                "form_name": form['form_name'],
+                "cloudinary_url": document_info['cloudinary_url'],
+                "file_format": document_info['file_format'],
+                "filename": document_info['filename']
+            })
+    
+    if not cloudinary_docs:
+        st.info("No documents with Cloudinary URLs found in the database. Please process some documents first.")
+        return
+
+    st.info(f"Displaying {len(cloudinary_docs)} documents found on Cloudinary.")
+
+    # Group documents by country and then by visa category
+    grouped_docs = {}
+    for doc in cloudinary_docs:
+        country = doc['country'] if doc['country'] else "Unknown Country"
+        visa_category = doc['visa_category'] if doc['visa_category'] else "Unknown Visa Type"
+
+        if country not in grouped_docs:
+            grouped_docs[country] = {}
+        if visa_category not in grouped_docs[country]:
+            grouped_docs[country][visa_category] = []
+        grouped_docs[country][visa_category].append(doc)
+
+    # Display grouped documents
+    for country, visa_categories in sorted(grouped_docs.items()):
+        with st.expander(f"🌍 {country} ({sum(len(v) for v in visa_categories.values())} documents)"):
+            for visa_category, docs in sorted(visa_categories.items()):
+                with st.expander(f"🛂 {visa_category} ({len(docs)} documents)"):
+                    for doc in docs:
+                        st.markdown(f"**📄 {doc['form_name']}** (ID: {doc['form_id']})")
+                        st.write(f"File: {doc['filename']} ({doc['file_format']})")
+                        st.markdown(f"[View on Cloudinary]({doc['cloudinary_url']})")
+                        st.markdown("---") # Separator for readability
 
 def database_health_check_page(database_url: str):
     st.header("🩺 Database Health Check")

@@ -19,12 +19,20 @@ class DocumentProcessor:
     def __init__(self, downloads_dir: str, cloudinary_url: Optional[str] = None): # NEW: Added cloudinary_url parameter
         self.downloads_dir = downloads_dir
         self.cloudinary_url = cloudinary_url # NEW: Store Cloudinary URL
-        if self.cloudinary_url: # NEW: Configure Cloudinary
-            cloudinary.config(cloud_name=self.cloudinary_url.split('@')[1],
-                              api_key=self.cloudinary_url.split('//')[1].split(':')[0],
-                              api_secret=self.cloudinary_url.split(':')[2].split('@')[0],
-                              secure=True)
-            st.success("Cloudinary configured for document uploads.")
+        if self.cloudinary_url:
+            try:
+                from urllib.parse import urlparse
+                parsed_url = urlparse(self.cloudinary_url)
+                cloudinary.config(
+                    cloud_name=parsed_url.hostname,
+                    api_key=parsed_url.username,
+                    api_secret=parsed_url.password,
+                    secure=True
+                )
+                st.success("Cloudinary configured for document uploads.")
+            except Exception as e:
+                st.error(f"Error configuring Cloudinary for document uploads: {e}. Please check your CLOUDINARY_URL format.")
+                self.cloudinary_url = None # Disable Cloudinary if config fails
         else:
             st.warning("Cloudinary URL not configured. Documents will only be stored locally.")
     
@@ -70,9 +78,15 @@ class DocumentProcessor:
                 public_id=public_id,
                 resource_type="auto" # Auto-detect resource type (image, raw, video)
             )
-            st.success(f"Uploaded to Cloudinary: {response['secure_url']}")
-            return response['secure_url']
-        except Exception as e:
+            st.json(response) # NEW: Display full Cloudinary response for debugging
+            secure_url = response.get('secure_url')
+            if secure_url:
+                st.success(f"Uploaded to Cloudinary: {secure_url}")
+                return secure_url
+            else:
+                st.error(f"Cloudinary upload successful, but 'secure_url' not found in response: {response}")
+                return None
+        except Exception as e: # ADDED: Exception handling
             st.error(f"Error uploading to Cloudinary: {e}")
             return None
 
