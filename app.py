@@ -19,12 +19,10 @@ from export_service import ExportService
 # Initialize services
 def init_services():
     db = DatabaseManager(config.DATABASE_URL)
-    processor = DocumentProcessor(config.DOWNLOADS_DIR, config.CLOUDINARY_URL) # NEW: Pass Cloudinary URL
-    # Pass db to discovery service
+    processor = DocumentProcessor(config.DOWNLOADS_DIR, config.CLOUDINARY_URL)
     discovery = DocumentDiscoveryService(config.TAVILY_API_KEY, processor, db) 
     ai_service = AIExtractionService(config.OPENAI_API_KEY, config.OPENROUTER_API_KEY, config.GEMINI_API_KEY)
-    # Pass db and Cloudinary URL to export service
-    export_service = ExportService(config.OUTPUTS_DIR, db, config.CLOUDINARY_URL) # NEW: Pass Cloudinary URL
+    export_service = ExportService(config.OUTPUTS_DIR, db, config.CLOUDINARY_URL)
     
     return db, discovery, processor, ai_service, export_service
 
@@ -36,21 +34,21 @@ def main():
     )
     
     st.title("🌍 Immigration Document Intelligence System")
-    st.markdown("**Automated discovery, processing, and validation of official immigration documents and information**") # Updated title
+    st.markdown("**Automated discovery, processing, and validation of official immigration documents and information**")
     
     if st.button("Clear all caches"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.rerun()
 
-    st.warning("⚠️ **Important:** Documents are now stored **locally** in the `downloads` directory. For cloud deployments, this directory might be ephemeral. **All downloaded and generated documents are also uploaded to Cloudinary for persistent storage.**") # Updated warning
+    st.warning("⚠️ **Important:** Documents are now stored **locally** in the `downloads` directory. For cloud deployments, this directory might be ephemeral. **All downloaded and generated documents are also uploaded to Cloudinary for persistent storage.**")
     
     db, discovery, processor, ai_service, export_service = init_services()
     
     st.sidebar.title("Navigation")
     page = st.sidebar.selectbox(
         "Choose a page:",
-        ["🔍 Document Discovery", "📄 Document Viewer", "✅ Validation Panel", "📊 Export Panel", "🗄️ Database Viewer", "☁️ Cloudinary Document Browser", "🩺 Database Health Check"] # ADDED: Cloudinary Document Browser
+        ["🔍 Document Discovery", "📄 Document Viewer", "✅ Validation Panel", "📊 Export Panel", "🗄️ Database Viewer", "☁️ Cloudinary Document Browser", "🩺 Database Health Check"]
     )
     
     if page == "🔍 Document Discovery":
@@ -63,21 +61,21 @@ def main():
         export_panel_page(db, export_service)
     elif page == "🗄️ Database Viewer":
         database_viewer_page(db)
-    elif page == "☁️ Cloudinary Document Browser": # ADDED: New page call
+    elif page == "☁️ Cloudinary Document Browser":
         cloudinary_browser_page(db)
     elif page == "🩺 Database Health Check":
         database_health_check_page(config.DATABASE_URL)
 
 def discovery_page(discovery, processor, ai_service, db):
     st.header("🔍 Document Discovery")
-    st.markdown("Discover official immigration documents and relevant informational pages from government sources.") # Updated description
+    st.markdown("Discover official immigration documents and relevant informational pages from government sources.")
     
     col1, col2 = st.columns(2)
     
     with col1:
         country = st.selectbox(
             "Select Country:",
-            ["USA", "Canada", "UK", "Australia", "Germany", "France", "United Arab Emirates", "India", "Mexico", "Brazil", "China", "Japan", "South Korea", "South Africa", "New Zealand", "Singapore", "Philippines", "Other"] # Updated list
+            ["USA", "Canada", "UK", "Australia", "Germany", "France", "United Arab Emirates", "India", "Mexico", "Brazil", "China", "Japan", "South Korea", "South Africa", "New Zealand", "Singapore", "Philippines", "Other"]
         )
         
         if country == "Other":
@@ -94,17 +92,17 @@ def discovery_page(discovery, processor, ai_service, db):
         
         if visa_type == "Other":
             visa_type = st.text_input("Enter visa type:")
-    
+
     st.subheader("Processing Options")
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        max_docs = st.slider("Maximum documents/pages to process:", 1, 25, 5) # Increased max to 25
+        max_docs = st.slider("Maximum documents/pages to process:", 1, 25, 5)
         auto_process = st.checkbox("Auto-process after discovery", value=True)
-    
+
     with col2:
         save_to_db = st.checkbox("Save to database", value=True)
-        validate_with_ai = st.checkbox("AI extraction & validation", value=True) # Renamed for clarity
+        validate_with_ai = st.checkbox("AI extraction & validation", value=True)
 
     if st.checkbox("Show AI Prompt Preview"):
         if ai_service.openai_client or ai_service.openrouter_client or ai_service.gemini_model:
@@ -118,7 +116,7 @@ def discovery_page(discovery, processor, ai_service, db):
             st.json(ai_service.extract_form_data("dummy text content", dummy_doc_info))
         else:
             st.info("AI service not initialized to show prompt preview.")
-    
+
     if st.button("🚀 Start Discovery", type="primary"):
         if country and visa_type:
             with st.spinner("Discovering documents and information pages..."):
@@ -148,6 +146,39 @@ def discovery_page(discovery, processor, ai_service, db):
                     st.warning("No documents or relevant information pages found. Try different search terms or broaden your query.")
         else:
             st.error("Please select both country and visa type.")
+
+    st.markdown("---")
+    st.subheader("⚡ Batch Process Country")
+    st.markdown("Automatically discover, process, and save documents for an entire country.")
+    batch_country = st.selectbox(
+        "Select Country for Batch Processing:",
+        [""] + sorted(list(DocumentDiscoveryService.COUNTRY_DOMAINS_MAP.keys()))
+    )
+    if st.button("🚀 Start Batch Processing", type="secondary"):
+        if batch_country:
+            st.info(f"Starting batch processing for {batch_country}. This may take a while...")
+            # Get all visa types for the selected country (or a general list)
+            # For simplicity, we'll use a predefined list of common visa types for batch processing
+            common_visa_types = ["Work Visa", "Student Visa", "Tourist Visa", "Family Visa", "Permanent Residence", "Citizenship", "Business Visa"]
+            
+            all_discovered_docs = []
+            for vt in common_visa_types:
+                st.subheader(f"Discovering for {batch_country} - {vt}...")
+                discovered_docs_for_type = discovery.discover_documents(batch_country, vt)
+                all_discovered_docs.extend(discovered_docs_for_type)
+                st.info(f"Found {len(discovered_docs_for_type)} documents for {batch_country} - {vt}.")
+                time.sleep(1) # Small delay between queries
+
+            if all_discovered_docs:
+                st.success(f"Total {len(all_discovered_docs)} unique documents/pages discovered for {batch_country}.")
+                st.subheader(f"Initiating processing for all discovered documents in {batch_country}...")
+                # The process_documents_improved function already handles duplicates and AI processing
+                process_documents_improved(all_discovered_docs, batch_country, "Batch Process", processor, ai_service, db, True, True)
+            else:
+                st.warning(f"No documents found for batch processing in {batch_country}.")
+        else:
+            st.error("Please select a country for batch processing.")
+
 
 def process_documents_improved(discovered_docs, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai):
     """Improved document processing with better error handling and progress tracking"""
@@ -184,7 +215,7 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         if save_to_db:
             existing_form = db.get_form_by_url(doc['url'])
             if existing_form:
-                st.info(f"⏩ Skipping duplicate: '{doc['title'][:50]}...' (already in database with ID: {existing_form['id']})")
+                st.info(f"⏩ Skipping duplicate: '{doc['title'][:50]}...' (already in database with ID: {existing_form['id']}). **Tokens saved!**")
                 skipped_duplicates.append(doc)
                 progress_bar.progress(current_progress)
                 continue
@@ -209,7 +240,7 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         }
 
         try:
-            status_text.text(f"Step 1/4: Downloading document/page to local storage and Cloudinary...") # Updated message
+            status_text.text(f"Step 1/4: Downloading document/page to local storage and Cloudinary...")
             progress_bar.progress(current_progress * 0.25)
             
             file_info = processor.download_document(doc['url'], country, visa_type)
@@ -226,9 +257,9 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             
             extracted_text = processor.extract_text(file_info['file_path']) 
             
-            if not extracted_text or len(extracted_text.strip()) < 50: # Lowered threshold for AI processing
+            if not extracted_text or len(extracted_text.strip()) < 50:
                 st.warning(f"Low text content ({len(extracted_text.strip())} chars) for '{doc['title'][:50]}...'. Attempting AI processing anyway for summary.")
-                form_data_to_save["processing_status"] = "low_text_content" # New status
+                form_data_to_save["processing_status"] = "low_text_content"
                 form_data_to_save["validation_warnings"].append("Document had low text content, AI summary might be limited.")
             
             doc_info_for_ai = {**doc, **file_info}
@@ -246,10 +277,8 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                 else:
                     form_data_to_save["structured_data"] = ai_extracted_data 
                     
-                    # --- IMPORTANT FIX: Prioritize AI-extracted country/visa_category ---
                     form_data_to_save['country'] = ai_extracted_data.get('country', country)
                     form_data_to_save['visa_category'] = ai_extracted_data.get('visa_category', visa_type)
-                    # --- END IMPORTANT FIX ---
 
                     form_data_to_save['form_name'] = ai_extracted_data.get('form_name', form_data_to_save['form_name'])
                     form_data_to_save['form_id'] = ai_extracted_data.get('form_id', form_data_to_save['form_id'])
@@ -277,9 +306,7 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                     processed_forms.append(form_data_to_save)
                     st.success(f"✅ Processed and Saved: {form_data_to_save.get('form_name', 'Unknown Form/Page')[:50]}...")
                     
-                    # --- NEW: Insert into documents table with Cloudinary URL ---
                     db.insert_document(form_id, file_info)
-                    # --- END NEW ---
 
                 else:
                     failed_docs.append({"doc": doc, "error": "Database save failed (check logs for details)", "step": "database"})
@@ -331,7 +358,6 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                     with col2:
                         st.write(f"**Processing Status:** {form.get('processing_status', 'N/A')}")
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
-                        # NEW: Display Cloudinary URL if available
                         document_info_from_db = db.get_document_by_form_id(form['id'])
                         if document_info_from_db and document_info_from_db.get('cloudinary_url'):
                             st.write(f"**Cloudinary URL:** [Link]({document_info_from_db['cloudinary_url']})")
@@ -363,7 +389,7 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
 
 def document_viewer_page(db, processor, ai_service):
     st.header("📄 Document Viewer")
-    st.markdown("View detailed information and extracted data for processed documents and informational pages.") # Updated description
+    st.markdown("View detailed information and extracted data for processed documents and informational pages.")
     
     forms = db.get_forms()
     
@@ -375,12 +401,12 @@ def document_viewer_page(db, processor, ai_service):
         
         if selected_idx is not None:
             selected_form = forms[selected_idx]
-            document_info_from_db = db.get_document_by_form_id(selected_form['id']) # NEW: Get document info from DB
+            document_info_from_db = db.get_document_by_form_id(selected_form['id'])
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("Form/Page Information") # Updated title
+                st.subheader("Form/Page Information")
                 st.write(f"**Country:** {selected_form['country']}")
                 st.write(f"**Visa Category:** {selected_form['visa_category']}")
                 st.write(f"**Form Name:** {selected_form['form_name']}")
@@ -392,7 +418,6 @@ def document_viewer_page(db, processor, ai_service):
                 structured_data_full = selected_form.get('structured_data', {})
                 st.write(f"**Processing Status:** {selected_form.get('processing_status', 'N/A')}")
                 st.write(f"**Downloaded Path (Local):** {selected_form.get('downloaded_file_path', 'N/A')}")
-                # NEW: Display Cloudinary URL if available
                 if document_info_from_db and document_info_from_db.get('cloudinary_url'):
                     st.write(f"**Cloudinary URL:** [Link]({document_info_from_db['cloudinary_url']})")
                 else:
@@ -427,17 +452,16 @@ def document_viewer_page(db, processor, ai_service):
 
             full_markdown = structured_data_full.get('full_markdown_summary')
             if full_markdown:
-                st.subheader("Comprehensive Document/Page Summary (Markdown)") # Updated title
+                st.subheader("Comprehensive Document/Page Summary (Markdown)")
                 st.markdown(full_markdown)
             else:
-                st.info("No comprehensive Markdown summary available for this document/page.") # Updated message
+                st.info("No comprehensive Markdown summary available for this document/page.")
             
             st.subheader("Download Options")
             downloaded_file_path = selected_form.get('downloaded_file_path')
             
             col_dl1, col_dl2 = st.columns(2)
 
-            # NEW: Prioritize Cloudinary URL for original document download
             if document_info_from_db and document_info_from_db.get('cloudinary_url'):
                 original_filename = document_info_from_db.get('filename', 'original_document')
                 original_file_format = document_info_from_db.get('file_format', 'UNKNOWN').lower()
@@ -462,7 +486,7 @@ def document_viewer_page(db, processor, ai_service):
                     with col_dl1:
                         st.warning("Original file content not available from local path.")
             else:
-                st.info("Original document/page file not found locally or on Cloudinary.") # Updated message
+                st.info("Original document/page file not found locally or on Cloudinary.")
             
             if full_markdown:
                 markdown_bytes = full_markdown.encode('utf-8')
@@ -481,20 +505,20 @@ def document_viewer_page(db, processor, ai_service):
             with st.expander("View Raw Structured Data (Full AI Output)"):
                 st.json(structured_data_full)
     else:
-        st.info("No documents/pages found. Use the Document Discovery page to find and process documents/pages first.") # Updated message
+        st.info("No documents/pages found. Use the Document Discovery page to find and process documents/pages first.")
 
 def validation_panel_page(db, processor, ai_service):
     st.header("✅ Validation & Lawyer Review Panel")
-    st.markdown("Review and validate extracted data, and manage lawyer approvals for documents and informational pages.") # Updated description
+    st.markdown("Review and validate extracted data, and manage lawyer approvals for documents and informational pages.")
     
     forms = db.get_forms()
     
     if forms:
-        st.info(f"Found {len(forms)} documents/pages for review") # Updated message
+        st.info(f"Found {len(forms)} documents/pages for review")
         
         review_filter = st.selectbox(
             "Filter by review status:",
-            ["All", "Pending Review", "Approved", "Approved with Comments", "Needs Revision", "Downloaded Only", "Partial AI Failure", "AI Extraction Failed", "Low Text Content"] # Added "Low Text Content"
+            ["All", "Pending Review", "Approved", "Approved with Comments", "Needs Revision", "Downloaded Only", "Partial AI Failure", "AI Extraction Failed", "Low Text Content"]
         )
         
         filtered_forms = forms
@@ -519,7 +543,7 @@ def validation_panel_page(db, processor, ai_service):
                     form for form in forms 
                     if form.get('processing_status') == 'ai_extraction_failed'
                 ]
-            elif review_filter == "Low Text Content": # New filter
+            elif review_filter == "Low Text Content":
                  filtered_forms = [
                     form for form in forms 
                     if form.get('processing_status') == 'low_text_content'
@@ -541,7 +565,6 @@ def validation_panel_page(db, processor, ai_service):
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
                         st.write(f"**Official Source URL:** {form.get('official_source_url', 'N/A')}")
                         
-                        # NEW: Display Cloudinary URL for original document
                         document_info_from_db = db.get_document_by_form_id(form['id'])
                         if document_info_from_db and document_info_from_db.get('cloudinary_url'):
                             st.write(f"**Cloudinary Original URL:** [Link]({document_info_from_db['cloudinary_url']})")
@@ -601,17 +624,16 @@ def validation_panel_page(db, processor, ai_service):
                                         st.error("Failed to update review")
                             
                             with col_buttons_ai:
-                                if st.form_submit_button("✨ Re-run AI Extraction & Validation"): # Updated button text
+                                if st.form_submit_button("✨ Re-run AI Extraction & Validation"):
                                     if not form.get('downloaded_file_path') or not Path(form['downloaded_file_path']).exists():
-                                        st.error("Cannot re-run AI: Document/page file not found locally.") # Updated message
+                                        st.error("Cannot re-run AI: Document/page file not found locally.")
                                     else:
                                         with st.spinner("Re-running AI processing and validation..."):
                                             try:
                                                 extracted_text = processor.extract_text(form['downloaded_file_path'])
                                                 
-                                                if not extracted_text or len(extracted_text.strip()) < 50: # Lowered threshold
+                                                if not extracted_text or len(extracted_text.strip()) < 50:
                                                     st.warning("Low text content for AI re-validation. AI summary might be limited.")
-                                                    # Do NOT return here, proceed with AI processing
                                                 
                                                 doc_info_for_ai = {
                                                     'filename': Path(form['downloaded_file_path']).name,
@@ -628,7 +650,7 @@ def validation_panel_page(db, processor, ai_service):
                                                     
                                                     new_processing_status = "validated" if not validation_warnings else "validated_with_warnings"
                                                     if not extracted_text or len(extracted_text.strip()) < 50:
-                                                        new_processing_status = "low_text_content" # Re-apply if still low text
+                                                        new_processing_status = "low_text_content"
                                                     
                                                     update_success = db.update_form_fields(
                                                         form['id'],
@@ -636,10 +658,8 @@ def validation_panel_page(db, processor, ai_service):
                                                             "structured_data": re_extracted_data,
                                                             "validation_warnings": validation_warnings,
                                                             "processing_status": new_processing_status,
-                                                            # --- IMPORTANT FIX: Update country/visa_category from AI ---
                                                             "country": re_extracted_data.get('country', form['country']),
                                                             "visa_category": re_extracted_data.get('visa_category', form['visa_category']),
-                                                            # --- END IMPORTANT FIX ---
                                                             "form_name": re_extracted_data.get('form_name', form['form_name']),
                                                             "form_id": re_extracted_data.get('form_id', form['form_id']),
                                                             "description": re_extracted_data.get('description', form['description']),
@@ -658,18 +678,18 @@ def validation_panel_page(db, processor, ai_service):
                                                 st.error(f"Error during AI re-validation: {e}")
                                                 st.code(traceback.format_exc())
     else:
-        st.info(f"No forms/pages found with status: {review_filter}") # Updated message
+        st.info(f"No forms/pages found with status: {review_filter}")
 
-    st.info("No documents/pages found for review.") # Updated message
+    st.info("No documents/pages found for review.")
 
 def export_panel_page(db, export_service):
     st.header("📊 Export Panel")
-    st.markdown("Export processed documents and extracted data in various formats.") # Updated description
+    st.markdown("Export processed documents and extracted data in various formats.")
     
     forms = db.get_forms()
     
     if forms:
-        st.info(f"Found {len(forms)} documents/pages available for export") # Updated message
+        st.info(f"Found {len(forms)} documents/pages available for export")
         
         st.subheader("Export Options")
         
@@ -712,7 +732,7 @@ def export_panel_page(db, export_service):
                     form for form in filtered_forms
                     if form.get('processing_status') == 'ai_extraction_failed'
                 ]
-            elif status_filter == "Low Text Content": # New filter
+            elif status_filter == "Low Text Content":
                 filtered_forms = [
                     form for form in filtered_forms
                     if form.get('processing_status') == 'low_text_content'
@@ -723,7 +743,7 @@ def export_panel_page(db, export_service):
                     if (form.get('lawyer_review') or {}).get('approval_status', 'Pending Review') == status_filter
                 ]
         
-        st.write(f"**Forms/Pages to export:** {len(filtered_forms)}") # Updated message
+        st.write(f"**Forms/Pages to export:** {len(filtered_forms)}")
         
         col1, col2, col3 = st.columns(3)
         
@@ -731,10 +751,9 @@ def export_panel_page(db, export_service):
             if st.button("📄 Export as JSON"):
                 if len(filtered_forms) == 1:
                     form_data = filtered_forms[0].get('structured_data', {})
-                    # Pass the original form object to export_json to get its ID
-                    file_path, file_content, cloudinary_export_url = export_service.export_json(filtered_forms[0]) # NEW: Get Cloudinary URL
+                    file_path, file_content, cloudinary_export_url = export_service.export_json(filtered_forms[0])
                     if file_content:
-                        if cloudinary_export_url: # NEW: Prioritize Cloudinary URL for download
+                        if cloudinary_export_url:
                             st.markdown(f"**Download JSON from Cloud:**")
                             st.markdown(f"[Click to Download]({cloudinary_export_url})")
                         else:
@@ -746,21 +765,21 @@ def export_panel_page(db, export_service):
                                 key="download_json_single"
                             )
                 elif len(filtered_forms) > 1:
-                    st.info("Exporting multiple JSON files to the server and Cloudinary. Individual download buttons are not provided for batch exports.") # Updated message
+                    st.info("Exporting multiple JSON files to the server and Cloudinary. Individual download buttons are not provided for batch exports.")
                     exported_files_count = 0
                     for form in filtered_forms:
-                        file_path, _, cloudinary_export_url = export_service.export_json(form) # NEW: Get Cloudinary URL
+                        file_path, _, cloudinary_export_url = export_service.export_json(form)
                         if file_path:
                             exported_files_count += 1
                     if exported_files_count > 0:
-                        st.success(f"Exported {exported_files_count} JSON files to server and Cloudinary.") # Updated message
+                        st.success(f"Exported {exported_files_count} JSON files to server and Cloudinary.")
                 else:
-                    st.warning("No forms/pages selected for JSON export.") # Updated message
+                    st.warning("No forms/pages selected for JSON export.")
                 if cloudinary_export_url:
                     st.info(f"Debug: Cloudinary URL for JSON export: {cloudinary_export_url}")
                 else:
                     st.warning("Debug: No Cloudinary URL returned for JSON export.")
-    
+
         with col2:
             if st.button("📊 Export as Excel"):
                 if filtered_forms:
@@ -771,9 +790,9 @@ def export_panel_page(db, export_service):
                             flat_form.update(form['structured_data'])
                         forms_data_for_excel.append(flat_form)
 
-                    file_path, file_content, cloudinary_export_url = export_service.export_excel(forms_data_for_excel) # NEW: Get Cloudinary URL
+                    file_path, file_content, cloudinary_export_url = export_service.export_excel(forms_data_for_excel)
                     if file_content:
-                        if cloudinary_export_url: # NEW: Prioritize Cloudinary URL for download
+                        if cloudinary_export_url:
                             st.markdown(f"**Download Excel from Cloud:**")
                             st.markdown(f"[Click to Download]({cloudinary_export_url})")
                         else:
@@ -785,22 +804,21 @@ def export_panel_page(db, export_service):
                                 key="download_excel"
                             )
                 else:
-                    st.warning("No forms/pages selected for Excel export.") # Updated message
+                    st.warning("No forms/pages selected for Excel export.")
                 if cloudinary_export_url:
                     st.info(f"Debug: Cloudinary URL for Excel export: {cloudinary_export_url}")
                 else:
                     st.warning("Debug: No Cloudinary URL returned for Excel export.")
-    
+
         with col3:
-            if st.button("📋 Export Summaries"):
+            if st.button("📋 Export Summaries (Markdown)"):
                 if filtered_forms:
                     exported_files_count = 0
                     for form in filtered_forms:
                         summary_data_to_export = form.get('structured_data', {})
-                        # Pass the original form object to export_summary_pdf to get its ID
-                        file_path, file_content, cloudinary_export_url = export_service.export_summary_pdf(form) # NEW: Get Cloudinary URL
+                        file_path, file_content, cloudinary_export_url = export_service.export_summary_markdown(form)
                         if file_content:
-                            if cloudinary_export_url: # NEW: Prioritize Cloudinary URL for download
+                            if cloudinary_export_url:
                                 st.markdown(f"**Download {Path(file_path).name} from Cloud:**")
                                 st.markdown(f"[Click to Download]({cloudinary_export_url})")
                             else:
@@ -808,21 +826,21 @@ def export_panel_page(db, export_service):
                                     label=f"Download {Path(file_path).name} (Local)",
                                     data=file_content,
                                     file_name=Path(file_path).name,
-                                    mime="text/plain",
+                                    mime="text/markdown",
                                     key=f"download_summary_{form['id']}"
                                 )
                             exported_files_count += 1
                     if exported_files_count > 0:
                         st.success(f"Exported {exported_files_count} summary files.")
                 else:
-                    st.warning("No forms/pages selected for summary export.") # Updated message
+                    st.warning("No forms/pages selected for summary export.")
                 if cloudinary_export_url:
                     st.info(f"Debug: Cloudinary URL for Summary export: {cloudinary_export_url}")
                 else:
                     st.warning("Debug: No Cloudinary URL returned for Summary export.")
-    
+
         if filtered_forms:
-            st.subheader("Preview of Forms/Pages to Export") # Updated message
+            st.subheader("Preview of Forms/Pages to Export")
             
             preview_data = []
             for form in filtered_forms:
@@ -838,11 +856,38 @@ def export_panel_page(db, export_service):
             df = pd.DataFrame(preview_data)
             st.dataframe(df, use_container_width=True)
     else:
-        st.info("No documents/pages available for export.") # Updated message
+        st.info("No documents/pages available for export.")
+
+    st.markdown("---")
+    st.subheader("📦 Comprehensive USA Export")
+    st.markdown("Generate a single report with all USA immigration forms, including links to original documents, JSON data, and Markdown summaries on Cloudinary.")
+    if st.button("🚀 Generate Comprehensive USA Export Report", type="primary"):
+        with st.spinner("Generating comprehensive USA export report..."):
+            usa_forms = db.get_forms(country="USA")
+            if usa_forms:
+                report_path, report_content, cloudinary_report_url = export_service.generate_comprehensive_report(usa_forms)
+                if report_content:
+                    st.success("Comprehensive USA Export Report generated successfully!")
+                    if cloudinary_report_url:
+                        st.markdown(f"**Download Comprehensive USA Report from Cloud:**")
+                        st.markdown(f"[Click to Download]({cloudinary_report_url})")
+                    else:
+                        st.download_button(
+                            label="Download Comprehensive USA Report (Local)",
+                            data=report_content,
+                            file_name=Path(report_path).name,
+                            mime="text/markdown",
+                            key="download_usa_report"
+                        )
+                else:
+                    st.error("Failed to generate comprehensive USA export report.")
+            else:
+                st.warning("No USA immigration forms found in the database to export.")
+
 
 def database_viewer_page(db):
     st.header("🗄️ Database Viewer")
-    st.markdown("Browse and search all processed documents and informational pages in the database.") # Updated description
+    st.markdown("Browse and search all processed documents and informational pages in the database.")
     
     forms = db.get_forms()
     
@@ -850,19 +895,18 @@ def database_viewer_page(db):
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
-            st.metric("Total Forms/Pages", len(forms)) # Updated message
+            st.metric("Total Forms/Pages", len(forms))
         
         with col2:
-            # Dynamically get countries from forms data
             countries_in_db = set(form['country'] for form in forms)
-            st.metric("Countries", len(countries_in_db)) # This will now reflect all countries
+            st.metric("Countries", len(countries_in_db))
         
         with col3:
             approved_forms = len([
                 form for form in forms 
                 if (form.get('lawyer_review') or {}).get('approval_status') == 'Approved'
             ])
-            st.metric("Approved Forms/Pages", approved_forms) # Updated message
+            st.metric("Approved Forms/Pages", approved_forms)
         
         with col4:
             pending_forms = len([
@@ -876,17 +920,17 @@ def database_viewer_page(db):
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            search_term = st.text_input("Search forms/pages (name, ID, description):") # Updated message
+            search_term = st.text_input("Search forms/pages (name, ID, description):")
         
         with col2:
             country_filter = st.selectbox(
                 "Filter by Country:",
-                ["All"] + sorted(list(set(form['country'] for form in forms))) # Dynamically populate filter
+                ["All"] + sorted(list(set(form['country'] for form in forms)))
             )
         with col3:
             processing_status_filter = st.selectbox(
                 "Filter by Processing Status:",
-                ["All", "validated", "validated_with_warnings", "downloaded_only", "ai_extraction_failed", "failed", "low_text_content"] # Added "low_text_content"
+                ["All", "validated", "validated_with_warnings", "downloaded_only", "ai_extraction_failed", "failed", "low_text_content"]
             )
         
         filtered_forms = forms
@@ -905,7 +949,7 @@ def database_viewer_page(db):
         if processing_status_filter != "All":
             filtered_forms = [form for form in filtered_forms if form.get('processing_status') == processing_status_filter]
         
-        st.subheader(f"Forms/Pages ({len(filtered_forms)} found)") # Updated message
+        st.subheader(f"Forms/Pages ({len(filtered_forms)} found)")
         
         for form in filtered_forms:
             with st.expander(f"📋 {form['form_name']} ({form['form_id']}) - {form['country']} (Status: {form.get('processing_status', 'N/A')})"):
@@ -928,7 +972,6 @@ def database_viewer_page(db):
                     source_url = form.get('official_source_url', '')
                     st.write(f"**Source:** {source_url}")
                     st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
-                    # NEW: Display Cloudinary URL for original document
                     document_info_from_db = db.get_document_by_form_id(form['id'])
                     if document_info_from_db and document_info_from_db.get('cloudinary_url'):
                         st.write(f"**Cloudinary Original URL:** [Link]({document_info_from_db['cloudinary_url']})")
@@ -945,15 +988,14 @@ def database_viewer_page(db):
                 with st.expander("View Raw Structured Data (Full AI Output)"):
                     st.json(form.get('structured_data', {}))
     else:
-        st.info("No documents/pages in database. Use the Document Discovery page to find and process documents/pages.") # Updated message
+        st.info("No documents/pages in database. Use the Document Discovery page to find and process documents/pages.")
 
-def cloudinary_browser_page(db): # NEW FUNCTION
+def cloudinary_browser_page(db):
     st.header("☁️ Cloudinary Document Browser")
     st.markdown("Browse documents stored on Cloudinary, organized by country and visa type.")
 
     all_forms = db.get_forms()
     
-    # Filter forms to only include those with a Cloudinary URL
     cloudinary_docs = []
     for form in all_forms:
         document_info = db.get_document_by_form_id(form['id'])
@@ -974,7 +1016,6 @@ def cloudinary_browser_page(db): # NEW FUNCTION
 
     st.info(f"Displaying {len(cloudinary_docs)} documents found on Cloudinary.")
 
-    # Group documents by country and then by visa category
     grouped_docs = {}
     for doc in cloudinary_docs:
         country = doc['country'] if doc['country'] else "Unknown Country"
@@ -986,7 +1027,6 @@ def cloudinary_browser_page(db): # NEW FUNCTION
             grouped_docs[country][visa_category] = []
         grouped_docs[country][visa_category].append(doc)
 
-    # Display grouped documents
     for country, visa_categories in sorted(grouped_docs.items()):
         with st.expander(f"🌍 {country} ({sum(len(v) for v in visa_categories.values())} documents)"):
             for visa_category, docs in sorted(visa_categories.items()):
@@ -995,19 +1035,19 @@ def cloudinary_browser_page(db): # NEW FUNCTION
                         st.markdown(f"**📄 {doc['form_name']}** (ID: {doc['form_id']})")
                         st.write(f"File: {doc['filename']} ({doc['file_format']})")
                         st.markdown(f"[View on Cloudinary]({doc['cloudinary_url']})")
-                        st.markdown("---") # Separator for readability
+                        st.markdown("---")
 
 def database_health_check_page(database_url: str):
     st.header("🩺 Database Health Check")
-    st.info("This page checks if the required columns exist in your 'forms' and 'documents' tables.") # Updated message
+    st.info("This page checks if the required columns exist in your 'forms' and 'documents' tables.")
 
     if not database_url:
         st.error("Database URL is not configured in `config.py` or Streamlit secrets.")
         return
 
     required_forms_columns = ["downloaded_file_path", "document_format", "processing_status"]
-    required_documents_columns = ["cloudinary_url"] # NEW: Check for cloudinary_url in documents table
-    required_export_logs_columns = ["cloudinary_url"] # NEW: Check for cloudinary_url in export_logs table
+    required_documents_columns = ["cloudinary_url"]
+    required_export_logs_columns = ["cloudinary_url"]
 
     missing_forms_columns = []
     missing_documents_columns = []
@@ -1019,7 +1059,6 @@ def database_health_check_page(database_url: str):
         
         st.success("Successfully connected to the database!")
         
-        # Check forms table
         cursor.execute("""
             SELECT column_name
             FROM information_schema.columns
@@ -1033,7 +1072,6 @@ def database_health_check_page(database_url: str):
             if col not in existing_forms_columns:
                 missing_forms_columns.append(col)
         
-        # Check documents table
         cursor.execute("""
             SELECT column_name
             FROM information_schema.columns
@@ -1047,7 +1085,6 @@ def database_health_check_page(database_url: str):
             if col not in existing_documents_columns:
                 missing_documents_columns.append(col)
 
-        # Check export_logs table
         cursor.execute("""
             SELECT column_name
             FROM information_schema.columns
@@ -1073,7 +1110,7 @@ def database_health_check_page(database_url: str):
             all_missing = True
         
         if not all_missing:
-            st.success("✅ All required columns are present in the 'forms', 'documents', and 'export_logs' tables!") # Updated message
+            st.success("✅ All required columns are present in the 'forms', 'documents', and 'export_logs' tables!")
             st.write("You should now be able to process and save documents correctly, including Cloudinary uploads.")
         else:
             st.warning("Please ensure you have dropped the old tables in your NeonDB console and re-run `python setup_neondb.py` to synchronize the schema.")

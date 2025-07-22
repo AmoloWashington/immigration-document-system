@@ -135,6 +135,9 @@ class DocumentProcessor:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             
+            # Add a small delay to ensure file handle is released, especially on Windows
+            time.sleep(0.1) # Wait for 100 milliseconds
+
             if not local_file_path.exists() or local_file_path.stat().st_size == 0:
                 st.error(f"Failed to save file or file is empty: {filename}")
                 return None
@@ -146,9 +149,13 @@ class DocumentProcessor:
                     if first_bytes != b'%PDF':
                         st.warning(f"Downloaded file is not a valid PDF (magic bytes mismatch): {filename}. It might be HTML or another format. Attempting to rename to .html")
                         new_local_path = local_file_path.with_suffix('.html')
-                        os.rename(local_file_path, new_local_path)
-                        local_file_path = new_local_path # Update path for subsequent steps
-            
+                        try:
+                            os.rename(local_file_path, new_local_path)
+                            local_file_path = new_local_path # Update path for subsequent steps
+                        except OSError as e:
+                            st.error(f"Failed to rename file {local_file_path} to {new_local_path}: {e}. The file might still be in use.")
+                            return None # Stop processing this file if rename fails
+
             # NEW: Upload to Cloudinary after successful local download
             cloudinary_url = self._upload_to_cloudinary(str(local_file_path), folder=f"immigration_documents/originals/{country.lower()}/{category.lower().replace(' ', '_')}")
 

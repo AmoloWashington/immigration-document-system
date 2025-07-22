@@ -39,7 +39,7 @@ class DatabaseManager:
                             structured_data JSONB,
                             validation_warnings JSONB,
                             lawyer_review JSONB,
-                            official_source_url TEXT UNIQUE, -- Added UNIQUE constraint
+                            official_source_url TEXT UNIQUE,
                             discovered_by_query TEXT,
                             downloaded_file_path TEXT,
                             document_format VARCHAR(20),
@@ -50,8 +50,6 @@ class DatabaseManager:
                     """)
                     
                     # Documents table (for file metadata, if needed separately from forms)
-                    # Note: Current logic stores primary document path in 'forms' table.
-                    # This table is here for potential future expansion (e.g., multiple supporting docs).
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS public.documents (
                             id SERIAL PRIMARY KEY,
@@ -62,7 +60,7 @@ class DatabaseManager:
                             file_size_bytes INTEGER,
                             mime_type VARCHAR(100),
                             download_url TEXT,
-                            cloudinary_url TEXT, -- NEW: Added Cloudinary URL column
+                            cloudinary_url TEXT,
                             downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
                     """)
@@ -89,7 +87,7 @@ class DatabaseManager:
                             exported_by VARCHAR(200),
                             export_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                             file_path TEXT,
-                            cloudinary_url TEXT -- NEW: Added Cloudinary URL for export logs
+                            cloudinary_url TEXT
                         )
                     """)
                     
@@ -100,8 +98,8 @@ class DatabaseManager:
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_documents_form_id ON public.documents(form_id)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
-                    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_forms_official_source_url ON public.forms(official_source_url)") # New index for URL
-
+                    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_forms_official_source_url ON public.forms(official_source_url)")
+                    
                     # Create JSONB indexes
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_structured_data ON public.forms USING GIN(structured_data)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_validation_warnings ON public.forms USING GIN(validation_warnings)")
@@ -196,7 +194,7 @@ class DatabaseManager:
                         file_info.get('file_size_bytes'),
                         file_info.get('mime_type'),
                         file_info.get('download_url'),
-                        file_info.get('cloudinary_url'), # NEW: Insert Cloudinary URL
+                        file_info.get('cloudinary_url'),
                         datetime.now()
                     ))
                     inserted_id = cur.fetchone()['id']
@@ -247,7 +245,7 @@ class DatabaseManager:
             st.error(f"Error retrieving form by URL: {e}")
             return None
     
-    def get_document_by_form_id(self, form_id: int) -> Optional[Dict]: # NEW: Helper to get document info
+    def get_document_by_form_id(self, form_id: int) -> Optional[Dict]:
         """Retrieve document info by form ID."""
         if not self.database_url:
             return None
@@ -320,8 +318,7 @@ class DatabaseManager:
                 with conn.cursor() as cur:
                     cur.execute("SELECT id FROM public.sources WHERE url = %s", (url,))
                     if cur.fetchone():
-                        # st.info(f"Source URL '{url}' already exists. Skipping insertion.")
-                        return None # Source already exists
+                        return None
                     
                     cur.execute("""
                         INSERT INTO public.sources (url, title, description, domain, discovered_at)
@@ -333,14 +330,13 @@ class DatabaseManager:
                     st.success(f"Source '{title}' inserted with ID: {inserted_id}")
                     return inserted_id
         except psycopg2.errors.UniqueViolation:
-            # This can happen if two processes try to insert the same URL concurrently
             st.warning(f"Source with URL '{url}' already exists (concurrent insert).")
             return None
         except Exception as e:
             st.error(f"Error inserting source: {e}")
             return None
 
-    def insert_export_log(self, document_ids: List[int], export_formats: List[str], file_path: str, cloudinary_url: Optional[str] = None, exported_by: str = "System") -> Optional[int]: # NEW: Added cloudinary_url
+    def insert_export_log(self, document_ids: List[int], export_formats: List[str], file_path: str, cloudinary_url: Optional[str] = None, exported_by: str = "System") -> Optional[int]:
         """Log an export operation."""
         if not self.database_url:
             st.warning("Database URL not configured. Skipping export log insertion.")
@@ -353,7 +349,7 @@ class DatabaseManager:
                         INSERT INTO public.export_logs (export_id, document_ids, export_formats, exported_by, export_timestamp, file_path, cloudinary_url)
                         VALUES (%s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
-                    """, (export_id, Json(document_ids), Json(export_formats), exported_by, datetime.now(), file_path, cloudinary_url)) # NEW: Insert cloudinary_url
+                    """, (export_id, Json(document_ids), Json(export_formats), exported_by, datetime.now(), file_path, cloudinary_url))
                     inserted_id = cur.fetchone()['id']
                     conn.commit()
                     st.success(f"Export log recorded with ID: {inserted_id}")
