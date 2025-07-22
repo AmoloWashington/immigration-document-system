@@ -11,12 +11,22 @@ import streamlit as st
 from urllib.parse import urlparse
 import mimetypes
 import time
-from bs4 import BeautifulSoup # Ensure BeautifulSoup is imported for HTML parsing
+from bs4 import BeautifulSoup
+import cloudinary # NEW: Import Cloudinary
+import cloudinary.uploader # NEW: Import Cloudinary uploader
 
 class DocumentProcessor:
-    def __init__(self, downloads_dir: str): # Removed blob_api_token parameter
+    def __init__(self, downloads_dir: str, cloudinary_url: Optional[str] = None): # NEW: Added cloudinary_url parameter
         self.downloads_dir = downloads_dir
-        # Removed self.blob_api_token and self.blob_upload_url
+        self.cloudinary_url = cloudinary_url # NEW: Store Cloudinary URL
+        if self.cloudinary_url: # NEW: Configure Cloudinary
+            cloudinary.config(cloud_name=self.cloudinary_url.split('@')[1],
+                              api_key=self.cloudinary_url.split('//')[1].split(':')[0],
+                              api_secret=self.cloudinary_url.split(':')[2].split('@')[0],
+                              secure=True)
+            st.success("Cloudinary configured for document uploads.")
+        else:
+            st.warning("Cloudinary URL not configured. Documents will only be stored locally.")
     
     def validate_url(self, url: str) -> Tuple[bool, Optional[int], Optional[str]]:
         """
@@ -44,12 +54,33 @@ class DocumentProcessor:
         except Exception as e:
             return False, None, f"Unexpected error during URL validation: {e}"
 
-    # Removed _upload_to_vercel_blob method entirely
+    def _upload_to_cloudinary(self, file_path: str, folder: str = "immigration_documents") -> Optional[str]: # NEW: Cloudinary upload method
+        """Uploads a file to Cloudinary and returns its URL."""
+        if not self.cloudinary_url:
+            st.warning("Cloudinary not configured. Skipping upload.")
+            return None
+        try:
+            st.info(f"Uploading {Path(file_path).name} to Cloudinary...")
+            # Use the original filename as public_id, but ensure it's URL-safe
+            public_id = Path(file_path).stem.replace(" ", "_").replace(".", "_")
+            
+            response = cloudinary.uploader.upload(
+                file_path,
+                folder=folder,
+                public_id=public_id,
+                resource_type="auto" # Auto-detect resource type (image, raw, video)
+            )
+            st.success(f"Uploaded to Cloudinary: {response['secure_url']}")
+            return response['secure_url']
+        except Exception as e:
+            st.error(f"Error uploading to Cloudinary: {e}")
+            return None
 
     def download_document(self, url: str, country: str, category: str) -> Optional[Dict[str, Any]]:
-        """Download document and return local file info."""
+        """Download document, save locally, and upload to Cloudinary. Return local file info and Cloudinary URL."""
         
         local_file_path = None
+        cloudinary_url = None # NEW: Initialize Cloudinary URL
         try:
             # Create directory structure for local storage
             save_dir = Path(self.downloads_dir) / country.lower() / category.lower().replace(" ", "_")
@@ -104,7 +135,10 @@ class DocumentProcessor:
                         os.rename(local_file_path, new_local_path)
                         local_file_path = new_local_path # Update path for subsequent steps
             
-            # Return file info with the local file path
+            # NEW: Upload to Cloudinary after successful local download
+            cloudinary_url = self._upload_to_cloudinary(str(local_file_path), folder=f"immigration_documents/originals/{country.lower()}/{category.lower().replace(' ', '_')}")
+
+            # Return file info with the local file path AND Cloudinary URL
             final_file_format = Path(local_file_path).suffix.upper().replace('.', '') or 'UNKNOWN'
             if final_file_format == 'HTM': final_file_format = 'HTML'
 
@@ -114,10 +148,11 @@ class DocumentProcessor:
                 "file_size_bytes": local_file_path.stat().st_size,
                 "mime_type": mimetypes.guess_type(filename)[0] or "application/octet-stream",
                 "download_url": url, # Original source URL
+                "cloudinary_url": cloudinary_url, # NEW: Add Cloudinary URL
                 "file_format": final_file_format
             }
             
-            st.success(f"Ready: {filename} (Stored locally)")
+            st.success(f"Ready: {filename} (Stored locally and on Cloudinary)")
             return file_info
             
         except requests.exceptions.RequestException as e:

@@ -12,3 +12,4 @@ pymupdf>=1.23.0
 pycryptodome>=3.19.0
 
 google-generativeai
+cloudinary>=1.37.0

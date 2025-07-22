@@ -156,6 +156,8 @@ class AIExtractionService:
 Return a JSON object that strictly adheres to the following schema.
 For the "full_markdown_summary" field, provide an extensive summary of the document, formatted in Markdown, capturing ALL available details, instructions, and nuances. For other fields, be concise.
 
+**IMPORTANT:** If the 'Document Text' is empty or very short, you MUST infer the 'country', 'visa_category', 'form_name', 'form_id', 'description', and 'governing_authority' fields primarily from the 'Document Info' (filename, URL, discovered query) provided in the user prompt. Only set these fields to null if absolutely no information can be inferred from any source.
+
 JSON Schema:
 {json.dumps(json_schema, indent=2)}
 
@@ -178,11 +180,13 @@ Document Info:
 - Filename: {document_info.get('filename', 'Unknown')}
 - Source URL: {document_info.get('download_url', 'Unknown')}
 - File Type: {document_info.get('file_format', 'Unknown')}
+- Discovered by Query: {document_info.get('discovered_by_query', 'Unknown')}
 
 Document Text:
 {ai_document_text}
 
-Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'full_markdown_summary' field with all details from the document, using proper Markdown formatting. If the 'Document Text' explicitly states that text extraction failed, ensure the 'full_markdown_summary' clearly communicates this and provides any summary based on available metadata."""
+Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'full_markdown_summary' field with all details from the document, using proper Markdown formatting. If the 'Document Text' explicitly states that text extraction failed, ensure the 'full_markdown_summary' clearly communicates this and provides any summary based on available metadata.
+**Remember to infer basic fields like country, visa_category, form_name, form_id, description, and governing_authority from the 'Document Info' if the 'Document Text' is insufficient.**"""
 
         response_content = None
         error_message = None

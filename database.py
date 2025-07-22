@@ -62,6 +62,7 @@ class DatabaseManager:
                             file_size_bytes INTEGER,
                             mime_type VARCHAR(100),
                             download_url TEXT,
+                            cloudinary_url TEXT, -- NEW: Added Cloudinary URL column
                             downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         )
                     """)
@@ -87,7 +88,8 @@ class DatabaseManager:
                             export_formats JSONB NOT NULL,
                             exported_by VARCHAR(200),
                             export_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            file_path TEXT
+                            file_path TEXT,
+                            cloudinary_url TEXT -- NEW: Added Cloudinary URL for export logs
                         )
                     """)
                     
@@ -183,8 +185,8 @@ class DatabaseManager:
                 with conn.cursor() as cur:
                     cur.execute("""
                         INSERT INTO public.documents (
-                            form_id, filename, file_path, file_format, file_size_bytes, mime_type, download_url, downloaded_at
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            form_id, filename, file_path, file_format, file_size_bytes, mime_type, download_url, cloudinary_url, downloaded_at
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
                         form_id,
@@ -194,6 +196,7 @@ class DatabaseManager:
                         file_info.get('file_size_bytes'),
                         file_info.get('mime_type'),
                         file_info.get('download_url'),
+                        file_info.get('cloudinary_url'), # NEW: Insert Cloudinary URL
                         datetime.now()
                     ))
                     inserted_id = cur.fetchone()['id']
@@ -244,6 +247,19 @@ class DatabaseManager:
             st.error(f"Error retrieving form by URL: {e}")
             return None
     
+    def get_document_by_form_id(self, form_id: int) -> Optional[Dict]: # NEW: Helper to get document info
+        """Retrieve document info by form ID."""
+        if not self.database_url:
+            return None
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM public.documents WHERE form_id = %s", (form_id,))
+                    return cur.fetchone()
+        except Exception as e:
+            st.error(f"Error retrieving document by form ID: {e}")
+            return None
+
     def update_lawyer_review(self, form_id: int, review_data: Dict[str, Any]) -> bool:
         """Update lawyer review for a form"""
         if not self.database_url:
@@ -324,7 +340,7 @@ class DatabaseManager:
             st.error(f"Error inserting source: {e}")
             return None
 
-    def insert_export_log(self, document_ids: List[int], export_formats: List[str], file_path: str, exported_by: str = "System") -> Optional[int]:
+    def insert_export_log(self, document_ids: List[int], export_formats: List[str], file_path: str, cloudinary_url: Optional[str] = None, exported_by: str = "System") -> Optional[int]: # NEW: Added cloudinary_url
         """Log an export operation."""
         if not self.database_url:
             st.warning("Database URL not configured. Skipping export log insertion.")
@@ -334,10 +350,10 @@ class DatabaseManager:
                 with conn.cursor() as cur:
                     export_id = str(uuid.uuid4())
                     cur.execute("""
-                        INSERT INTO public.export_logs (export_id, document_ids, export_formats, exported_by, export_timestamp, file_path)
-                        VALUES (%s, %s, %s, %s, %s, %s)
+                        INSERT INTO public.export_logs (export_id, document_ids, export_formats, exported_by, export_timestamp, file_path, cloudinary_url)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
-                    """, (export_id, Json(document_ids), Json(export_formats), exported_by, datetime.now(), file_path))
+                    """, (export_id, Json(document_ids), Json(export_formats), exported_by, datetime.now(), file_path, cloudinary_url)) # NEW: Insert cloudinary_url
                     inserted_id = cur.fetchone()['id']
                     conn.commit()
                     st.success(f"Export log recorded with ID: {inserted_id}")
