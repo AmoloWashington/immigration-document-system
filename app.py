@@ -34,23 +34,108 @@ def main():
         layout="wide"
     )
 
-    st.title("🌍 Immigration Document Intelligence System")
-    st.markdown("**Automated discovery, processing, and validation of official immigration documents and information**")
+    # Hero Section with Custom Styling
+    st.markdown("""
+    <style>
+    .hero-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 20px;
+        margin-bottom: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .hero-title {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        text-align: center;
+        opacity: 0.9;
+        margin-bottom: 2rem;
+    }
 
-    if st.button("Clear all caches"):
-        st.cache_data.clear()
-        st.cache_resource.clear()
-        st.rerun()
+    .main-nav {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    .feature-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        text-align: center;
+        margin: 1rem 0;
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+    }
+    .warning-banner {
+        background: linear-gradient(45deg, #ff6b6b, #feca57);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: bold;
+    }
+    </style>
 
-    st.warning("⚠️ **Important:** Documents are now stored **locally** in the `downloads` directory. For cloud deployments, this directory might be ephemeral. **All downloaded and generated documents are also uploaded to Cloudinary for persistent storage.**")
+    <div class="hero-container">
+        <h1 class="hero-title">🌍 Immigration Document Intelligence System</h1>
+        <p class="hero-subtitle">Automated discovery, processing, and validation of official immigration documents and information</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Clear cache button in sidebar
+    with st.sidebar:
+        st.markdown("### ⚙️ System Controls")
+        if st.button("🔄 Clear All Caches", use_container_width=True):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            st.rerun()
+
+    # Warning banner
+    st.markdown("""
+    <div class="warning-banner">
+        ⚠️ <strong>Important:</strong> Documents are stored locally and uploaded to Cloudinary for persistent storage.
+    </div>
+    """, unsafe_allow_html=True)
 
     db, discovery, processor, ai_service, export_service = init_services()
 
-    st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox(
+    # Enhanced Navigation
+    st.markdown('<div class="main-nav">', unsafe_allow_html=True)
+    st.markdown("### 🧭 Navigation Dashboard")
+
+    # Navigation cards in columns
+    col1, col2, col3 = st.columns(3)
+
+    navigation_options = [
+        {"title": "🔍 Document Discovery", "desc": "Find and process immigration documents", "icon": "🔍"},
+        {"title": "📄 Document Viewer", "desc": "Browse and analyze processed documents", "icon": "📄"},
+        {"title": "✅ Validation Panel", "desc": "Review and validate document data", "icon": "✅"},
+        {"title": "📊 Export Panel", "desc": "Export data in various formats", "icon": "📊"},
+        {"title": "🗄️ Database Viewer", "desc": "Browse database contents", "icon": "🗄️"},
+        {"title": "☁️ Cloudinary Document Browser", "desc": "View cloud-stored documents", "icon": "☁️"},
+        {"title": "🩺 Database Health Check", "desc": "Check database health status", "icon": "🩺"}
+    ]
+
+    page = st.selectbox(
         "Choose a page:",
-        ["🔍 Document Discovery", "📄 Document Viewer", "✅ Validation Panel", "📊 Export Panel", "🗄️ Database Viewer", "☁️ Cloudinary Document Browser", "🩺 Database Health Check"]
+        [opt["title"] for opt in navigation_options],
+        format_func=lambda x: x
     )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if page == "🔍 Document Discovery":
         discovery_page(discovery, processor, ai_service, db)
@@ -68,9 +153,57 @@ def main():
         database_health_check_page(config.DATABASE_URL)
 
 def discovery_page(discovery, processor, ai_service, db):
-    st.header("🔍 Document Discovery")
-    st.markdown("Discover official immigration documents and relevant informational pages from government sources.")
+    st.markdown("""
+    <style>
+    .discovery-header {
+        background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .input-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .options-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .action-button {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .action-button:hover {
+        transform: translateY(-2px);
+    }
+    </style>
 
+    <div class="discovery-header">
+        <h1>🔍 Document Discovery</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0; opacity: 0.9;">
+            Discover official immigration documents and relevant informational pages from government sources
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="input-section">', unsafe_allow_html=True)
+    st.markdown("### 🌍 Select Country and Visa Type")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -94,7 +227,10 @@ def discovery_page(discovery, processor, ai_service, db):
         if visa_type == "Other":
             visa_type = st.text_input("Enter visa type:")
 
-    st.subheader("Processing Options")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="options-section">', unsafe_allow_html=True)
+    st.markdown("### ⚙️ Processing Options")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -104,6 +240,8 @@ def discovery_page(discovery, processor, ai_service, db):
     with col2:
         save_to_db = st.checkbox("Save to database", value=True)
         validate_with_ai = st.checkbox("AI extraction & validation", value=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if st.checkbox("Show AI Prompt Preview"):
         if ai_service.openai_client or ai_service.openrouter_client or ai_service.gemini_model:
@@ -672,6 +810,7 @@ def document_viewer_page(db, processor, ai_service):
 
         # AI Summary
         with col2:
+            structured_data = selected_form.get('structured_data', {})  # Define structured_data here
             if structured_data and structured_data.get('full_markdown_summary'):
                 st.download_button(
                     "📄 AI Summary",
@@ -890,18 +1029,53 @@ def document_viewer_page(db, processor, ai_service):
             st.info("🔍 No documents match your current filters. Try adjusting the search criteria.")
 
 def validation_panel_page(db, processor, ai_service):
-    st.header("✅ Validation & Lawyer Review Panel")
-    st.markdown("Review and validate extracted data, and manage lawyer approvals for documents and informational pages.")
+    st.markdown("""
+    <style>
+    .validation-header {
+        background: linear-gradient(45deg, #11998e 0%, #38ef7d 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .filter-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+    }
+    .document-card-validation {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-left: 5px solid #11998e;
+    }
+    </style>
+
+    <div class="validation-header">
+        <h1>✅ Validation & Lawyer Review Panel</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0; opacity: 0.9;">
+            Review and validate extracted data, and manage lawyer approvals for documents and informational pages
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     forms = db.get_forms()
 
     if forms:
-        st.info(f"Found {len(forms)} documents/pages for review")
+        st.success(f"✅ Found {len(forms)} documents/pages for review")
 
+        st.markdown('<div class="filter-section">', unsafe_allow_html=True)
+        st.markdown("### 🔍 Filter Documents")
         review_filter = st.selectbox(
             "Filter by review status:",
             ["All", "Pending Review", "Approved", "Approved with Comments", "Needs Revision", "Downloaded Only", "Partial AI Failure", "AI Extraction Failed", "Low Text Content"]
         )
+        st.markdown('</div>', unsafe_allow_html=True)
 
         filtered_forms = forms
         if review_filter != "All":
@@ -1065,15 +1239,52 @@ def validation_panel_page(db, processor, ai_service):
     st.info("No documents/pages found for review.")
 
 def export_panel_page(db, export_service):
-    st.header("📊 Export Panel")
-    st.markdown("Export processed documents and extracted data in various formats.")
+    st.markdown("""
+    <style>
+    .export-header {
+        background: linear-gradient(45deg, #ffecd2 0%, #fcb69f 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: #333;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .export-options {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .export-button {
+        width: 100%;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-radius: 10px;
+        font-weight: bold;
+        transition: transform 0.3s ease;
+    }
+    .export-button:hover {
+        transform: translateY(-2px);
+    }
+    </style>
+
+    <div class="export-header">
+        <h1>📊 Export Panel</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0;">
+            Export processed documents and extracted data in various formats
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     forms = db.get_forms()
 
     if forms:
-        st.info(f"Found {len(forms)} documents/pages available for export")
+        st.success(f"✅ Found {len(forms)} documents/pages available for export")
 
-        st.subheader("Export Options")
+        st.markdown('<div class="export-options">', unsafe_allow_html=True)
+        st.markdown("### 🔧 Export Options")
 
         col1, col2 = st.columns(2)
 
@@ -1126,7 +1337,9 @@ def export_panel_page(db, export_service):
                 ]
 
         st.write(f"**Forms/Pages to export:** {len(filtered_forms)}")
+        st.markdown('</div>', unsafe_allow_html=True)
 
+        st.markdown("### 📁 Export Actions")
         col1, col2, col3 = st.columns(3)
 
         with col1:
@@ -1268,36 +1481,95 @@ def export_panel_page(db, export_service):
 
 
 def database_viewer_page(db):
-    st.header("🗄️ Database Viewer")
-    st.markdown("Browse and search all processed documents and informational pages in the database.")
+    st.markdown("""
+    <style>
+    .database-header {
+        background: linear-gradient(45deg, #a8edea 0%, #fed6e3 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: #333;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stats-container {
+        display: flex;
+        justify-content: space-around;
+        margin: 2rem 0;
+    }
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        min-width: 150px;
+    }
+    .search-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+    }
+    </style>
+
+    <div class="database-header">
+        <h1>🗄️ Database Viewer</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0;">
+            Browse and search all processed documents and informational pages in the database
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     forms = db.get_forms()
 
     if forms:
+        st.markdown("### 📊 Database Statistics")
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            st.metric("Total Forms/Pages", len(forms))
+            st.markdown(f"""
+            <div class="stat-card">
+                <h3 style="color: #667eea; margin: 0;">📄 {len(forms)}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Total Forms/Pages</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col2:
             countries_in_db = set(form['country'] for form in forms)
-            st.metric("Countries", len(countries_in_db))
+            st.markdown(f"""
+            <div class="stat-card">
+                <h3 style="color: #11998e; margin: 0;">🌍 {len(countries_in_db)}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Countries</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col3:
             approved_forms = len([
-                form for form in forms 
+                form for form in forms
                 if (form.get('lawyer_review') or {}).get('approval_status') == 'Approved'
             ])
-            st.metric("Approved Forms/Pages", approved_forms)
+            st.markdown(f"""
+            <div class="stat-card">
+                <h3 style="color: #28a745; margin: 0;">✅ {approved_forms}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Approved Forms/Pages</p>
+            </div>
+            """, unsafe_allow_html=True)
 
         with col4:
             pending_forms = len([
-                form for form in forms 
+                form for form in forms
                 if (form.get('lawyer_review') or {}).get('approval_status', 'Pending Review') == 'Pending Review'
             ])
-            st.metric("Pending Review", pending_forms)
+            st.markdown(f"""
+            <div class="stat-card">
+                <h3 style="color: #ffc107; margin: 0;">⏳ {pending_forms}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Pending Review</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-        st.subheader("Search & Filter")
+        st.markdown('<div class="search-section">', unsafe_allow_html=True)
+        st.markdown("### 🔍 Search & Filter")
 
         col1, col2, col3 = st.columns(3)
 
@@ -1331,7 +1603,9 @@ def database_viewer_page(db):
         if processing_status_filter != "All":
             filtered_forms = [form for form in filtered_forms if form.get('processing_status') == processing_status_filter]
 
-        st.subheader(f"Forms/Pages ({len(filtered_forms)} found)")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(f"### �� Forms/Pages ({len(filtered_forms)} found)")
 
         for form in filtered_forms:
             with st.expander(f"📋 {form['form_name']} ({form['form_id']}) - {form['country']} (Status: {form.get('processing_status', 'N/A')})"):
@@ -1373,8 +1647,34 @@ def database_viewer_page(db):
         st.info("No documents/pages in database. Use the Document Discovery page to find and process documents/pages.")
 
 def cloudinary_browser_page(db):
-    st.header("☁️ Cloudinary Document Browser")
-    st.markdown("Browse documents stored on Cloudinary, organized by country and visa type.")
+    st.markdown("""
+    <style>
+    .cloudinary-header {
+        background: linear-gradient(45deg, #d299c2 0%, #fef9d7 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: #333;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .cloud-document {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 0.5rem 0;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        border-left: 4px solid #d299c2;
+    }
+    </style>
+
+    <div class="cloudinary-header">
+        <h1>☁️ Cloudinary Document Browser</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0;">
+            Browse documents stored on Cloudinary, organized by country and visa type
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     all_forms = db.get_forms()
 
@@ -1420,8 +1720,44 @@ def cloudinary_browser_page(db):
                         st.markdown("---")
 
 def database_health_check_page(database_url: str):
-    st.header("🩺 Database Health Check")
-    st.info("This page checks if the required columns exist in your 'forms' and 'documents' tables.")
+    st.markdown("""
+    <style>
+    .health-header {
+        background: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: #333;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .health-info {
+        background: #e3f2fd;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        border-left: 4px solid #2196f3;
+    }
+    .troubleshooting {
+        background: #fff3e0;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        border-left: 4px solid #ff9800;
+    }
+    </style>
+
+    <div class="health-header">
+        <h1>🩺 Database Health Check</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0;">
+            Verify database schema and column integrity
+        </p>
+    </div>
+
+    <div class="health-info">
+        <p style="margin: 0;"><strong>Info:</strong> This page checks if the required columns exist in your 'forms' and 'documents' tables.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     if not database_url:
         st.error("Database URL is not configured in `config.py` or Streamlit secrets.")
