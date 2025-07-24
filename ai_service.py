@@ -148,10 +148,19 @@ class AIExtractionService:
             "processing_time": "Expected processing time (e.g., 6-12 months, 30 days)",
             "fees": "Required fees (e.g., $460, Varies)",
             "language": "Primary language of the document (e.g., English, French)",
+            "official_source_url": "URL to the official form or document source (e.g., USCIS website)",
+            "downloaded_file_path": "Local file path where the document was saved (if applicable)",
+            "document_format": "Format of the document (e.g., PDF, DOCX)",
+            "last_fetched": "Timestamp of when the document was last fetched (ISO 8601 format)",
+            "discovered_by_query": "Query or method used to discover this document (e.g., Google Search, API Call)",
+            "extracted_text_length": "Length of the extracted text in characters",
+            "validation_warnings": "List of validation warnings or issues found during extraction",
+            "full_markdown_summary": "A comprehensive Markdown summary of the document, capturing all details, instructions, and nuances.",
             "full_markdown_summary": "A comprehensive, detailed summary of the document, formatted in Markdown. This field should elaborate on all aspects of the form, including its purpose, detailed instructions, eligibility, process, and any other relevant information found in the document, even if it doesn't fit into the structured fields above. Use Markdown headings (##, ###), lists, and bold text for clarity and readability. Ensure this summary is exhaustive and captures all nuances, acting as the primary source of truth for detailed document intelligence. If information is found that doesn't fit the specific structured keys, include it here."
         }
 
-        system_prompt = f"""You are an expert immigration document analyzer. Your task is to extract highly detailed and structured information from immigration forms and documents.
+        system_prompt = f"""You are an expert immigration document analyzer. Your task is to extract highly detailed and structured information from immigration forms and documents. You will receive a document's text and metadata, and you must extract all relevant information according to the provided JSON schema. As part of your analysis, you will also generate a comprehensive Markdown summary of the document, capturing all details, instructions, and nuances.I need you to also to be able to handle cases where the document text is very short or empty, inferring necessary fields from the metadata provided.And you must download the document text and metadata from the provided URL, and use that to extract information.
+
 
 Return a JSON object that strictly adheres to the following schema.
 For the "full_markdown_summary" field, provide an extensive summary of the document, formatted in Markdown, capturing ALL available details, instructions, and nuances. For other fields, be concise.

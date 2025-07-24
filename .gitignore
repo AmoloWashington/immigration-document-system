@@ -47,4 +47,5 @@ Thumbs.db
 .env.production
 
 .config/
-buider.config.json
+builder/
+*.json/

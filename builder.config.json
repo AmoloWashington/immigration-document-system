@@ -1,6 +1,6 @@
 {
-  "command": "python manage.py runserver",
-  "serverUrl": " http://localhost:8501",
+  "command": "streamlit run app.py",
+  "serverUrl": "http://localhost:8501",
   "authenticateProxy": false,
   "commitMode": "commits"
 }

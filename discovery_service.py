@@ -101,39 +101,73 @@ class DocumentDiscoveryService:
         
         # Deduplicate and filter results
         unique_results = self._deduplicate_and_filter_results(all_results)
-        
-        st.success(f"Found {len(unique_results)} potential documents/information pages")
+
+        # Display format distribution for transparency
+        if unique_results:
+            format_counts = {}
+            for result in unique_results:
+                file_type = result.get('file_type', 'UNKNOWN')
+                format_counts[file_type] = format_counts.get(file_type, 0) + 1
+
+            format_summary = ", ".join([f"{fmt}: {count}" for fmt, count in sorted(format_counts.items())])
+            st.success(f"Found {len(unique_results)} potential documents/pages")
+            st.info(f"📊 **Format Distribution:** {format_summary}")
+        else:
+            st.warning("No relevant documents found")
+
         return unique_results
     
     def _generate_search_queries(self, country: str, visa_type: str) -> List[str]:
-        """Generate comprehensive search queries for document and information discovery,
-        now explicitly guiding towards official sources to complement domain filtering."""
-        
-        # Queries for forms and official information
+        """Generate comprehensive search queries targeting ALL critical document formats equally."""
+
+        # Queries explicitly targeting different document formats
         queries = [
-            f"{country} {visa_type} visa application forms official government",
-            f"{country} immigration {visa_type} requirements PDF official",
+            # PDF-focused queries (often contain official forms and comprehensive guides)
+            f"{country} {visa_type} visa application forms PDF official government",
+            f"{country} immigration {visa_type} requirements PDF guide government",
+            f"{country} {visa_type} visa checklist PDF official documents",
+            f"{country} {visa_type} visa instructions PDF embassy consulate",
+
+            # Excel/Spreadsheet-focused queries (often contain fee schedules, requirements matrices)
+            f"{country} {visa_type} visa fee schedule Excel official government",
+            f"{country} immigration {visa_type} requirements spreadsheet official",
+            f"{country} {visa_type} visa document checklist Excel government",
+
+            # Word document queries (often contain detailed application guides)
+            f"{country} {visa_type} visa application guide DOCX official",
+            f"{country} immigration {visa_type} instructions Word document official",
+            f"{country} {visa_type} visa manual DOCX government guide",
+
+            # General document queries (catch downloadable files)
+            f"{country} {visa_type} visa documents download official government",
+            f"{country} immigration {visa_type} official documents PDF DOCX Excel",
+            f"{country} {visa_type} visa application package download official",
+
+            # Web-based information (but lower priority)
             f"{country} {visa_type} visa eligibility guide government website",
             f"{country} {visa_type} visa application process official site",
-            f"{country} {visa_type} visa supporting documents government",
-            f"{country} ministry of immigration {visa_type} visa",
-            f"{country} department of home affairs {visa_type} visa information",
-            f"{country} official immigration website {visa_type}",
-            f"{country} embassy {visa_type} visa application", # Added embassy/consulate terms
-            f"{country} consulate {visa_type} visa application"
+            f"{country} official immigration website {visa_type} documents"
         ]
 
-        # Specific queries for common visa types if selected
+        # Format-specific queries for common visa types
         if "family" in visa_type.lower():
-            queries.append(f"{country} family reunification visa requirements official")
-            queries.append(f"{country} spouse visa application process government")
+            queries.extend([
+                f"{country} family reunification visa forms PDF official",
+                f"{country} spouse visa requirements Excel checklist government"
+            ])
         if "work" in visa_type.lower():
-            queries.append(f"{country} work permit application guide official")
+            queries.extend([
+                f"{country} work permit application forms PDF official",
+                f"{country} work visa requirements DOCX guide government"
+            ])
         if "student" in visa_type.lower():
-            queries.append(f"{country} student visa application checklist government")
-        
-        # Limit to a reasonable number of diverse queries
-        return list(set(queries))[:12] # Increased limit for more diverse results
+            queries.extend([
+                f"{country} student visa application forms PDF official",
+                f"{country} student visa requirements Excel government"
+            ])
+
+        # Prioritize diversity and limit to reasonable number
+        return list(set(queries))[:18]  # Increased to capture more format diversity
     
     def _search_tavily(self, query: str, country: str) -> List[Dict]: # Now accepts country
         """Execute search using Tavily API, with dynamic domain filtering."""
@@ -145,10 +179,11 @@ class DocumentDiscoveryService:
         payload = {
             "api_key": self.api_key,
             "query": query,
-            "search_depth": "basic", 
+            "search_depth": "advanced",  # Deeper search for more comprehensive results
             "include_answer": False,
             "include_raw_content": False,
-            "max_results": 15, 
+            "max_results": 20,  # Increased to find more diverse document types
+            "include_images": False,  # Focus on documents, not images
         }
 
         # Dynamically set include_domains based on country
@@ -204,74 +239,195 @@ class DocumentDiscoveryService:
     
     def _is_relevant_page(self, url: str, title: str, content: str) -> bool:
         """
-        Determines if a page is relevant for immigration intelligence,
-        including direct documents and informational HTML pages.
+        Enhanced relevance detection prioritizing ALL critical document formats equally.
         """
-        # Always include direct document links (PDF, DOCX, etc.)
-        if any(url.lower().endswith(ext) for ext in ['.pdf', '.docx', '.doc', '.xlsx', '.xls']):
-            return True
-        
-        # Keywords indicating relevance for informational pages
-        # Expanded to include more terms for immigration and official bodies
-        relevant_keywords = [
-            'visa', 'immigration', 'form', 'application', 'petition', 'requirements',
-            'eligibility', 'process', 'guide', 'checklist', 'instructions', 'official',
-            'government', 'ministry', 'department', 'authority', 'consulate', 'embassy',
-            'citizenship', 'residence', 'passport', 'permit', 'travel'
-        ]
-        
+        url_lower = url.lower()
         title_lower = title.lower()
         content_lower = content.lower()
-        
-        # Check if any relevant keyword is in the title or content
-        if any(keyword in title_lower for keyword in relevant_keywords):
-            return True
-        if any(keyword in content_lower for keyword in relevant_keywords):
-            return True
-        
-        # Specific check for HTML pages: must contain core immigration terms AND be from a somewhat official-looking domain
-        if url.lower().endswith(('.html', '.htm')):
+
+        # PRIORITY 1: Direct document formats - these are almost always relevant if from official sources
+        high_value_formats = ['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.ppt', '.pptx']
+        if any(url_lower.endswith(ext) or ext in url_lower for ext in high_value_formats):
+            # Additional relevance check for document files
+            critical_doc_terms = [
+                'visa', 'immigration', 'form', 'application', 'petition', 'guide',
+                'instruction', 'manual', 'requirements', 'checklist', 'schedule',
+                'fee', 'eligibility', 'process', 'citizenship', 'residence'
+            ]
+            if any(term in title_lower or term in content_lower for term in critical_doc_terms):
+                return True
+
+            # For official domains, be more lenient with document files
             domain = urlparse(url).netloc.lower()
-            # Basic check to exclude common non-official domains (blogs, news, forums)
-            if any(s in domain for s in ['blog', 'news', 'forum', 'wikipedia', 'quora', 'youtube', 'medium', 'reddit', 'facebook', 'twitter', 'linkedin', 'stackexchange']):
+            if any(indicator in domain for indicator in ['gov', 'official', 'embassy', 'consulate']):
+                return True
+
+        # PRIORITY 2: Comprehensive keyword relevance for all content types
+        # Core immigration terms (high relevance)
+        core_immigration_terms = [
+            'visa', 'immigration', 'immigrant', 'nonimmigrant', 'citizenship',
+            'residence', 'passport', 'permit', 'travel', 'border'
+        ]
+
+        # Document-specific terms (high relevance)
+        document_terms = [
+            'form', 'application', 'petition', 'requirements', 'instructions',
+            'guide', 'manual', 'checklist', 'schedule', 'fees', 'eligibility'
+        ]
+
+        # Official source terms (medium relevance)
+        official_terms = [
+            'government', 'ministry', 'department', 'authority', 'consulate',
+            'embassy', 'official', 'federal', 'national', 'state'
+        ]
+
+        # Calculate relevance score
+        relevance_score = 0
+
+        # Check title (weighted higher)
+        for term in core_immigration_terms:
+            if term in title_lower:
+                relevance_score += 3
+        for term in document_terms:
+            if term in title_lower:
+                relevance_score += 2
+        for term in official_terms:
+            if term in title_lower:
+                relevance_score += 1
+
+        # Check content (weighted lower but still important)
+        for term in core_immigration_terms:
+            if term in content_lower:
+                relevance_score += 2
+        for term in document_terms:
+            if term in content_lower:
+                relevance_score += 1
+
+        # High relevance threshold
+        if relevance_score >= 3:
+            return True
+
+        # PRIORITY 3: Special handling for HTML pages (stricter requirements)
+        if url_lower.endswith(('.html', '.htm', '.php', '.asp', '.aspx')):
+            domain = urlparse(url).netloc.lower()
+
+            # Exclude non-official domains for HTML content
+            excluded_domains = [
+                'blog', 'news', 'forum', 'wikipedia', 'quora', 'youtube',
+                'medium', 'reddit', 'facebook', 'twitter', 'linkedin',
+                'stackexchange', 'pinterest', 'instagram'
+            ]
+            if any(excluded in domain for excluded in excluded_domains):
                 return False
 
-            # Further check for core immigration terms in title or content for HTML pages
-            if any(term in title_lower for term in ['immigrant', 'nonimmigrant', 'citizen', 'residence', 'travel', 'visa']):
-                return True
-            if any(term in content_lower for term in ['immigrant', 'nonimmigrant', 'citizen', 'residence', 'travel', 'visa']):
-                return True
+            # For HTML, require stronger immigration relevance AND official-looking domain
+            has_strong_immigration_terms = any(term in title_lower or term in content_lower
+                                             for term in core_immigration_terms)
+            has_official_domain = any(indicator in domain
+                                    for indicator in ['gov', '.edu', 'official', 'embassy', 'consulate'])
 
-        return False # Default to not relevant if no strong indicators
+            return has_strong_immigration_terms and (has_official_domain or relevance_score >= 4)
+
+        return False
     
     def _extract_file_type(self, url: str, title: str) -> str:
-        """Extract likely file type from URL or title, including HTML."""
-        for ext in ['.pdf', '.docx', '.doc', '.xlsx', '.xls']:
-            if ext in url.lower() or ext in title.lower():
-                return ext.replace('.', '').upper()
-        if url.lower().endswith(('.html', '.htm')):
+        """Enhanced file type detection for comprehensive format recognition."""
+        url_lower = url.lower()
+        title_lower = title.lower()
+
+        # Enhanced format detection with better pattern matching
+        format_patterns = {
+            'PDF': ['.pdf', 'pdf', 'portable document'],
+            'DOCX': ['.docx', 'docx', 'word document', 'microsoft word'],
+            'DOC': ['.doc', ' doc ', 'word doc'],
+            'XLSX': ['.xlsx', 'xlsx', 'excel', 'spreadsheet', 'microsoft excel'],
+            'XLS': ['.xls', ' xls ', 'excel'],
+            'PPT': ['.ppt', '.pptx', 'powerpoint', 'presentation'],
+            'TXT': ['.txt', 'text file'],
+            'RTF': ['.rtf', 'rich text']
+        }
+
+        # Check URL and title for format indicators
+        for format_type, patterns in format_patterns.items():
+            for pattern in patterns:
+                if pattern in url_lower or pattern in title_lower:
+                    return format_type
+
+        # Check for HTML/web pages
+        if url_lower.endswith(('.html', '.htm', '.php', '.asp', '.aspx')) or \
+           not any(ext in url_lower for ext in ['.pdf', '.doc', '.xls', '.ppt', '.txt']):
             return "HTML"
-        return "UNKNOWN" # Default if no clear type found
+
+        return "UNKNOWN"
 
     def _deduplicate_and_filter_results(self, results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Remove duplicates and filter for best results, prioritizing forms and then comprehensive info."""
+        """Remove duplicates and filter for best results, with balanced prioritization of ALL critical formats."""
         seen_urls = set()
         unique_results = []
-        
-        # Sort by relevance: direct documents > HTML info pages > others
-        # Improved sorting to prioritize official sources and detailed content
-        results.sort(key=lambda x: (
-            x['file_type'] == 'PDF',        # PDFs first (most likely official forms)
-            x['file_type'] == 'DOCX',       # DOCX second
-            x['file_type'] == 'HTML' and 'gov' in x['source_domain'].lower() or 'org' in x['source_domain'].lower(), # Official HTML sources
-            'form' in x['title'].lower() or 'application' in x['title'].lower(),   # Forms/applications in title
-            len(x['description'])           # More description usually means more content
-        ), reverse=True)
-        
+
+        def get_document_priority_score(result):
+            """Calculate priority score for balanced document format representation."""
+            score = 0
+            file_type = result.get('file_type', '').upper()
+            title = result.get('title', '').lower()
+            domain = result.get('source_domain', '').lower()
+
+            # BALANCED FORMAT SCORING - All critical formats get high scores
+            format_scores = {
+                'PDF': 100,      # Official forms, guides, instructions
+                'DOCX': 95,      # Detailed application guides, manuals
+                'DOC': 90,       # Legacy Word documents with instructions
+                'XLSX': 95,      # Fee schedules, requirement matrices, checklists
+                'XLS': 90,       # Legacy Excel with important data
+                'HTML': 60       # Web information (lower but still valuable)
+            }
+            score += format_scores.get(file_type, 30)
+
+            # CONTENT RELEVANCE SCORING - Higher priority for core immigration terms
+            high_value_terms = ['form', 'application', 'instruction', 'guide', 'manual',
+                              'checklist', 'requirements', 'fees', 'schedule', 'petition']
+            medium_value_terms = ['visa', 'immigration', 'eligibility', 'process', 'documents']
+
+            for term in high_value_terms:
+                if term in title:
+                    score += 20
+            for term in medium_value_terms:
+                if term in title:
+                    score += 10
+
+            # OFFICIAL SOURCE BONUS - Government and official domains get priority
+            official_indicators = ['gov', '.edu', 'official', 'embassy', 'consulate']
+            for indicator in official_indicators:
+                if indicator in domain:
+                    score += 25
+                    break
+
+            # CONTENT LENGTH BONUS - More detailed content typically more valuable
+            description_length = len(result.get('description', ''))
+            if description_length > 300:
+                score += 15
+            elif description_length > 150:
+                score += 10
+
+            return score
+
+        # Sort by comprehensive priority score rather than simple format hierarchy
+        results.sort(key=get_document_priority_score, reverse=True)
+
+        # Ensure format diversity in final results
+        format_counts = {}
         for result in results:
             url = result.get("url", "")
-            if url not in seen_urls and len(unique_results) < 25:  # Increased limit to 25 best results for more breadth
-                seen_urls.add(url)
-                unique_results.append(result)
-        
+            file_type = result.get('file_type', 'UNKNOWN')
+
+            if url not in seen_urls and len(unique_results) < 30:  # Increased limit for better diversity
+                # Limit each format to prevent over-representation
+                max_per_format = {'PDF': 10, 'DOCX': 8, 'DOC': 6, 'XLSX': 8, 'XLS': 6, 'HTML': 12}
+                current_count = format_counts.get(file_type, 0)
+
+                if current_count < max_per_format.get(file_type, 5):
+                    seen_urls.add(url)
+                    unique_results.append(result)
+                    format_counts[file_type] = current_count + 1
+
         return unique_results

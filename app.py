@@ -8,6 +8,8 @@ import psycopg2
 from urllib.parse import urlparse
 import mimetypes
 import time  # Import time for delays
+import html
+import re
 
 # Import our services
 from config import config
@@ -16,6 +18,24 @@ from discovery_service import DocumentDiscoveryService
 from document_processor import DocumentProcessor
 from ai_service import AIExtractionService
 from export_service import ExportService
+
+# Utility function to clean HTML tags and entities
+def clean_html_text(text):
+    """Remove HTML tags and decode HTML entities from text"""
+    if not text:
+        return text
+
+    # Remove HTML tags
+    clean = re.compile('<.*?>')
+    text = re.sub(clean, '', str(text))
+
+    # Decode HTML entities
+    text = html.unescape(text)
+
+    # Clean up extra whitespace
+    text = ' '.join(text.split())
+
+    return text
 
 # Initialize services
 def init_services():
@@ -231,10 +251,14 @@ def discovery_page(discovery, processor, ai_service, db):
 
     st.markdown('<div class="options-section">', unsafe_allow_html=True)
     st.markdown("### ⚙️ Processing Options")
+
+    # Information about balanced document discovery
+    st.info("🎯 **Enhanced Discovery**: The system now equally prioritizes PDF, Excel, Word, and other critical document formats alongside web pages for comprehensive immigration intelligence.")
+
     col1, col2 = st.columns(2)
 
     with col1:
-        max_docs = st.slider("Maximum documents/pages to process:", 1, 25, 5)
+        max_docs = st.slider("Maximum documents/pages to process:", 1, 30, 8)  # Increased default for better format diversity
         auto_process = st.checkbox("Auto-process after discovery", value=True)
 
     with col2:
@@ -482,13 +506,15 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         if processed_forms:
             st.subheader("✅ Successfully Processed Documents/Pages")
             for form in processed_forms:
-                with st.expander(f"📋 {form.get('form_name', 'Unknown Form/Page')} (ID: {form.get('form_id', 'N/A')})"):
+                clean_form_name = clean_html_text(form.get('form_name', 'Unknown Form/Page'))
+                clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
+                with st.expander(f"📋 {clean_form_name} (ID: {clean_form_id})"):
                     col1, col2 = st.columns(2)
 
                     with col1:
-                        st.write(f"**Country:** {form.get('country', 'N/A')}")
-                        st.write(f"**Visa Category:** {form.get('visa_category', 'N/A')}")
-                        st.write(f"**Authority:** {form.get('governing_authority', 'N/A')}")
+                        st.write(f"**Country:** {clean_html_text(form.get('country', 'N/A'))}")
+                        st.write(f"**Visa Category:** {clean_html_text(form.get('visa_category', 'N/A'))}")
+                        st.write(f"**Authority:** {clean_html_text(form.get('governing_authority', 'N/A'))}")
                         st.write(f"**Database ID:** {form.get('id', 'Not saved')}")
 
                     with col2:
@@ -510,7 +536,8 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         if failed_docs:
             st.subheader("❌ Failed Documents/Pages")
             for failed in failed_docs:
-                with st.expander(f"❌ {failed['doc']['title'][:80]}..."):
+                clean_title = clean_html_text(failed['doc']['title'])
+                with st.expander(f"❌ {clean_title[:80]}..."):
                     st.error(f"**Error:** {failed['error']}")
                     st.write(f"**Failed at step:** {failed['step']}")
                     st.write(f"**URL:** {failed['doc']['url']}")
@@ -518,16 +545,77 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
         if skipped_duplicates:
             st.subheader("⏩ Skipped Duplicate Documents/Pages")
             for skipped in skipped_duplicates:
-                with st.expander(f"⏩ {skipped['title'][:80]}..."):
+                clean_title = clean_html_text(skipped['title'])
+                with st.expander(f"⏩ {clean_title[:80]}..."):
                     st.info(f"**URL:** {skipped['url']}")
                     st.info("This document/page was skipped because its URL already exists in the database.")
 
 
 def document_viewer_page(db, processor, ai_service):
-    # Custom CSS for professional styling
+    # Custom CSS for professional styling with dark mode support
     st.markdown("""
     <style>
-    .document-card {
+    /* Dark mode detection - Multiple approaches for better compatibility */
+    @media (prefers-color-scheme: dark) {
+        .document-card-wrapper {
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+            border: 2px solid #4a5568 !important;
+            color: #f7fafc !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+        }
+        .document-card-wrapper h3 {
+            color: #f7fafc !important;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8) !important;
+        }
+        .document-card-wrapper p {
+            color: #e2e8f0 !important;
+            opacity: 0.95 !important;
+        }
+        .document-card-wrapper strong {
+            color: #f7fafc !important;
+        }
+        .metric-card {
+            background: #2d3748 !important;
+            color: #f7fafc !important;
+            border: 1px solid #4a5568 !important;
+        }
+        .filter-container {
+            background: #1a202c !important;
+            color: #f7fafc !important;
+            border: 1px solid #4a5568 !important;
+        }
+        .document-preview {
+            background: #1a202c !important;
+            color: #f7fafc !important;
+            border: 1px solid #4a5568 !important;
+        }
+        .document-preview h2 {
+            color: #f7fafc !important;
+        }
+        .document-preview p {
+            color: #e2e8f0 !important;
+        }
+        .tab-container {
+            background: #1a202c !important;
+            color: #f7fafc !important;
+            border: 1px solid #4a5568 !important;
+        }
+        .download-section {
+            background: linear-gradient(45deg, #4c51bf 0%, #553c9a 100%) !important;
+            color: #f7fafc !important;
+        }
+    }
+
+    /* Streamlit dark theme detection via CSS variables */
+    [data-theme="dark"] .document-card-wrapper,
+    .stApp[data-theme="dark"] .document-card-wrapper {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+        border: 2px solid #4a5568 !important;
+        color: #f7fafc !important;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+
+    .document-card-wrapper {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 15px;
         padding: 20px;
@@ -535,10 +623,26 @@ def document_viewer_page(db, processor, ai_service):
         box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         color: white;
         transition: transform 0.3s ease;
+        border: 1px solid rgba(255,255,255,0.1);
     }
-    .document-card:hover {
+    .document-card-wrapper:hover {
         transform: translateY(-5px);
         box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    .document-card-wrapper h3 {
+        color: white !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        margin-bottom: 15px !important;
+        font-size: 1.1rem !important;
+    }
+    .document-card-wrapper p {
+        color: white !important;
+        opacity: 0.95;
+        margin: 5px 0 !important;
+        font-size: 0.9rem !important;
+    }
+    .document-card-wrapper strong {
+        color: white !important;
     }
     .status-badge {
         display: inline-block;
@@ -547,6 +651,7 @@ def document_viewer_page(db, processor, ai_service):
         font-size: 12px;
         font-weight: bold;
         margin: 5px 0;
+        text-shadow: none;
     }
     .status-validated { background: #28a745; color: white; }
     .status-warnings { background: #ffc107; color: black; }
@@ -586,7 +691,57 @@ def document_viewer_page(db, processor, ai_service):
         border-radius: 10px;
         margin: 20px 0;
     }
+
+    /* Force high contrast for better visibility */
+    .document-card-wrapper * {
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    }
+    .document-card-wrapper h3,
+    .document-card-wrapper p,
+    .document-card-wrapper strong {
+        color: inherit !important;
+        opacity: 1 !important;
+    }
+
+    /* Additional dark mode override for Streamlit's specific classes */
+    .stApp.dark .document-card-wrapper,
+    [data-testid="stApp"][data-theme="dark"] .document-card-wrapper {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+        border: 2px solid #4a5568 !important;
+        color: #f7fafc !important;
+    }
+
+    /* High contrast text for all themes */
+    .document-card-wrapper h3 {
+        font-weight: 700 !important;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.7) !important;
+    }
+
+    .document-card-wrapper p {
+        font-weight: 500 !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.6) !important;
+    }
     </style>
+
+    <script>
+    // Dynamic theme detection for Streamlit
+    function updateThemeClasses() {
+        const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const body = document.body;
+
+        if (isDark) {
+            body.classList.add('dark-mode');
+        } else {
+            body.classList.remove('dark-mode');
+        }
+    }
+
+    // Check theme on load and when it changes
+    updateThemeClasses();
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateThemeClasses);
+    }
+    </script>
     """, unsafe_allow_html=True)
 
     st.header("📄 Professional Document Viewer")
@@ -614,11 +769,15 @@ def document_viewer_page(db, processor, ai_service):
 
     if selected_form:
         # === DETAILED DOCUMENT VIEW ===
+        clean_form_name = clean_html_text(selected_form.get('form_name', 'Unknown Document'))
+        clean_form_id = clean_html_text(selected_form.get('form_id', 'N/A'))
+        clean_country = clean_html_text(selected_form.get('country', 'N/A'))
+
         st.markdown(f"""
         <div class="document-preview">
-            <h2>📋 {selected_form.get('form_name', 'Unknown Document')}</h2>
-            <p><strong>Form ID:</strong> {selected_form.get('form_id', 'N/A')} | 
-               <strong>Country:</strong> {selected_form.get('country', 'N/A')} | 
+            <h2>📋 {clean_form_name}</h2>
+            <p><strong>Form ID:</strong> {clean_form_id} |
+               <strong>Country:</strong> {clean_country} |
                <strong>Status:</strong> {selected_form.get('processing_status', 'Unknown').replace('_', ' ').title()}</p>
         </div>
         """, unsafe_allow_html=True)
@@ -652,11 +811,11 @@ def document_viewer_page(db, processor, ai_service):
 
             with col1:
                 st.markdown("### 📋 Document Information")
-                st.write(f"**Country:** {selected_form.get('country', 'N/A')}")
-                st.write(f"**Visa Category:** {selected_form.get('visa_category', 'N/A')}")
-                st.write(f"**Form Name:** {selected_form.get('form_name', 'N/A')}")
-                st.write(f"**Form ID:** {selected_form.get('form_id', 'N/A')}")
-                st.write(f"**Authority:** {selected_form.get('governing_authority', 'N/A')}")
+                st.write(f"**Country:** {clean_html_text(selected_form.get('country', 'N/A'))}")
+                st.write(f"**Visa Category:** {clean_html_text(selected_form.get('visa_category', 'N/A'))}")
+                st.write(f"**Form Name:** {clean_html_text(selected_form.get('form_name', 'N/A'))}")
+                st.write(f"**Form ID:** {clean_html_text(selected_form.get('form_id', 'N/A'))}")
+                st.write(f"**Authority:** {clean_html_text(selected_form.get('governing_authority', 'N/A'))}")
 
                 if document_info_from_db:
                     st.write(f"**File Format:** {document_info_from_db.get('file_format', 'Unknown')}")
@@ -673,7 +832,7 @@ def document_viewer_page(db, processor, ai_service):
 
             # Description
             st.markdown("### 📝 Description")
-            st.write(selected_form.get('description', 'No description available'))
+            st.write(clean_html_text(selected_form.get('description', 'No description available')))
 
             # Supporting Documents
             if structured_data.get('supporting_documents'):
@@ -991,29 +1150,36 @@ def document_viewer_page(db, processor, ai_service):
                                 'XLS': '📊'
                             }.get(file_format, '📄')
 
-                            st.markdown(f"""
-                            <div class="document-card">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                                    <h4 style="margin: 0; font-size: 16px; flex: 1;">
-                                        {format_icon} {form.get('form_name', 'Unknown Document')[:50]}{'...' if len(form.get('form_name', '')) > 50 else ''}
-                                    </h4>
-                                    <span class="{status_class} status-badge">{file_format}</span>
-                                </div>
-                                
-                                <div style="margin-bottom: 15px;">
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>🌍 Country:</strong> {form.get('country', 'N/A')}</p>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>🛂 Visa Type:</strong> {form.get('visa_category', 'N/A')}</p>
-                                    <p style="margin: 5px 0; font-size: 14px;"><strong>🆔 Form ID:</strong> {form.get('form_id', 'N/A')}</p>
-                                    <p style="margin: 5px 0; font-size: 12px; opacity: 0.8;"><strong>Status:</strong> {status.replace('_', ' ').title()}</p>
-                                </div>
-                                
-                                <div style="margin-top: 15px;">
-                                    <p style="margin: 0; font-size: 13px; opacity: 0.9; line-height: 1.4;">
-                                        {form.get('description', 'No description available')[:100]}{'...' if len(form.get('description', '')) > 100 else ''}
-                                    </p>
-                                </div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            # Clean text content to prevent HTML tags from showing
+                            clean_form_name = clean_html_text(form.get('form_name', 'Unknown Document'))
+                            clean_description = clean_html_text(form.get('description', 'No description available'))
+                            clean_country = clean_html_text(form.get('country', 'N/A'))
+                            clean_visa_category = clean_html_text(form.get('visa_category', 'N/A'))
+                            clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
+
+                            # Use Streamlit container for the card instead of HTML template
+                            with st.container():
+                                # Apply custom CSS class
+                                st.markdown(f'<div class="document-card-wrapper">', unsafe_allow_html=True)
+
+                                # Header with title and format badge
+                                col_title, col_badge = st.columns([4, 1])
+                                with col_title:
+                                    st.markdown(f"### {format_icon} {clean_form_name[:50]}{'...' if len(clean_form_name) > 50 else ''}")
+                                with col_badge:
+                                    st.markdown(f'<span class="{status_class} status-badge">{file_format}</span>', unsafe_allow_html=True)
+
+                                # Document details
+                                st.markdown(f"**🌍 Country:** {clean_country}")
+                                st.markdown(f"**🛂 Visa Type:** {clean_visa_category}")
+                                st.markdown(f"**🆔 Form ID:** {clean_form_id}")
+                                st.markdown(f"**Status:** {status.replace('_', ' ').title()}")
+
+                                # Description
+                                if clean_description:
+                                    st.markdown(f"**Description:** {clean_description[:100]}{'...' if len(clean_description) > 100 else ''}")
+
+                                st.markdown('</div>', unsafe_allow_html=True)
 
                             # View Details Button
                             if st.button(
@@ -1112,12 +1278,14 @@ def validation_panel_page(db, processor, ai_service):
 
         if filtered_forms:
             for form in filtered_forms:
-                with st.expander(f"📋 {form['form_name']} - {form['country']} (Status: {form.get('processing_status', 'N/A')})"):
+                clean_form_name = clean_html_text(form['form_name'])
+                clean_country = clean_html_text(form['country'])
+                with st.expander(f"📋 {clean_form_name} - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
                     col1, col2 = st.columns([2, 1])
 
                     with col1:
-                        st.write(f"**Form ID:** {form['form_id']}")
-                        st.write(f"**Description:** {form.get('description', 'N/A')}")
+                        st.write(f"**Form ID:** {clean_html_text(form['form_id'])}")
+                        st.write(f"**Description:** {clean_html_text(form.get('description', 'N/A'))}")
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
                         st.write(f"**Official Source URL:** {form.get('official_source_url', 'N/A')}")
 
@@ -1440,9 +1608,9 @@ def export_panel_page(db, export_service):
             preview_data = []
             for form in filtered_forms:
                 preview_data.append({
-                    "Country": form['country'],
-                    "Form Name": form['form_name'],
-                    "Form ID": form['form_id'],
+                    "Country": clean_html_text(form['country']),
+                    "Form Name": clean_html_text(form['form_name']),
+                    "Form ID": clean_html_text(form['form_id']),
                     "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
                     "Processing Status": form.get('processing_status', 'N/A'),
                     "Last Updated": form['created_at']
@@ -1608,14 +1776,17 @@ def database_viewer_page(db):
         st.markdown(f"### �� Forms/Pages ({len(filtered_forms)} found)")
 
         for form in filtered_forms:
-            with st.expander(f"📋 {form['form_name']} ({form['form_id']}) - {form['country']} (Status: {form.get('processing_status', 'N/A')})"):
+            clean_form_name = clean_html_text(form['form_name'])
+            clean_form_id = clean_html_text(form['form_id'])
+            clean_country = clean_html_text(form['country'])
+            with st.expander(f"📋 {clean_form_name} ({clean_form_id}) - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
                 col1, col2 = st.columns(2)
 
                 with col1:
-                    st.write(f"**Country:** {form['country']}")
-                    st.write(f"**Visa Category:** {form['visa_category']}")
-                    st.write(f"**Form ID:** {form['form_id']}")
-                    st.write(f"**Authority:** {form.get('governing_authority', 'N/A')}")
+                    st.write(f"**Country:** {clean_country}")
+                    st.write(f"**Visa Category:** {clean_html_text(form['visa_category'])}")
+                    st.write(f"**Form ID:** {clean_form_id}")
+                    st.write(f"**Authority:** {clean_html_text(form.get('governing_authority', 'N/A'))}")
                     st.write(f"**Created:** {form['created_at']}")
 
                 with col2:
@@ -1634,7 +1805,7 @@ def database_viewer_page(db):
                     else:
                         st.write(f"**Cloudinary Original URL:** N/A")
 
-                st.write(f"**Description:** {form.get('description', 'No description')}")
+                st.write(f"**Description:** {clean_html_text(form.get('description', 'No description'))}")
 
                 if form.get('validation_warnings'):
                     st.write("**⚠️ Validation Warnings:**")
@@ -1714,7 +1885,9 @@ def cloudinary_browser_page(db):
             for visa_category, docs in sorted(visa_categories.items()):
                 with st.expander(f"🛂 {visa_category} ({len(docs)} documents)"):
                     for doc in docs:
-                        st.markdown(f"**📄 {doc['form_name']}** (ID: {doc['form_id']})")
+                        clean_doc_form_name = clean_html_text(doc['form_name'])
+                        clean_doc_form_id = clean_html_text(doc['form_id'])
+                        st.markdown(f"**📄 {clean_doc_form_name}** (ID: {clean_doc_form_id})")
                         st.write(f"File: {doc['filename']} ({doc['file_format']})")
                         st.markdown(f"[View on Cloudinary]({doc['cloudinary_url']})")
                         st.markdown("---")
