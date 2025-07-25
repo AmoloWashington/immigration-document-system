@@ -273,7 +273,7 @@ def discovery_page(discovery, processor, ai_service, db):
     st.markdown("### ⚙️ Processing Options")
 
     # Information about balanced document discovery
-    st.info("🎯 **Enhanced Discovery**: The system now equally prioritizes PDF, Excel, Word, and other critical document formats alongside web pages for comprehensive immigration intelligence.")
+    st.info("�� **Enhanced Discovery**: The system now equally prioritizes PDF, Excel, Word, and other critical document formats alongside web pages for comprehensive immigration intelligence.")
 
     col1, col2 = st.columns(2)
 
@@ -1628,22 +1628,22 @@ def export_panel_page(db, export_service):
                 else:
                     st.warning("Debug: No Cloudinary URL returned for Summary export.")
 
-        if filtered_forms:
-            st.subheader("Preview of Forms/Pages to Export")
+    if filtered_forms:
+        st.subheader("Preview of Forms/Pages to Export")
 
-            preview_data = []
-            for form in filtered_forms:
-                preview_data.append({
-                    "Country": clean_html_text(form['country']),
-                    "Form Name": clean_html_text(form['form_name']),
-                    "Form ID": clean_html_text(form['form_id']),
-                    "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
-                    "Processing Status": form.get('processing_status', 'N/A'),
-                    "Last Updated": form['created_at']
-                })
+        preview_data = []
+        for form in filtered_forms:
+            preview_data.append({
+                "Country": clean_html_text(form['country']),
+                "Form Name": clean_html_text(form['form_name']),
+                "Form ID": clean_html_text(form['form_id']),
+                "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
+                "Processing Status": form.get('processing_status', 'N/A'),
+                "Last Updated": form['created_at']
+            })
 
-            df = pd.DataFrame(preview_data)
-            st.dataframe(df, use_container_width=True)
+        df = pd.DataFrame(preview_data)
+        st.dataframe(df, use_container_width=True)
     else:
         st.info("No documents/pages available for export.")
 
