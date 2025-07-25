@@ -1,0 +1,74 @@
+{
+  "id": 10,
+  "country": "USA",
+  "visa_category": "Permanent Residence",
+  "form_name": "Application to Replace Permanent Resident Card",
+  "form_id": "I-90",
+  "description": "Used by lawful permanent residents to apply for a replacement of their Permanent Resident Card.",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$540",
+    "country": "USA",
+    "form_id": "I-90",
+    "language": "English",
+    "form_name": "Application to Replace Permanent Resident Card",
+    "description": "Used by lawful permanent residents to apply for a replacement of their Permanent Resident Card.",
+    "last_fetched": "2025-07-22T10:56:00.384975",
+    "visa_category": "Permanent Residence",
+    "document_format": "PDF",
+    "processing_time": "Varies, typically 6-12 months",
+    "required_fields": [
+      {
+        "name": "Alien Registration Number (A-Number)",
+        "type": "text",
+        "description": "Unique identification number assigned to a noncitizen.",
+        "example_value": "A123456789"
+      },
+      {
+        "name": "USCIS Online Account Number",
+        "type": "text",
+        "description": "Number assigned to the applicant's online account.",
+        "example_value": "123456789"
+      },
+      {
+        "name": "Full Name",
+        "type": "text",
+        "description": "Applicant's name as printed on their current Permanent Resident Card.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Applicant’s date of birth in mm/dd/yyyy format.",
+        "example_value": "01/01/1990"
+      },
+      {
+        "name": "Reason for Application",
+        "type": "text",
+        "description": "Select one reason for applying.",
+        "example_value": "My previous card has been lost, stolen, or destroyed."
+      }
+    ],
+    "submission_method": "Mail or Online (through USCIS account)",
+    "target_applicants": "Lawful Permanent Residents needing to replace or update their Permanent Resident Card.",
+    "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-90.pdf",
+    "downloaded_file_path": "downloads/usa/permanent_residence/i-90.pdf",
+    "supporting_documents": [
+      "Existing Permanent Resident Card (if applicable)",
+      "Evidence of legal name change (if applicable)"
+    ],
+    "extracted_text_length": 13964,
+    "full_markdown_summary": "# Application to Replace Permanent Resident Card (Form I-90)\n\n## Overview\nThe **Form I-90** is utilized by lawful permanent residents of the USA who need to apply for a replacement of their existing Permanent Resident Card (Green Card). The form can be used for various reasons including loss, theft, destruction, or errors in the information on the card.\n\n## Governing Authority\nThe form is managed by the **U.S. Citizenship and Immigration Services (USCIS)** under the Department of Homeland Security.\n\n## Purpose\nThis application serves the following purposes:\n- Replace lost, stolen, or destroyed cards\n- Renew expired cards\n- Correct data errors on existing cards\n- Update biographic information due to legal name changes\n\n## Sections Included\n1. **Part 1: Information About You**  \n   - Applicant must provide personal information including their Alien Registration Number, USCIS Online Account Number, full name, date of birth, and reasons for application.\n\n2. **Part 2: Application Type**  \n   - The applicant must indicate their status (lawful permanent resident, conditional permanent resident, etc.)\n\n3. **Part 3: Processing Information**  \n   - This section collects details regarding the applicant’s immigration history, including locations of past visa applications and status adjustments.\n\n4. **Part 4: Accommodations for Disabilities**  \n   - For applicants requiring special assistance, there’s a section to indicate their needs.\n\n## Required Information\nKey information required from the applicant includes:\n- Alien Registration Number (A-Number)\n- USCIS Online Account Number (if applicable)\n- Full Name as it appears on the current card\n- Date of Birth\n- Reason for Replacement (select one from multiple choices)\n\n## Supporting Documents\nApplicants should include relevant documents such as:\n- Existing permanent resident card if available\n- Any documents proving legal name changes if applicable\n\n## Submission Details\nThe completed form can be submitted either:\n- **Online** via a USCIS account\n- **By Mail** to a designated USCIS address\n\n## Processing Time and Fees\n- **Processing Time:** Typically 6-12 months, but can vary.\n- **Fees:** A submission fee of $540 is required, with additional fees for biometrics if applicable.\n\n## Conclusion\nThe Form I-90 is essential for lawful permanent residents needing to update or replace their green card. Accurate completion and submission are crucial for a smooth processing experience. Ensure all parts of the form are meticulously filled and all necessary documentation is attached."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-90.pdf",
+  "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+  "downloaded_file_path": "downloads/usa/permanent_residence/i-90.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-22T10:56:03.691667",
+  "updated_at": "2025-07-22T10:56:03.691667"
+}

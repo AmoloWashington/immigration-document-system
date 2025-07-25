@@ -1,0 +1,64 @@
+{
+  "id": 7,
+  "country": "USA",
+  "visa_category": "Permanent Residence",
+  "form_name": "Application to Register Permanent Residence or Adjust Status",
+  "form_id": "I-485",
+  "description": "Form I-485 is used by individuals in the U.S. to apply for lawful permanent resident status.",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$1,140 plus biometrics fee",
+    "country": "USA",
+    "form_id": "I-485",
+    "language": "English",
+    "form_name": "Application to Register Permanent Residence or Adjust Status",
+    "description": "Form I-485 is used by individuals in the U.S. to apply for lawful permanent resident status.",
+    "last_fetched": "2025-07-22T10:54:39.123927",
+    "visa_category": "Permanent Residence",
+    "document_format": "PDF",
+    "processing_time": "6-12 months",
+    "required_fields": [
+      {
+        "name": "Application Type or Filing Category",
+        "type": "text",
+        "description": "Indicates the immigrant category under which the applicant is filing.",
+        "example_value": "Family-based"
+      },
+      {
+        "name": "Personal Information",
+        "type": "text",
+        "description": "Basic information including full name, date of birth, and country of birth.",
+        "example_value": "John Doe, 01/01/1990, USA"
+      },
+      {
+        "name": "Eligibility Confirmation",
+        "type": "text",
+        "description": "Eligibility questions related to adjustment of status.",
+        "example_value": "Yes"
+      }
+    ],
+    "submission_method": "Mail",
+    "target_applicants": "Individuals physically present in the U.S. seeking to become lawful permanent residents.",
+    "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-485instr.pdf",
+    "downloaded_file_path": "downloads/usa/permanent_residence/i-485instr.pdf",
+    "supporting_documents": [
+      "Current passport",
+      "Photograph(s)",
+      "I-94 Arrival/Departure Record",
+      "Evidence of eligibility for adjustment of status"
+    ],
+    "extracted_text_length": 149777,
+    "full_markdown_summary": "## Overview of Form I-485\n\nForm I-485, **Application to Register Permanent Residence or Adjust Status**, is utilized by individuals who are currently in the United States and wish to apply for lawful permanent resident status, commonly known as a \"Green Card\". This form is a crucial step in the U.S. immigration process, allowing eligible applicants to adjust their immigration status.\n\n## Purpose of Form I-485\nThe primary purpose of Form I-485 is to facilitate the transition from a temporary status to that of a permanent resident. \n\n## Eligibility Requirements\n- **Who May File**: Applicants must be physically present in the U.S. and must meet additional criteria depending on their immigrant category.\n- **Principal Applicants**: Individuals who qualify for an immigrant category on their own.\n- **Derivative Applicants**: Spouses or children of the principal applicants, who also need to file their own I-485.\n\n### Conditions for Adjustment\n- Must not be ineligible due to certain bars under the Immigration and Nationality Act (INA).\n- May qualify under specific provisions like INA section 245(i) even if present without inspection or admission.\n\n## Important Instructions\n- **Submission**: Applications must be submitted via mail to the designated USCIS address.\n- Complete all required sections, including the application type or filing category, personal information, and confirmation of eligibility.\n- Applicants are encouraged to review additional instructions relevant to their specific status (family-based, employment-based, etc.).\n\n### Supporting Documents\nApplicants must provide various supporting documents, including:\n- A current passport\n- Recent photographs\n- I-94 Arrival/Departure Record\n- Any evidence that substantiates eligibility for adjustment of status.\n\n## Additional Categories\nThere are specific instructions outlined for:\n- Family-based applicants\n- Employment-based applicants\n- Special immigrants\n- Victims of trafficking and crime\n- Asylees and refugees\n\n## Fees and Processing\n- **Filing Fee**: The cost to file Form I-485 is initially set at $1,140, which may vary depending on circumstances and applicable biometrics fees.\n- **Processing Time**: The expected processing time is typically between 6 to 12 months.\n\n## Conclusion\nIt is essential to read the entire set of instructions carefully, as mistakes or omissions may delay the processing of the application or result in denial. For more specific information, applicants should refer to the official USCIS website or contact USCIS customer service."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-485instr.pdf",
+  "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+  "downloaded_file_path": "downloads/usa/permanent_residence/i-485instr.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-22T10:54:42.514194",
+  "updated_at": "2025-07-22T10:54:42.514194"
+}

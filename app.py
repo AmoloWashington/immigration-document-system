@@ -983,9 +983,15 @@ def document_viewer_page(db, processor, ai_service):
         # JSON Data
         with col3:
             if structured_data:
+                def json_serializer(obj):
+                    """JSON serializer function that handles datetime objects"""
+                    if isinstance(obj, datetime):
+                        return obj.isoformat()
+                    raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
                 st.download_button(
                     "📊 JSON Data",
-                    data=json.dumps(structured_data, indent=2, ensure_ascii=False).encode('utf-8'),
+                    data=json.dumps(structured_data, indent=2, ensure_ascii=False, default=json_serializer).encode('utf-8'),
                     file_name=f"{selected_form.get('form_id', 'data')}_data.json",
                     mime="application/json"
                 )
@@ -1622,6 +1628,63 @@ def export_panel_page(db, export_service):
         st.info("No documents/pages available for export.")
 
     st.markdown("---")
+    st.subheader("🗄️ Complete Database Export")
+    st.markdown("Export the entire database with all rows, columns, and fields in a single file that can be imported elsewhere.")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("📄 Export Database as JSON", type="primary"):
+            with st.spinner("Exporting complete database as JSON..."):
+                file_path, file_content, cloudinary_export_url = export_service.export_full_database("json")
+                if file_content:
+                    if cloudinary_export_url:
+                        st.markdown(f"**Download Complete Database (JSON) from Cloud:**")
+                        st.markdown(f"[Click to Download]({cloudinary_export_url})")
+                    else:
+                        st.download_button(
+                            label="Download Complete Database (JSON)",
+                            data=file_content,
+                            file_name=Path(file_path).name,
+                            mime="application/json",
+                            key="download_full_db_json"
+                        )
+
+    with col2:
+        if st.button("📊 Export Database as CSV", type="primary"):
+            with st.spinner("Exporting complete database as CSV..."):
+                file_path, file_content, cloudinary_export_url = export_service.export_full_database("csv")
+                if file_content:
+                    if cloudinary_export_url:
+                        st.markdown(f"**Download Complete Database (CSV) from Cloud:**")
+                        st.markdown(f"[Click to Download]({cloudinary_export_url})")
+                    else:
+                        st.download_button(
+                            label="Download Complete Database (CSV)",
+                            data=file_content,
+                            file_name=Path(file_path).name,
+                            mime="text/csv",
+                            key="download_full_db_csv"
+                        )
+
+    with col3:
+        if st.button("📈 Export Database as Excel", type="primary"):
+            with st.spinner("Exporting complete database as Excel..."):
+                file_path, file_content, cloudinary_export_url = export_service.export_full_database("xlsx")
+                if file_content:
+                    if cloudinary_export_url:
+                        st.markdown(f"**Download Complete Database (Excel) from Cloud:**")
+                        st.markdown(f"[Click to Download]({cloudinary_export_url})")
+                    else:
+                        st.download_button(
+                            label="Download Complete Database (Excel)",
+                            data=file_content,
+                            file_name=Path(file_path).name,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key="download_full_db_xlsx"
+                        )
+
+    st.markdown("---")
     st.subheader("📦 Comprehensive USA Export")
     st.markdown("Generate a single report with all USA immigration forms, including links to original documents, JSON data, and Markdown summaries on Cloudinary.")
     if st.button("🚀 Generate Comprehensive USA Export Report", type="primary"):
@@ -1773,7 +1836,7 @@ def database_viewer_page(db):
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown(f"### �� Forms/Pages ({len(filtered_forms)} found)")
+        st.markdown(f"### ���� Forms/Pages ({len(filtered_forms)} found)")
 
         for form in filtered_forms:
             clean_form_name = clean_html_text(form['form_name'])
@@ -1883,14 +1946,32 @@ def cloudinary_browser_page(db):
     for country, visa_categories in sorted(grouped_docs.items()):
         with st.expander(f"🌍 {country} ({sum(len(v) for v in visa_categories.values())} documents)"):
             for visa_category, docs in sorted(visa_categories.items()):
-                with st.expander(f"🛂 {visa_category} ({len(docs)} documents)"):
-                    for doc in docs:
-                        clean_doc_form_name = clean_html_text(doc['form_name'])
-                        clean_doc_form_id = clean_html_text(doc['form_id'])
-                        st.markdown(f"**📄 {clean_doc_form_name}** (ID: {clean_doc_form_id})")
-                        st.write(f"File: {doc['filename']} ({doc['file_format']})")
-                        st.markdown(f"[View on Cloudinary]({doc['cloudinary_url']})")
-                        st.markdown("---")
+                st.markdown(f"""
+                <div style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+                           color: white; padding: 15px; border-radius: 10px; margin: 10px 0;
+                           text-align: center; font-weight: bold; font-size: 1.1rem;">
+                    🛂 {visa_category} ({len(docs)} documents)
+                </div>
+                """, unsafe_allow_html=True)
+
+                for doc in docs:
+                    clean_doc_form_name = clean_html_text(doc['form_name'])
+                    clean_doc_form_id = clean_html_text(doc['form_id'])
+
+                    st.markdown(f"""
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin: 8px 0;
+                               box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #667eea;">
+                        <h4 style="margin: 0 0 10px 0; color: #333;">📄 {clean_doc_form_name}</h4>
+                        <p style="margin: 5px 0; color: #666;"><strong>Form ID:</strong> {clean_doc_form_id}</p>
+                        <p style="margin: 5px 0; color: #666;"><strong>File:</strong> {doc['filename']} ({doc['file_format']})</p>
+                        <a href="{doc['cloudinary_url']}" target="_blank"
+                           style="display: inline-block; background: #667eea; color: white;
+                                  padding: 8px 16px; border-radius: 5px; text-decoration: none;
+                                  margin-top: 10px;">
+                            ☁️ View on Cloudinary
+                        </a>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 def database_health_check_page(database_url: str):
     st.markdown("""

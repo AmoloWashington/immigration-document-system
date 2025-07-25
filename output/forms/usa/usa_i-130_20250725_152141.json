@@ -1,0 +1,79 @@
+{
+  "id": 9,
+  "country": "USA",
+  "visa_category": "Family-Based Immigration",
+  "form_name": "Petition for Alien Relative",
+  "form_id": "I-130",
+  "description": "Form used to establish a relationship to certain alien relatives wishing to immigrate to the United States.",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "$535",
+    "country": "USA",
+    "form_id": "I-130",
+    "language": "English",
+    "form_name": "Petition for Alien Relative",
+    "description": "Form used to establish a relationship to certain alien relatives wishing to immigrate to the United States.",
+    "last_fetched": "2025-07-22T10:55:32.713938",
+    "visa_category": "Family-Based Immigration",
+    "document_format": "PDF",
+    "processing_time": "Varies; consult current USCIS processing times.",
+    "required_fields": [
+      {
+        "name": "Petitioner's Name",
+        "type": "text",
+        "description": "The name of the individual filing the petition.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Beneficiary's Name",
+        "type": "text",
+        "description": "The name of the relative for whom the petition is being filed.",
+        "example_value": "Jane Doe"
+      },
+      {
+        "name": "Relationship to Beneficiary",
+        "type": "text",
+        "description": "The nature of the relationship to the beneficiary (spouse, child, etc.).",
+        "example_value": "Spouse"
+      },
+      {
+        "name": "Address",
+        "type": "text",
+        "description": "The residential address of the petitioner.",
+        "example_value": "123 Main St, Anytown, USA"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "The date of birth of the petitioner and the beneficiary.",
+        "example_value": "01/01/1980"
+      }
+    ],
+    "submission_method": "Mail (specific address provided in the instructions)",
+    "target_applicants": "U.S. citizens and lawful permanent residents seeking to petition for eligible relatives.",
+    "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-130instr.pdf",
+    "downloaded_file_path": "downloads/usa/permanent_residence/i-130instr.pdf",
+    "supporting_documents": [
+      "Proof of U.S. citizenship or lawful permanent resident status",
+      "Evidence of relationship (marriage certificate, birth certificates, etc.)",
+      "Form I-130A, Supplemental Information for Spouse Beneficiary, if applicable"
+    ],
+    "extracted_text_length": 38449,
+    "full_markdown_summary": "# Instructions for Form I-130, Petition for Alien Relative\n\n## Purpose\nForm I-130 is utilized by U.S. citizens and lawful permanent residents to establish eligibility for certain relatives wishing to immigrate to the United States.\n\n## Who May File Form I-130\n1. **U.S. Citizens** can file for:\n   - Spouse\n   - Unmarried children under 21\n   - Unmarried sons/daughters 21 and older\n   - Married sons/daughters of any age\n   - Brothers/Sisters (must be 21 or older)\n   - Parents (must be 21 or older)\n\n2. **Lawful Permanent Residents** can file for:\n   - Spouse\n   - Unmarried children under 21\n   - Unmarried sons/daughters 21 and older\n\n## Important Notes\n- If filing for a spouse, Form I-130A must be completed and submitted.\n- Married children of lawful permanent residents are not eligible for this petition.\n- Non-citizen U.S. nationals can also file under specific conditions.\n\n## Who May Not File Form I-130\nCertain categories are excluded, including:\n- Adoptive relationships established after the child turned 16.\n- Stepparents or stepchildren from marriages after the child turned 18.\n- Spousal partnerships where the marriage didn't occur legally.\n- Individuals involved in fraudulent marriages.\n\n## General Instructions\n- Forms can be downloaded for free from the USCIS website.\n- Follow detailed instructions for each section of the form.\n\n## Additional Information\n- Be aware of the detailed documents required to prove relationship and eligibility.\n- Instructions detail the rights and responsibilities of petitioners and beneficiaries."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-130instr.pdf",
+  "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+  "downloaded_file_path": "downloads/usa/permanent_residence/i-130instr.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-22T10:55:36.640804",
+  "updated_at": "2025-07-22T10:55:36.640804"
+}

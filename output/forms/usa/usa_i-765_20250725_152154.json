@@ -1,0 +1,58 @@
+{
+  "id": 5,
+  "country": "USA",
+  "visa_category": "Work Visa",
+  "form_name": "Application for Employment Authorization",
+  "form_id": "I-765",
+  "description": "Form I-765 is used by certain foreign nationals in the U.S. to apply for an Employment Authorization Document (EAD).",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "Varies",
+    "country": "USA",
+    "form_id": "I-765",
+    "language": "English",
+    "form_name": "Application for Employment Authorization",
+    "description": "Form I-765 is used by certain foreign nationals in the U.S. to apply for an Employment Authorization Document (EAD).",
+    "last_fetched": "2025-07-22T10:50:01.525709",
+    "visa_category": "Work Visa",
+    "document_format": "PDF",
+    "processing_time": "Varies",
+    "required_fields": [
+      {
+        "name": "Eligibility Category",
+        "type": "text",
+        "description": "The category under which the applicant is eligible to work.",
+        "example_value": "(a)(3)"
+      }
+    ],
+    "submission_method": "Mail",
+    "target_applicants": "Foreign nationals in the U.S. requesting employment authorization.",
+    "discovered_by_query": "USA work permit application guide official",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr-feerule.pdf",
+    "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr-feerule.pdf",
+    "supporting_documents": [
+      "Form I-94, Arrival-Departure Record",
+      "Final Notice of Eligibility for Resettlement",
+      "Form I-797 Notice",
+      "USCIS Asylum approval letter",
+      "EOIR IJ's signed order"
+    ],
+    "extracted_text_length": 116349,
+    "full_markdown_summary": "# Instructions for Application for Employment Authorization (Form I-765)\n\n## Overview\nThe **Form I-765**, known as the **Application for Employment Authorization**, allows foreign nationals in the United States to request an Employment Authorization Document (EAD) and apply for employment authorization with U.S. Citizenship and Immigration Services (USCIS). \n\n## Purpose of Form I-765\nThis form is used by:\n- Foreign nationals seeking to obtain an EAD.\n- Those who have immigration status allowing work without restrictions can also apply for an EAD for proof.\n\n## Definition\n- **Employment Authorization Document (EAD):** A card issued proving that the holder is authorized to work in the U.S.\n  - **Initial EAD:** First-time issuance under a specific eligibility category.\n  - **Renewal EAD:** Issued after a previous EAD's expiration under the same category.\n  - **Replacement EAD:** Issued when the previous EAD is lost, stolen, damaged, or contains errors.\n\n## Who May File Form I-765?\nFilers must fall within specific eligibility categories:\n- Asylees, Refugees, Paroled individuals, or those with deferred action.\n- Employment authorization might be granted incident to status or require USCIS approval.\n\n### Eligibility Categories\n1. **Refugees (a)(3):** Requires proof of status such as Form I-94 or approval letters.\n2. **Paroled as a Refugee (a)(4):** Must provide necessary documents confirming status.\n3. **Asylees (a)(5):** Must include proof such as a stamped Form I-94 indicating asylee status.\n4. **Granted Withholding of Deportation or Removal (a)(10):** Filing must include the signed order from EOIR IJ.\n5. **Pending Applications for Asylum (c)(8):** Those awaiting asylum must meet specific timeline guidelines before applying.\n\n## Special Filing Instructions\nApplicants under the c8 category must:\n- Wait 365 days post-application.\n- Attend biometric services appointments and interviews as required.\n\n## Important Links\nFor further details regarding EADs, visit [USCIS EAD Information](http://www.uscis.gov/greencard/employment-authorization-document).\n\n## Conclusion\nUnderstanding eligibility and collecting required supporting documents are critical for a successful application. Be sure to review the full instructions and guidelines provided by USCIS."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear",
+    "Unclear eligibility requirements for c8 category applicants regarding timeline"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr-feerule.pdf",
+  "discovered_by_query": "USA work permit application guide official",
+  "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr-feerule.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-22T07:50:09.862966",
+  "updated_at": "2025-07-22T07:50:09.862966"
+}

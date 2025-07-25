@@ -1,0 +1,62 @@
+{
+  "id": 26,
+  "country": "USA",
+  "visa_category": "NATO Visa",
+  "form_name": "Visas for Employees of International Organizations and NATO",
+  "form_id": null,
+  "description": "Information regarding visa requirements for employees of international organizations and NATO personnel working in the United States.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": null,
+    "country": "USA",
+    "form_id": null,
+    "language": "English",
+    "form_name": "Visas for Employees of International Organizations and NATO",
+    "description": "Information regarding visa requirements for employees of international organizations and NATO personnel working in the United States.",
+    "last_fetched": "2025-07-23T10:08:46.322681",
+    "visa_category": "NATO Visa",
+    "document_format": "HTML",
+    "processing_time": null,
+    "required_fields": [
+      {
+        "name": "Visa Type",
+        "type": "text",
+        "description": "Type of visa being applied for (G-1, G-2, G-3, G-4, NATO-1, NATO-2, etc.)",
+        "example_value": "G-1"
+      },
+      {
+        "name": "Purpose of Travel",
+        "type": "text",
+        "description": "Reason for traveling to the United States (e.g., attending meetings, working at an organization)",
+        "example_value": "Attend meetings at a designated international organization"
+      }
+    ],
+    "submission_method": "Online or through U.S. embassies/consulates",
+    "target_applicants": "Employees of international organizations and NATO personnel",
+    "discovered_by_query": "USA embassy Work Visa visa application",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/other-visa-categories/visa-employees-nato.html",
+    "downloaded_file_path": "downloads/usa/batch_process/visa-employees-nato.html",
+    "supporting_documents": [
+      "Passport",
+      "Official military identification card (for NATO personnel)",
+      "NATO travel orders (for NATO personnel)"
+    ],
+    "extracted_text_length": 28300,
+    "full_markdown_summary": "# Visas for Employees of International Organizations and NATO\n\n## Overview\nThis document provides essential information regarding the visa requirements for employees of international organizations and NATO personnel who will be working in the United States. It outlines the types of visas available, eligibility criteria, and application processes.\n\n## Visa Types\n### G Visas\n- **G-1**: Permanent mission members of a recognized government to a designated international organization and their immediate family members.\n- **G-2**: Representatives of a recognized government traveling temporarily to the U.S. to attend meetings of a designated international organization and their immediate family members.\n- **G-3**: Representatives of non-recognized or non-member governments and their immediate family members.\n- **G-4**: Individuals coming to the U.S. to take up an appointment at a designated international organization, including the United Nations, and their immediate family members.\n- **G-5**: Personal employees or domestic workers of G-1 to G-4 visa holders.\n\n### NATO Visas\n- **NATO-1 to NATO-6**: For national representatives, international staff, and their immediate family members traveling under the NATO agreement.\n- **NATO-7**: For personal employees or domestic workers of NATO-1 to NATO-6 visa holders.\n\n## Application Process\n- Employees of international organizations and NATO personnel must apply for the appropriate visa type based on their travel purpose.\n- If already in the U.S., G-5 and NATO-7 visa holders must reapply for their visas outside the United States.\n- For changing status to or from G or NATO status, applicants should refer to the relevant sections on the U.S. Department of State website.\n\n## Exemptions\n- Many armed forces personnel attached to NATO Allied Headquarters in the U.S. may be exempt from passport and visa requirements when traveling on official business.\n- Immediate family members of NATO personnel are not included in this exemption and must have the appropriate visas.\n\n## Important Notes\n- It is crucial to review the authorized list of designated international organizations as outlined in the Foreign Affairs Manual.\n- All applicants must ensure they have the necessary documentation, including passports and any required visas, before traveling to the United States.\n\nFor further details, applicants are encouraged to visit the U.S. Department of State's official website or contact their nearest U.S. embassy or consulate."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear",
+    "No specific documentation requirements listed for each visa type"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/other-visa-categories/visa-employees-nato.html",
+  "discovered_by_query": "USA embassy Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/visa-employees-nato.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:08:50.338940",
+  "updated_at": "2025-07-23T10:08:50.338940"
+}

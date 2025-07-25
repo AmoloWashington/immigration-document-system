@@ -1,0 +1,119 @@
+{
+  "id": 44,
+  "country": "USA",
+  "visa_category": "Naturalization",
+  "form_name": "Document Checklist for N-400 Application",
+  "form_id": "M-477",
+  "description": "Checklist of required documents for applicants submitting the N-400 application for naturalization.",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$725 (includes application fee and biometric services fee)",
+    "country": "USA",
+    "form_id": "M-477",
+    "language": "English",
+    "form_name": "Document Checklist for N-400 Application",
+    "description": "Checklist of required documents for applicants submitting the N-400 application for naturalization.",
+    "last_fetched": "2025-07-24T11:15:01.525038",
+    "visa_category": "Naturalization",
+    "document_format": "PDF",
+    "processing_time": "Varies",
+    "required_fields": [
+      {
+        "name": "Permanent Resident Card",
+        "type": "text",
+        "description": "Photocopy of both sides of your Permanent Resident Card.",
+        "example_value": "Photocopy of Green Card"
+      },
+      {
+        "name": "Application Fee Payment",
+        "type": "text",
+        "description": "Check or money order for the application fee and biometric services fee.",
+        "example_value": "$725"
+      },
+      {
+        "name": "Photographs",
+        "type": "text",
+        "description": "Two identical color photographs with name and A-Number on the back.",
+        "example_value": "Color photographs"
+      },
+      {
+        "name": "Form G-28",
+        "type": "text",
+        "description": "Notice of Entry of Appearance as Attorney or Representative if applicable.",
+        "example_value": "Completed Form G-28"
+      },
+      {
+        "name": "Name Change Documents",
+        "type": "text",
+        "description": "Documents that legally changed your name if different from the Permanent Resident Card.",
+        "example_value": "Marriage certificate"
+      },
+      {
+        "name": "Spouse's Citizenship Evidence",
+        "type": "text",
+        "description": "Evidence that your spouse has been a U.S. citizen for the last 3 years if applying based on marriage.",
+        "example_value": "Spouse's birth certificate"
+      },
+      {
+        "name": "Marriage Certificate",
+        "type": "text",
+        "description": "Current marriage certificate if applying based on marriage.",
+        "example_value": "Marriage certificate"
+      },
+      {
+        "name": "Proof of Termination of Prior Marriages",
+        "type": "text",
+        "description": "Documents proving termination of all prior marriages of your spouse.",
+        "example_value": "Divorce decree"
+      },
+      {
+        "name": "Financial Support Evidence",
+        "type": "text",
+        "description": "Evidence of financial support for dependents not living with you.",
+        "example_value": "Cancelled checks"
+      },
+      {
+        "name": "Criminal Record Documentation",
+        "type": "text",
+        "description": "Court documents related to any arrests or convictions.",
+        "example_value": "Court-certified copy of arrest record"
+      }
+    ],
+    "submission_method": "Mail",
+    "target_applicants": "Individuals applying for U.S. citizenship through naturalization.",
+    "discovered_by_query": "USA Student Visa visa checklist PDF official documents",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/guides/M-477.pdf",
+    "validation_warnings": [],
+    "downloaded_file_path": "downloads\\usa\\student_visa\\M-477.pdf",
+    "supporting_documents": [
+      "Permanent Resident Card",
+      "Application fee payment (check or money order)",
+      "Two identical color photographs",
+      "Form G-28 (if applicable)",
+      "Name change documents (if applicable)",
+      "Spouse's citizenship evidence (if applicable)",
+      "Marriage certificate (if applicable)",
+      "Proof of termination of prior marriages (if applicable)",
+      "Financial support evidence (if applicable)",
+      "Criminal record documentation (if applicable)"
+    ],
+    "extracted_text_length": 7189,
+    "full_markdown_summary": "# Document Checklist for N-400 Application (M-477)\n\n## Overview\nThis document, M-477, is a checklist provided by the U.S. Citizenship and Immigration Services (USCIS) for individuals applying for naturalization through the N-400 application. It outlines the necessary documents and requirements that applicants must submit.\n\n## Required Items\nAll applicants must include the following items with their N-400 application:\n\n1. **Permanent Resident Card**: A photocopy of both sides of your Permanent Resident Card (Green Card). If lost, submit a photocopy of the receipt for Form I-90.\n2. **Application Fee Payment**: A check or money order for the application fee and biometric services fee. Applicants aged 75 or older are exempt from the biometric fee. Credit card payments can be made using Form G-1450.\n3. **Photographs**: If residing outside the U.S., include two identical color photographs with your name and A-Number on the back.\n\n## Additional Supporting Documents\n- If represented by an attorney, include **Form G-28**.\n- If your name differs from your Permanent Resident Card, provide legal name change documents (e.g., marriage certificate).\n- If applying based on marriage to a U.S. citizen, include:\n  - Evidence of spouse's U.S. citizenship (e.g., birth certificate, naturalization certificate).\n  - Current marriage certificate.\n  - Proof of termination of prior marriages of your spouse.\n  - Joint documents (e.g., tax returns, bank accounts).\n- If in the military, include **Form N-426**.\n- If you have traveled outside the U.S. for 6 months or more, provide evidence of continued ties to the U.S.\n- If you have dependents not living with you, include financial support evidence.\n- If you have any arrests or convictions, provide relevant court documents.\n\n## Important Notes\n- Ensure all documents are copies unless originals are requested.\n- Follow specific photo requirements as outlined in the document.\n- Be prepared to provide additional evidence if you have any criminal history.\n\n## Conclusion\nThis checklist is essential for ensuring that all necessary documentation is submitted with the N-400 application to avoid delays in processing. For more detailed instructions, refer to the official USCIS website."
+  },
+  "validation_warnings": [
+    "Fee amount for application and biometric services not specified",
+    "Processing times for N-400 application not mentioned",
+    "Submission methods for documents not clearly outlined",
+    "No mention of specific photo requirements for applicants residing in the U.S.",
+    "Potential ambiguity in the requirement for financial support evidence for dependents not living with the applicant"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/guides/M-477.pdf",
+  "discovered_by_query": "USA Student Visa visa checklist PDF official documents",
+  "downloaded_file_path": "downloads\\usa\\student_visa\\M-477.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-24T08:15:13.550443",
+  "updated_at": "2025-07-24T08:15:13.550443"
+}

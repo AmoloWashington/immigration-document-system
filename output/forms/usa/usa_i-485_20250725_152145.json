@@ -1,0 +1,68 @@
+{
+  "id": 8,
+  "country": "USA",
+  "visa_category": "Permanent Residence",
+  "form_name": "Application to Register Permanent Residence or Adjust Status",
+  "form_id": "I-485",
+  "description": "This form is used by individuals in the United States to apply for lawful permanent resident status.",
+  "governing_authority": "U.S. Citizenship and Immigration Services",
+  "structured_data": {
+    "fees": "$1,140 for the application; additional fees may apply for biometrics.",
+    "country": "USA",
+    "form_id": "I-485",
+    "language": "English",
+    "form_name": "Application to Register Permanent Residence or Adjust Status",
+    "description": "This form is used by individuals in the United States to apply for lawful permanent resident status.",
+    "last_fetched": "2025-07-22T10:55:09.705779",
+    "visa_category": "Permanent Residence",
+    "document_format": "PDF",
+    "processing_time": "Varies; typically several months depending on case complexity and service center workload.",
+    "required_fields": [
+      {
+        "name": "Current Legal Name",
+        "type": "text",
+        "description": "The applicant's current legal name without any nicknames.",
+        "example_value": "Doe, John"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Date of birth in the format mm/dd/yyyy.",
+        "example_value": "01/15/1990"
+      },
+      {
+        "name": "Country of Citizenship or Nationality",
+        "type": "text",
+        "description": "The country where the applicant holds citizenship.",
+        "example_value": "United States"
+      },
+      {
+        "name": "Current U.S. Physical Address",
+        "type": "text",
+        "description": "The current physical address of the applicant in the U.S.",
+        "example_value": "123 Main St, Springfield, IL 62704"
+      }
+    ],
+    "submission_method": "Mail to the designated USCIS service center based on the applicant's location.",
+    "target_applicants": "Individuals applying for adjustment of status to become lawful permanent residents.",
+    "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+    "governing_authority": "U.S. Citizenship and Immigration Services",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-485.pdf",
+    "downloaded_file_path": "downloads/usa/permanent_residence/i-485.pdf",
+    "supporting_documents": [
+      "Passport",
+      "Form I-693 (medical examination report)"
+    ],
+    "extracted_text_length": 53960,
+    "full_markdown_summary": "# Form I-485 - Application to Register Permanent Residence or Adjust Status\n\nThis document is the official Form I-485, used by individuals in the United States to apply for lawful permanent resident status, also known as a Green Card.\n\n## **Key Information**\n- **Governing Authority:** U.S. Citizenship and Immigration Services (USCIS)\n- **OMB Number:** 1615-0023\n- **Expiration Date:** Expires on 10/31/2027\n\n## **Purpose**\nThe Form I-485 is used to apply for:\n- Adjustment of status to lawful permanent resident (LPR).\n\n## **Important Notes**\n- Applications must be fully completed, or they may be rejected or denied by USCIS. Ensure all sections are filled out as instructed.\n- If necessary, additional information can be provided in Part 14: Additional Information.\n\n## **Target Applicants**\nThis form is intended for:\n- Individuals who are currently in the U.S. and eligible to apply for permanent residency.\n\n## **Required Fields**\n1. **Current Legal Name** - Include first, middle (if any), and last name.\n2. **Other Names Used** - List any prior names, including nicknames or aliases.\n3. **Date of Birth** - Specify in mm/dd/yyyy format.\n4. **Country of Citizenship** - Indicate the applicant's country of citizenship.\n5. **Current U.S. Physical Address** - Provide the complete address where the applicant resides.\n\n## **Supporting Documents**\nThe following documents are typically required:\n- **Passport**: Valid passport from your country of citizenship.\n- **Form I-693**: Medical examination report completed by a civil surgeon.\n\n## **Submission Method**\n- Application must be mailed to the appropriate USCIS service center based on the applicant's location.\n\n## **Processing Time**\n- Processing times can vary significantly, usually taking several months.\n\n## **Application Fees**\n- The filing fee for Form I-485 is **$1,140**. Additional fees may apply for biometrics.\n\n## **Language**\n- The form and all communications must be conducted in **English**.\n\n**Disclaimer**: Ensure all information is accurate and complete to avoid delays or rejection in processing your application."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-485.pdf",
+  "discovered_by_query": "USA immigration Permanent Residence requirements PDF official",
+  "downloaded_file_path": "downloads/usa/permanent_residence/i-485.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-22T10:55:14.392050",
+  "updated_at": "2025-07-22T10:55:14.392050"
+}

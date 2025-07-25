@@ -1,0 +1,74 @@
+{
+  "id": 41,
+  "country": "USA",
+  "visa_category": "Student Visa",
+  "form_name": "U.S. Visa: Reciprocity and Civil Documents by Country",
+  "form_id": null,
+  "description": "Information regarding visa reciprocity fees and civil documents required by country for U.S. visa applicants.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "Varies based on reciprocity",
+    "country": "USA",
+    "form_id": null,
+    "language": "English",
+    "form_name": "U.S. Visa: Reciprocity and Civil Documents by Country",
+    "description": "Information regarding visa reciprocity fees and civil documents required by country for U.S. visa applicants.",
+    "last_fetched": "2025-07-23T10:14:53.049993",
+    "visa_category": "Student Visa",
+    "document_format": "HTML",
+    "processing_time": null,
+    "required_fields": [
+      {
+        "name": "Visa Classification",
+        "type": "text",
+        "description": "The type of nonimmigrant visa you are applying for.",
+        "example_value": "F-1 (student visa)"
+      },
+      {
+        "name": "Fee",
+        "type": "number",
+        "description": "The reciprocity fee you must pay in addition to the nonimmigrant visa application fee.",
+        "example_value": "Varies"
+      },
+      {
+        "name": "Number of Entries",
+        "type": "text",
+        "description": "The number of times you may seek entry into the United States with that visa.",
+        "example_value": "M (multiple times)"
+      },
+      {
+        "name": "Validity Period",
+        "type": "text",
+        "description": "The duration for which the visa is valid from the date it is issued.",
+        "example_value": "60 months"
+      }
+    ],
+    "submission_method": "Online",
+    "target_applicants": "Nonimmigrant visa applicants from various countries",
+    "discovered_by_query": "USA Student Visa visa supporting documents government",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/Visa-Reciprocity-and-Civil-Documents-by-Country.html",
+    "downloaded_file_path": "downloads/usa/batch_process/Visa-Reciprocity-and-Civil-Documents-by-Country.html",
+    "supporting_documents": [
+      "Passport",
+      "Civil documents as required by country"
+    ],
+    "extracted_text_length": 11938,
+    "full_markdown_summary": "# U.S. Visa: Reciprocity and Civil Documents by Country\n\n## Overview\nThis document provides essential information regarding the reciprocity fees and civil documents required for U.S. visa applicants from various countries. It is particularly relevant for nonimmigrant visa applicants, including those applying for student visas (F-1).\n\n## What is Reciprocity?\nReciprocity refers to the principle that when a foreign government imposes fees on U.S. citizens for certain types of visas, the United States will impose a similar fee on citizens of that country for comparable visa types. Nonimmigrant visa applicants from certain countries may be required to pay a visa issuance fee after their application is approved.\n\n## How to Find Out if You Have to Pay a Reciprocity Fee\n1. **Select Your Country**: Choose your country of nationality from the list provided on the left side menu.\n2. **Select Visa Classifications**: Click on the Visa Classifications tab.\n3. **Choose Visa Type**: Select the type of visa you have applied for (e.g., B-1/B-2 for business or pleasure, F-1 for student visa).\n4. **View Reciprocity Information**: The reciprocity information for your country will be displayed, including:\n   - **Visa Classification**: The type of nonimmigrant visa you are applying for.\n   - **Fee**: The reciprocity fee you must pay, in addition to the nonimmigrant visa application fee (MRV fee).\n   - **Number of Entries**: Indicates how many times you may enter the U.S. with that visa (e.g., “M” for multiple entries).\n   - **Validity Period**: Duration for which the visa is valid from the date of issuance.\n\n## Difference Between Reciprocity Fee and Nonimmigrant Visa Application Fee\n- **Nonimmigrant Visa Application Fee (MRV Fee)**: A nonrefundable fee paid by most applicants for U.S. visas, covering the costs associated with processing the application.\n- **Reciprocity Fee**: Charged only to approved nonimmigrant visa applicants from certain countries, based on the principle of reciprocity.\n\n## Supporting Documents\nApplicants may need to provide various civil documents as required by their country of nationality, along with their passport.\n\n## Conclusion\nThis document serves as a crucial resource for understanding the requirements and fees associated with applying for a U.S. visa, particularly for nonimmigrant applicants from different countries."
+  },
+  "validation_warnings": [
+    "Fee amount missing for specific visa classifications",
+    "Processing times for visa applications not specified",
+    "Submission methods for required documents unclear",
+    "No specific examples of civil documents required by country provided",
+    "Ambiguity in the definition of 'validity period' for visas"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/Visa-Reciprocity-and-Civil-Documents-by-Country.html",
+  "discovered_by_query": "USA Student Visa visa supporting documents government",
+  "downloaded_file_path": "downloads/usa/batch_process/Visa-Reciprocity-and-Civil-Documents-by-Country.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:14:57.135638",
+  "updated_at": "2025-07-23T10:14:57.135638"
+}

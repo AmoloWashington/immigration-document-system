@@ -1,0 +1,87 @@
+{
+  "id": 43,
+  "country": "USA",
+  "visa_category": "Student Visa",
+  "form_name": "Form I-20",
+  "form_id": "I-20",
+  "description": "Certificate of Eligibility for Nonimmigrant Student Status.",
+  "governing_authority": "U.S. Department of Homeland Security",
+  "structured_data": {
+    "fees": "No fee for the form itself, but there may be fees for visa application.",
+    "country": "USA",
+    "form_id": "I-20",
+    "language": "English",
+    "form_name": "Form I-20",
+    "description": "Certificate of Eligibility for Nonimmigrant Student Status.",
+    "last_fetched": "2025-07-24T11:14:10.625780",
+    "visa_category": "Student Visa",
+    "document_format": "PDF",
+    "processing_time": "Varies based on the school and processing times.",
+    "required_fields": [
+      {
+        "name": "Student's Name",
+        "type": "text",
+        "description": "Full name of the student applying for the visa.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "The birth date of the student.",
+        "example_value": "2000-01-01"
+      },
+      {
+        "name": "Program of Study",
+        "type": "text",
+        "description": "The academic program the student intends to pursue.",
+        "example_value": "Bachelor of Science in Computer Science"
+      },
+      {
+        "name": "Start Date",
+        "type": "date",
+        "description": "The date when the student's program begins.",
+        "example_value": "2023-09-01"
+      },
+      {
+        "name": "End Date",
+        "type": "date",
+        "description": "The date when the student's program ends.",
+        "example_value": "2027-05-15"
+      }
+    ],
+    "submission_method": "Online or through the designated school official.",
+    "target_applicants": "International students applying for a student visa to study in the USA.",
+    "discovered_by_query": "USA Student Visa visa application forms PDF official government",
+    "governing_authority": "U.S. Department of Homeland Security",
+    "official_source_url": "https://studyinthestates.dhs.gov/sites/default/files/M-1%20Form%20I-20%20SAMPLE.pdf",
+    "validation_warnings": [
+      "Text extraction failed due to encoding issues."
+    ],
+    "downloaded_file_path": "downloads\\usa\\student_visa\\M-120Form20I-2020SAMPLE.pdf",
+    "supporting_documents": [
+      "Passport",
+      "Financial Support Evidence",
+      "Admission Letter from the School"
+    ],
+    "extracted_text_length": 63653,
+    "full_markdown_summary": "# Form I-20 Overview\n\nThe **Form I-20**, officially known as the **Certificate of Eligibility for Nonimmigrant Student Status**, is a crucial document for international students wishing to study in the United States. This form is issued by U.S. schools that are authorized by the Student and Exchange Visitor Program (SEVP).\n\n## Purpose\nThe I-20 form serves as proof that a student has been accepted into a program of study and is eligible for a student visa (F or M visa).\n\n## Target Applicants\nThis form is intended for international students who have been accepted into a U.S. educational institution and are applying for a student visa.\n\n## Required Fields\nThe following fields are typically required on the Form I-20:\n- **Student's Name**: Full name of the student applying for the visa.\n- **Date of Birth**: The birth date of the student.\n- **Program of Study**: The academic program the student intends to pursue.\n- **Start Date**: The date when the student's program begins.\n- **End Date**: The date when the student's program ends.\n\n## Supporting Documents\nApplicants must provide several supporting documents, including:\n- Passport\n- Financial Support Evidence\n- Admission Letter from the School\n\n## Submission Method\nThe Form I-20 can be submitted online or through the designated school official.\n\n## Processing Time\nProcessing times for the I-20 can vary based on the school and other factors.\n\n## Fees\nThere is no fee for the form itself, but applicants should be aware of potential fees associated with the visa application process.\n\n## Additional Information\nFor more details, applicants can refer to the official source: [Form I-20 Sample](https://studyinthestates.dhs.gov/sites/default/files/M-1%20Form%20I-20%20SAMPLE.pdf).\n\n## Note\nText extraction from the document failed due to encoding issues, and thus specific content from the document could not be retrieved. The summary is based on the metadata and general knowledge of the form."
+  },
+  "validation_warnings": [
+    "Specific content from the document could not be retrieved due to encoding issues, leading to potential missing required information.",
+    "Student's Name field is not provided in the extracted data.",
+    "Date of Birth field is not provided in the extracted data.",
+    "Program of Study field is not provided in the extracted data.",
+    "Start Date field is not provided in the extracted data.",
+    "End Date field is not provided in the extracted data.",
+    "Financial Support Evidence requirement is not confirmed in the extracted data.",
+    "Admission Letter from the School requirement is not confirmed in the extracted data."
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://studyinthestates.dhs.gov/sites/default/files/M-1%20Form%20I-20%20SAMPLE.pdf",
+  "discovered_by_query": "USA Student Visa visa application forms PDF official government",
+  "downloaded_file_path": "downloads\\usa\\student_visa\\M-120Form20I-2020SAMPLE.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-24T08:14:24.490492",
+  "updated_at": "2025-07-24T08:14:24.490492"
+}

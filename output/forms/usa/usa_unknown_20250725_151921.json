@@ -1,0 +1,90 @@
+{
+  "id": 32,
+  "country": "USA",
+  "visa_category": "Immigrant Visa",
+  "form_name": "Applicant Interview",
+  "form_id": null,
+  "description": "Instructions and information regarding the applicant interview process for immigrant visas.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "Varies, based on visa application fees",
+    "country": "USA",
+    "form_id": null,
+    "language": "English",
+    "form_name": "Applicant Interview",
+    "description": "Instructions and information regarding the applicant interview process for immigrant visas.",
+    "last_fetched": "2025-07-23T10:11:10.918549",
+    "visa_category": "Immigrant Visa",
+    "document_format": "HTML",
+    "processing_time": null,
+    "required_fields": [
+      {
+        "name": "Appointment Letter",
+        "type": "text",
+        "description": "The interview appointment letter received from NVC.",
+        "example_value": "NVC Appointment Letter"
+      },
+      {
+        "name": "Passport",
+        "type": "text",
+        "description": "An unexpired passport valid for six months beyond the intended date of entry into the United States.",
+        "example_value": "Passport No. 123456789"
+      },
+      {
+        "name": "Photographs",
+        "type": "text",
+        "description": "Two identical color photographs for each applicant that meet the general photograph requirements.",
+        "example_value": "Two color photographs"
+      },
+      {
+        "name": "DS-260 Confirmation Page",
+        "type": "text",
+        "description": "Confirmation page from the DS-260 visa application.",
+        "example_value": "DS-260 Confirmation No. 987654321"
+      },
+      {
+        "name": "Supporting Documents",
+        "type": "text",
+        "description": "Original or certified copies of all civil documents uploaded into CEAC.",
+        "example_value": "Birth Certificate, Marriage Certificate"
+      },
+      {
+        "name": "English Translations",
+        "type": "text",
+        "description": "Translations of documents requiring English translation, if not sent to NVC.",
+        "example_value": "Translated Birth Certificate"
+      },
+      {
+        "name": "Visa Fees",
+        "type": "number",
+        "description": "Any unpaid visa application fees that need to be paid at the U.S. Embassy or Consulate.",
+        "example_value": 0
+      }
+    ],
+    "submission_method": "In-person at the U.S. Embassy or Consulate",
+    "target_applicants": "Principal applicants and accompanying family members applying for an immigrant visa.",
+    "discovered_by_query": "USA embassy Work Visa visa application",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-10-prepare-for-the-interview/step-11-applicant-interview.html",
+    "downloaded_file_path": "downloads/usa/batch_process/step-11-applicant-interview.html",
+    "supporting_documents": [
+      "Appointment Letter",
+      "Passport",
+      "Photographs",
+      "DS-260 Confirmation Page",
+      "Supporting Documents",
+      "English Translations"
+    ],
+    "extracted_text_length": 7809,
+    "full_markdown_summary": "# Applicant Interview\n\n## Overview\nThe Applicant Interview is a crucial step in the immigrant visa process. It is conducted at a U.S. Embassy or Consulate and determines the eligibility of the applicant for an immigrant visa.\n\n## Important Instructions\n- **Preparation**: Ensure you have followed the U.S. Embassy or Consulate interview preparation instructions prior to your interview.\n- **Interview Date**: Attend the interview on the scheduled date and time with your printed visa application (DS-260) confirmation page.\n- **Fingerprinting**: Digital fingerprint scans will be taken during the interview.\n\n## Important Notice\nDo not make permanent financial commitments (e.g., selling property, resigning from your job) until you have received your immigrant visa.\n\n## Who Must Attend the Interview\n- The principal applicant, regardless of age.\n- Family members immigrating with the principal applicant who are at least 14 years old on the day of the interview.\n- Any family member with their own petition/case number.\n\n## Who Is Not Required to Attend\n- Family members under the age of 14 on the day of the interview.\n- Family members who will immigrate at a later date and travel separately.\n- The sponsor/petitioner is not required but may attend.\n\n## Required Documents\nApplicants must bring the following documents to the interview:\n1. **Appointment Letter**: The interview appointment letter received from NVC.\n2. **Passport**: An unexpired passport valid for six months beyond the intended date of entry into the U.S.\n3. **Photographs**: Two identical color photographs for each applicant.\n4. **DS-260 Confirmation Page**: Confirmation page from the DS-260 visa application.\n5. **Supporting Documents**: Original or certified copies of all civil documents uploaded into CEAC.\n6. **English Translations**: Translations of documents requiring English translation, if not sent to NVC.\n7. **Visa Fees**: Any unpaid visa application fees must be paid at the U.S. Embassy or Consulate.\n\n## Failure to Appear for Interview\nIf you cannot attend your scheduled interview, contact the U.S. Embassy or Consulate as soon as possible. Failure to do so within one year may result in termination of your case and cancellation of your immigrant visa petition.\n\n## Rescheduling the Interview\nInstructions for rescheduling your appointment are available at the U.S. Embassy or Consulate interview preparation instructions.\n\n## Additional Information\nFor detailed information about your visa interview, visit the U.S. Embassy or Consulate interview preparation instructions specific to your interview location."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-10-prepare-for-the-interview/step-11-applicant-interview.html",
+  "discovered_by_query": "USA embassy Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/step-11-applicant-interview.html",
+  "document_format": "HTML",
+  "processing_status": "validated",
+  "created_at": "2025-07-23T10:11:14.625380",
+  "updated_at": "2025-07-23T10:11:14.625380"
+}

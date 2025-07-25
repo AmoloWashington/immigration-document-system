@@ -1,0 +1,100 @@
+{
+  "id": 11,
+  "country": "USA",
+  "visa_category": "Tourist Visa",
+  "form_name": "Nonimmigrant Visa Application",
+  "form_id": "DS-156",
+  "description": "Application form for individuals seeking a nonimmigrant visa for visits to the United States for tourism or business.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "Varies",
+    "country": "USA",
+    "form_id": "DS-156",
+    "language": "English",
+    "form_name": "Nonimmigrant Visa Application",
+    "description": "Application form for individuals seeking a nonimmigrant visa for visits to the United States for tourism or business.",
+    "last_fetched": "2025-07-22T14:01:34.742251",
+    "visa_category": "Tourist Visa",
+    "document_format": "PDF",
+    "processing_time": "Varies",
+    "required_fields": [
+      {
+        "name": "Passport Number",
+        "type": "text",
+        "description": "The unique number assigned to your passport.",
+        "example_value": "123456789"
+      },
+      {
+        "name": "Place of Issuance",
+        "type": "text",
+        "description": "The city and country where your passport was issued.",
+        "example_value": "Los Angeles, USA"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Your birth date in the format dd-mmm-yyyy.",
+        "example_value": "01-Jan-1990"
+      },
+      {
+        "name": "Home Address",
+        "type": "text",
+        "description": "Your full residential address including apartment number, street, city, state or province, postal zone, and country.",
+        "example_value": "456 Elm St, Springfield, IL, 62704, USA"
+      },
+      {
+        "name": "Marital Status",
+        "type": "text",
+        "description": "Your current marital status.",
+        "example_value": "Single"
+      },
+      {
+        "name": "Purpose of Trip",
+        "type": "text",
+        "description": "The main reason for traveling to the United States.",
+        "example_value": "Tourism"
+      },
+      {
+        "name": "Have you ever been in the U.S.?",
+        "type": "text",
+        "description": "Indicate if you have previously traveled to the United States.",
+        "example_value": "Yes"
+      },
+      {
+        "name": "Spouse's Full Name",
+        "type": "text",
+        "description": "Full name of your spouse, including the maiden name if applicable.",
+        "example_value": "Jane Doe"
+      }
+    ],
+    "submission_method": "Online, Mail, or In-person",
+    "target_applicants": "Individuals applying for B-1/B-2 visas for tourism or business purposes.",
+    "discovered_by_query": "USA immigration Tourist Visa requirements PDF official",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/dam/visas/DS-156.pdf",
+    "downloaded_file_path": "downloads\\usa\\tourist_visa\\DS-156.pdf",
+    "supporting_documents": [
+      "Passport",
+      "Photograph",
+      "Proof of financial means",
+      "Travel itinerary"
+    ],
+    "extracted_text_length": 7223,
+    "full_markdown_summary": "# Nonimmigrant Visa Application (DS-156)\n\n## Overview\nThe **Nonimmigrant Visa Application (DS-156)** is an application required for foreign nationals seeking to visit the United States for tourism (B-2) or business (B-1) purposes. This form collects personal information and travel-related details, helping the U.S. Department of State evaluate the eligibility of applicants for nonimmigrant visas.\n\n## Applicant Information Required\n1. **Passport Information**\n   - Passport Number\n   - Place of Issuance (City, Country)\n   - Date of Issuance\n   - Expiration Date\n2. **Personal Details**\n   - Surname and First Names\n   - Other Names Used (including maiden names)\n   - Date and Place of Birth\n   - Nationality\n   - Gender\n   - Home Address (full residential details)\n   - Contact Numbers (home, mobile, and business)\n3. **Marital Status and Family Details**\n   - Current marital status (Married, Single, etc.)\n   - Spouse's Name and Date of Birth\n4. **Travel Plans**\n   - Intended Arrival Date in the U.S.\n   - Address during stay in the U.S.\n   - Purpose of visit (tourism, business, etc.)\n5. **Background Information**\n   - Previous visits to the U.S. (dates, purpose, duration)\n   - Visa history (any previously issued or denied U.S. visas)\n   - Criminal history (arrests, convictions, or immigration violations)\n\n## Important Instructions\n- Applicants must **type or print** their answers clearly.\n- Include a recent passport-size photograph in the provided space.\n- After filling out the form, applicants should ensure honesty in all responses, as any **false information** can lead to visa denial.\n\n## Submission\n- The application can be submitted **online**, via **mail**, or in **person** at the consulate or embassy.\n- Fees and processing times may vary based on the specific situation and location of application submission.\n\n## Additional Considerations\n- Applicants should also be prepared to submit **supporting documents** including their passport, proof of financial capacity, and travel itinerary.\n- The application is subject to various eligibility criteria defined by U.S. immigration laws, including inadmissibility factors, which applicants should review carefully before applying.\n\nFor more detailed instructions, refer to the U.S. Department of State guidelines on the Nonimmigrant Visa Application process."
+  },
+  "validation_warnings": [
+    "Fees and processing times are mentioned but not specified in the content.",
+    "Submission methods are described but not detailed, lacking specific options for online, mail, or in-person submission.",
+    "Potential ambiguity in intended address during stay in the U.S., as it requires a full address not specified in the content.",
+    "Passport-size photograph requirement is mentioned but lacks details on specific dimensions or recentness.",
+    "No information provided on supporting document requirements beyond general mention."
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/dam/visas/DS-156.pdf",
+  "discovered_by_query": "USA immigration Tourist Visa requirements PDF official",
+  "downloaded_file_path": "downloads\\usa\\tourist_visa\\DS-156.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-22T11:01:46.826484",
+  "updated_at": "2025-07-22T11:01:46.826484"
+}

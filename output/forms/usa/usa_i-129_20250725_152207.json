@@ -1,0 +1,77 @@
+{
+  "id": 1,
+  "country": "USA",
+  "visa_category": "Work Visa",
+  "form_name": "Petition for a Nonimmigrant Worker",
+  "form_id": "I-129",
+  "description": "Form used to petition for a nonimmigrant worker in various classifications.",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "$460 application fee; additional fees may apply based on the visa type and processing method.",
+    "country": "USA",
+    "form_id": "I-129",
+    "language": "English",
+    "form_name": "Petition for a Nonimmigrant Worker",
+    "description": "Form used to petition for a nonimmigrant worker in various classifications.",
+    "last_fetched": "2025-07-22T10:47:13.786181",
+    "visa_category": "Work Visa",
+    "document_format": "PDF",
+    "processing_time": "Varies; typically several months depending on the type of petition and current workload.",
+    "required_fields": [
+      {
+        "name": "Petitioner Legal Name",
+        "type": "text",
+        "description": "Name of the individual or organization submitting the petition.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Mailing Address",
+        "type": "text",
+        "description": "Complete mailing address for the petitioner.",
+        "example_value": "123 Main St, Springfield, IL 62701"
+      },
+      {
+        "name": "Federal Employer Identification Number (FEIN)",
+        "type": "text",
+        "description": "Unique number assigned by the IRS to the employer.",
+        "example_value": "12-3456789"
+      },
+      {
+        "name": "Requested Nonimmigrant Classification",
+        "type": "text",
+        "description": "The classification symbol being requested for the beneficiary.",
+        "example_value": "H-1B"
+      },
+      {
+        "name": "Requested Action",
+        "type": "text",
+        "description": "The action being requested, such as extension of stay or change of employer.",
+        "example_value": "Change of employer"
+      }
+    ],
+    "submission_method": "Mail or online through USCIS designated submission portals.",
+    "target_applicants": "Employers filing petitions for nonimmigrant workers.",
+    "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-129.pdf",
+    "downloaded_file_path": "downloads\\usa\\work_visa\\i-129.pdf",
+    "supporting_documents": [
+      "Proof of the beneficiary's qualifications (e.g., degrees, certifications)",
+      "Job offer letter from the petitioning employer",
+      "Evidence of the employer's ability to pay the offered wage",
+      "Form G-28, if applicable (Notice of Entry of Appearance as Attorney)",
+      "Copy of the beneficiary's passport"
+    ],
+    "extracted_text_length": 71368,
+    "full_markdown_summary": "# Form I-129: Petition for a Nonimmigrant Worker\n\n## Overview\nThe Form I-129 is a petition used to request the classification of a nonimmigrant worker in the United States. This form is essential for employers wishing to sponsor foreign workers for various visa types, including H-1B, L-1, O-1, and others.\n\n### Governing Authority\n- **Agency**: U.S. Citizenship and Immigration Services (USCIS)\n- **OMB Number**: 1615-0009\n- **Expiration Date**: 12/31/2027\n\n### Who Should Use This Form\nThis form should be completed by:\n- Employers seeking to file for nonimmigrant workers.\n- Individuals filing for themselves or on behalf of a group (for certain petition categories).\n\n## Key Sections of the Form\n1. **Petitioner Information**: Details about the individual or organization submitting the petition, including contact information and tax identification numbers.\n2. **Information About This Petition**: Request for nonimmigrant classification and the basis for such classification (e.g., new employment, continuation of previously approved employment).\n3. **Beneficiary Information**: Information about each beneficiary of the petition, including names, contact, and biographical data.\n4. **Processing Information**: Details on where notifications should be sent upon approval and information regarding the beneficiaries' passport and travel details.\n5. **Signature Confirmation**: The form must be signed and dated by the petitioner or an authorized representative.\n\n## Required Fields\n- **Legal Name of Petitioner**: Full name of the individual or organization.\n- **Mailing Address**: Complete address for correspondence.\n- **Federal Employer Identification Number**: Tax ID for the employer.\n- **Requested Nonimmigrant Classification**: The specific visa category being requested.\n- **Requested Action**: The type of processing action being sought (e.g., change of status, new employment).\n\n## Supporting Documents\nWhen submitting Form I-129, the following documents may be required:\n- Evidence demonstrating the beneficiary's qualifications, such as degrees or certifications.\n- A job offer letter detailing the position and offered salary.\n- Proof of the employer's ability to pay the required wage for the sponsored position.\n\n## Submission & Fees\n- **Submission Method**: Forms can be submitted via mail or through USCIS's online application portals, depending on the petition type.\n- **Processing Time**: Varies widely, but typically takes several months depending on workload and type of petition.\n- **Fees**: A base fee of $460 is required, with potential additional costs based on the specific visa category and processing options.\n\n## Notes\n- Ensure all parts of the form are meticulously completed. Partial or inaccurate information can lead to delays or denials.\n- Be aware of any specific instructions or limitations regarding simultaneous filings, especially for beneficiaries currently in the United States on other statuses."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-129.pdf",
+  "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+  "downloaded_file_path": "downloads\\usa\\work_visa\\i-129.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-22T07:47:21.953677",
+  "updated_at": "2025-07-22T07:47:21.953677"
+}

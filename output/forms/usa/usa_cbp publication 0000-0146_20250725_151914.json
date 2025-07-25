@@ -1,0 +1,70 @@
+{
+  "id": 34,
+  "country": "USA",
+  "visa_category": "Visitor Visa",
+  "form_name": "Welcome to the United States",
+  "form_id": "CBP Publication 0000-0146",
+  "description": "A guide for international visitors entering the United States, providing essential information on preparation, entry requirements, and customs procedures.",
+  "governing_authority": "U.S. Customs and Border Protection",
+  "structured_data": {
+    "fees": null,
+    "country": "USA",
+    "form_id": "CBP Publication 0000-0146",
+    "language": "English",
+    "form_name": "Welcome to the United States",
+    "description": "A guide for international visitors entering the United States, providing essential information on preparation, entry requirements, and customs procedures.",
+    "last_fetched": "2025-07-23T10:11:57.788039",
+    "visa_category": "Visitor Visa",
+    "document_format": "PDF",
+    "processing_time": null,
+    "required_fields": [
+      {
+        "name": "Passport",
+        "type": "text",
+        "description": "A valid passport required for entry, typically valid for six months beyond the intended stay.",
+        "example_value": "Valid passport from country of origin"
+      },
+      {
+        "name": "Visa",
+        "type": "text",
+        "description": "An appropriate unexpired visa if applicable, must be carried and not packed.",
+        "example_value": "Nonimmigrant visa"
+      },
+      {
+        "name": "Health Certificate for Pets",
+        "type": "text",
+        "description": "Required if bringing a pet, must include proof of rabies vaccination.",
+        "example_value": "Health certificate from veterinarian"
+      }
+    ],
+    "submission_method": null,
+    "target_applicants": "International visitors, including students, tourists, and business travelers.",
+    "discovered_by_query": "USA immigration Student Visa requirements PDF official",
+    "governing_authority": "U.S. Customs and Border Protection",
+    "official_source_url": "https://www.cbp.gov/sites/default/files/documents/WelcomeToTheUS.pdf",
+    "downloaded_file_path": "downloads/usa/batch_process/WelcomeToTheUS.pdf",
+    "supporting_documents": [
+      "Passport",
+      "Visa (if applicable)",
+      "Health certificate for pets",
+      "Notarized travel permission letters for minors"
+    ],
+    "extracted_text_length": 51343,
+    "full_markdown_summary": "# Welcome to the United States\n\n## Overview\nThis document serves as a guide for international visitors entering the United States, published by the U.S. Customs and Border Protection (CBP). It provides essential information to ensure a smooth entry process for visitors, including students, tourists, and business travelers.\n\n## Contents\n- **Introduction**: Overview of CBP's mission and the importance of cooperation during the entry process.\n- **Preparing For Your Trip**: A checklist for international visitors, including:\n  - Valid passport requirements (must be valid for six months beyond intended stay).\n  - Visa requirements for nonimmigrant visitors.\n  - Health certificates for pets traveling with visitors.\n  - Notarized travel permission letters for minors traveling without parents.\n- **Visa Waiver Program (VWP)**: Information on eligibility and requirements for visitors from participating countries.\n- **Passenger Processing**: Details on the CBP inspection process upon arrival, including what to expect and how to navigate through customs.\n- **Helpful Tips**: Suggestions for a smooth travel experience, including prohibited items and links to helpful websites.\n\n## Important Notes\n- The information in this brochure was accurate as of March 2007. For the most current information, visitors are encouraged to check the CBP website at [www.cbp.gov](http://www.cbp.gov).\n- Visitors should carry their passport and visa (if applicable) in their hand luggage, not packed away.\n\n## Conclusion\nThis guide is designed to assist international visitors in preparing for their trip to the United States, ensuring they have the necessary documentation and understanding of the entry process."
+  },
+  "validation_warnings": [
+    "Information is outdated; last verified in March 2007.",
+    "Fee amount for visa applications not specified.",
+    "Processing times for visa applications not included.",
+    "Submission methods for required documents not detailed.",
+    "No mention of current health and safety regulations related to COVID-19."
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://www.cbp.gov/sites/default/files/documents/WelcomeToTheUS.pdf",
+  "discovered_by_query": "USA immigration Student Visa requirements PDF official",
+  "downloaded_file_path": "downloads/usa/batch_process/WelcomeToTheUS.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:12:02.449344",
+  "updated_at": "2025-07-23T10:12:02.449344"
+}

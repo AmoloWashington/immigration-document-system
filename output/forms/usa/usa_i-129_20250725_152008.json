@@ -1,0 +1,68 @@
+{
+  "id": 21,
+  "country": "USA",
+  "visa_category": "Temporary Worker Visa",
+  "form_name": "Petition for a Nonimmigrant Worker",
+  "form_id": "I-129",
+  "description": "Form used to petition for a nonimmigrant worker to come to the U.S. for temporary employment.",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "$460",
+    "country": "USA",
+    "form_id": "I-129",
+    "language": "English",
+    "form_name": "Petition for a Nonimmigrant Worker",
+    "description": "Form used to petition for a nonimmigrant worker to come to the U.S. for temporary employment.",
+    "last_fetched": "2025-07-23T10:06:44.415201",
+    "visa_category": "Temporary Worker Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies, typically several months",
+    "required_fields": [
+      {
+        "name": "Petitioner's Information",
+        "type": "text",
+        "description": "Details about the employer filing the petition.",
+        "example_value": "ABC Corporation"
+      },
+      {
+        "name": "Beneficiary's Information",
+        "type": "text",
+        "description": "Details about the foreign worker for whom the petition is being filed.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Job Offer Details",
+        "type": "text",
+        "description": "Information about the job being offered to the foreign worker.",
+        "example_value": "Software Engineer"
+      }
+    ],
+    "submission_method": "Mail",
+    "target_applicants": "Foreign citizens seeking temporary employment in the U.S.",
+    "discovered_by_query": "USA embassy Work Visa visa application",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html",
+    "downloaded_file_path": "downloads/usa/batch_process/temporary-worker-visas.html",
+    "supporting_documents": [
+      "Labor Certification (if required)",
+      "Proof of Employer's Ability to Pay",
+      "Beneficiary's Educational Credentials",
+      "Job Offer Letter"
+    ],
+    "extracted_text_length": 19015,
+    "full_markdown_summary": "# Temporary Worker Visas\n\n## Overview\nA citizen of a foreign country who wishes to work in the United States must first obtain the appropriate visa. If the employment is for a fixed period, the applicant can apply for a temporary employment visa. There are **11 temporary worker visa categories** available.\n\n## Visa Categories\n1. **H-1B**: For individuals in specialty occupations requiring at least a bachelor’s degree or equivalent experience.\n2. **H-1B1**: For professionals from Chile or Singapore in specialty occupations. Not petition-based.\n3. **H-2A**: For temporary agricultural workers from designated countries.\n4. **H-2B**: For temporary non-agricultural workers from designated countries.\n5. **H-3**: For trainees in fields unavailable in their home country.\n6. **L**: For intracompany transferees in managerial or specialized roles.\n7. **O**: For individuals with extraordinary abilities in various fields.\n8. **P-1**: For recognized athletes or entertainment group members.\n9. **P-2**: For artists or entertainers in reciprocal exchange programs.\n10. **P-3**: For artists or entertainers in unique cultural programs.\n11. **Q-1**: For participants in international cultural exchange programs.\n\n## Labor Certification\nCertain visa categories require an approved labor certification. The prospective employer must apply for this certification with the **Department of Labor** before filing the petition using **Form I-129** with USCIS.\n\n## Petition Approval\nSome temporary worker categories have limits on the total number of petitions that can be approved each year. It is crucial for applicants to check the specific requirements and limitations for their visa category.\n\n## Conclusion\nThis document provides essential information for foreign nationals seeking temporary work in the U.S. It outlines the necessary steps, categories, and requirements for obtaining a temporary worker visa."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/employment/temporary-worker-visas.html",
+  "discovered_by_query": "USA embassy Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/temporary-worker-visas.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:06:47.841892",
+  "updated_at": "2025-07-23T10:06:47.841892"
+}

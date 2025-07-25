@@ -58,24 +58,30 @@ class ExportService:
             st.error(f"Error uploading to Cloudinary: {e}")
             return None
 
+    def _json_serializer(self, obj):
+        """JSON serializer function that handles datetime objects"""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+
     def export_json(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes], Optional[str]]:
         """Export form data as JSON, save locally, upload to Cloudinary, and return file path, content, and Cloudinary URL."""
-        
+
         # Fix: Ensure country and form_id are strings before calling .lower()
         country = (form_data.get('country') or 'unknown').lower()
         form_id = (form_data.get('form_id') or 'unknown').lower()
 
         if not filename:
             filename = f"{country}_{form_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        
+
         country_dir = self.output_dir / "forms" / country
         country_dir.mkdir(parents=True, exist_ok=True)
-        
+
         file_path = country_dir / filename
         cloudinary_url = None
-        
+
         try:
-            json_content = json.dumps(form_data, indent=2, ensure_ascii=False)
+            json_content = json.dumps(form_data, indent=2, ensure_ascii=False, default=self._json_serializer)
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(json_content)
             
@@ -318,4 +324,164 @@ class ExportService:
             return str(report_path), report_full_content.encode('utf-8'), cloudinary_report_url
         except Exception as e:
             st.error(f"Error generating comprehensive report: {e}")
+            return "", None, None
+
+    def export_full_database(self, export_format: str = "json") -> Tuple[str, Optional[bytes], Optional[str]]:
+        """Export complete database with all tables and fields in specified format"""
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        cloudinary_url = None
+
+        try:
+            # Get all forms with complete data
+            all_forms = self.db_manager.get_forms()
+
+            if not all_forms:
+                st.warning("No data found in database to export.")
+                return "", None, None
+
+            # Flatten all data including structured_data fields
+            flattened_data = []
+            for form in all_forms:
+                row = {}
+
+                # Basic form fields
+                row['id'] = form.get('id')
+                row['country'] = form.get('country')
+                row['visa_category'] = form.get('visa_category')
+                row['form_name'] = form.get('form_name')
+                row['form_id'] = form.get('form_id')
+                row['description'] = form.get('description')
+                row['governing_authority'] = form.get('governing_authority')
+                row['official_source_url'] = form.get('official_source_url')
+                row['discovered_by_query'] = form.get('discovered_by_query')
+                row['downloaded_file_path'] = form.get('downloaded_file_path')
+                row['document_format'] = form.get('document_format')
+                row['processing_status'] = form.get('processing_status')
+                row['created_at'] = form.get('created_at')
+                row['updated_at'] = form.get('updated_at')
+
+                # Validation warnings
+                warnings = form.get('validation_warnings', [])
+                row['validation_warnings'] = '; '.join(warnings) if warnings else ''
+                row['validation_warnings_count'] = len(warnings) if warnings else 0
+
+                # Lawyer review data
+                lawyer_review = form.get('lawyer_review', {})
+                row['lawyer_review_status'] = lawyer_review.get('approval_status', 'Pending Review')
+                row['lawyer_reviewer_name'] = lawyer_review.get('reviewer_name', '')
+                row['lawyer_review_date'] = lawyer_review.get('review_date', '')
+                row['lawyer_review_comments'] = lawyer_review.get('comments', '')
+
+                # Structured data fields
+                structured_data = form.get('structured_data', {})
+                if structured_data:
+                    row['target_applicants'] = structured_data.get('target_applicants', '')
+                    row['submission_method'] = structured_data.get('submission_method', '')
+                    row['processing_time'] = structured_data.get('processing_time', '')
+                    row['fees'] = structured_data.get('fees', '')
+                    row['language'] = structured_data.get('language', '')
+
+                    # Required fields
+                    required_fields = structured_data.get('required_fields', [])
+                    if required_fields:
+                        for i, field in enumerate(required_fields, 1):
+                            if i <= 10:  # Limit to first 10 fields to avoid too many columns
+                                row[f'required_field_{i}_name'] = field.get('name', '')
+                                row[f'required_field_{i}_type'] = field.get('type', '')
+                                row[f'required_field_{i}_description'] = field.get('description', '')
+                                row[f'required_field_{i}_example'] = field.get('example_value', '')
+
+                    # Supporting documents
+                    supporting_docs = structured_data.get('supporting_documents', [])
+                    row['supporting_documents'] = '; '.join(supporting_docs) if supporting_docs else ''
+                    row['supporting_documents_count'] = len(supporting_docs) if supporting_docs else 0
+
+                    # Extract text length
+                    row['extracted_text_length'] = structured_data.get('extracted_text_length', 0)
+                else:
+                    # Set empty values for structured data fields
+                    row['target_applicants'] = ''
+                    row['submission_method'] = ''
+                    row['processing_time'] = ''
+                    row['fees'] = ''
+                    row['language'] = ''
+                    row['supporting_documents'] = ''
+                    row['supporting_documents_count'] = 0
+                    row['extracted_text_length'] = 0
+
+                # Get document information
+                document_info = self.db_manager.get_document_by_form_id(form['id'])
+                if document_info:
+                    row['document_filename'] = document_info.get('filename', '')
+                    row['document_file_format'] = document_info.get('file_format', '')
+                    row['document_file_size_bytes'] = document_info.get('file_size_bytes', 0)
+                    row['document_cloudinary_url'] = document_info.get('cloudinary_url', '')
+                else:
+                    row['document_filename'] = ''
+                    row['document_file_format'] = ''
+                    row['document_file_size_bytes'] = 0
+                    row['document_cloudinary_url'] = ''
+
+                flattened_data.append(row)
+
+            # Export based on format
+            if export_format.lower() == "json":
+                filename = f"complete_database_export_{timestamp}.json"
+                file_path = self.output_dir / filename
+
+                json_content = json.dumps(flattened_data, indent=2, ensure_ascii=False, default=self._json_serializer)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(json_content)
+
+                content = json_content.encode('utf-8')
+                st.success(f"Complete database exported as JSON: {file_path}")
+
+            elif export_format.lower() == "csv":
+                filename = f"complete_database_export_{timestamp}.csv"
+                file_path = self.output_dir / filename
+
+                df = pd.DataFrame(flattened_data)
+                df.to_csv(file_path, index=False, encoding='utf-8')
+
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+
+                st.success(f"Complete database exported as CSV: {file_path}")
+
+            elif export_format.lower() == "xlsx":
+                filename = f"complete_database_export_{timestamp}.xlsx"
+                file_path = self.output_dir / filename
+
+                df = pd.DataFrame(flattened_data)
+
+                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='Complete Database', index=False)
+
+                with open(file_path, 'rb') as f:
+                    content = f.read()
+
+                st.success(f"Complete database exported as Excel: {file_path}")
+
+            else:
+                st.error(f"Unsupported export format: {export_format}")
+                return "", None, None
+
+            # Upload to Cloudinary
+            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder="immigration_exports/database")
+
+            # Log export
+            if self.db_manager:
+                exported_form_ids = [form['id'] for form in all_forms]
+                self.db_manager.insert_export_log(
+                    document_ids=exported_form_ids,
+                    export_formats=[f"database_{export_format}"],
+                    file_path=str(file_path),
+                    cloudinary_url=cloudinary_url
+                )
+
+            return str(file_path), content, cloudinary_url
+
+        except Exception as e:
+            st.error(f"Error exporting complete database: {e}")
             return "", None, None

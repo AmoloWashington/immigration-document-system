@@ -1,0 +1,91 @@
+{
+  "id": 27,
+  "country": "USA",
+  "visa_category": "Immigrant Visa",
+  "form_name": "Civil Documents Collection",
+  "form_id": null,
+  "description": "Guidelines for collecting civil documents required for the immigrant visa application process.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": null,
+    "country": "USA",
+    "form_id": null,
+    "language": "English",
+    "form_name": "Civil Documents Collection",
+    "description": "Guidelines for collecting civil documents required for the immigrant visa application process.",
+    "last_fetched": "2025-07-23T10:09:20.916790",
+    "visa_category": "Immigrant Visa",
+    "document_format": "HTML",
+    "processing_time": null,
+    "required_fields": [
+      {
+        "name": "Birth Certificate",
+        "type": "text",
+        "description": "Original or certified copy of the birth certificate for each family member.",
+        "example_value": "Certified copy of birth certificate"
+      },
+      {
+        "name": "Marriage Certificate",
+        "type": "text",
+        "description": "Original or certified copies of all marriage certificates.",
+        "example_value": "Certified copy of marriage certificate"
+      },
+      {
+        "name": "Adoption Decree",
+        "type": "text",
+        "description": "Certified copy of the adoption decree if applicable.",
+        "example_value": "Certified adoption decree"
+      },
+      {
+        "name": "Court and Prison Records",
+        "type": "text",
+        "description": "Certified copies of court and prison records for any convictions.",
+        "example_value": "Certified court record"
+      },
+      {
+        "name": "Military Records",
+        "type": "text",
+        "description": "Photocopy of military records if applicable.",
+        "example_value": "Photocopy of military record"
+      },
+      {
+        "name": "Police Certificates",
+        "type": "text",
+        "description": "Photocopy of police certificates from all countries lived in for more than 6 months if aged 16 or older.",
+        "example_value": "Police certificate from country of residence"
+      },
+      {
+        "name": "Photocopy of Valid Passport Biographic Data Page",
+        "type": "text",
+        "description": "Photocopy of the biographic data page of a currently valid passport for each family member.",
+        "example_value": "Photocopy of passport biographic data page"
+      }
+    ],
+    "submission_method": "Online via CEAC",
+    "target_applicants": "Individuals applying for an immigrant visa and their family members.",
+    "discovered_by_query": "USA Work Visa visa supporting documents government",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-5-collect-financial-evidence-and-other-supporting-documents/step-7-collect-civil-documents.html",
+    "downloaded_file_path": "downloads/usa/batch_process/step-7-collect-civil-documents.html",
+    "supporting_documents": [
+      "Certified translations for documents not in English",
+      "Final legal divorce decree, death certificate, or annulment papers for marriage termination",
+      "Custody documents if applicable"
+    ],
+    "extracted_text_length": 8692,
+    "full_markdown_summary": "# Civil Documents Collection for Immigrant Visa\n\n## Overview\nThis document outlines the requirements for collecting civil documents necessary for the immigrant visa application process in the United States. It is crucial for applicants and their family members to gather these documents to support their visa applications.\n\n## Key Steps\n1. **Complete DS-260**: Before collecting civil documents, ensure that you have completed the DS-260 form for yourself and each family member immigrating with you.\n2. **Document Issuance**: All civil documents must be issued by the official authority in your country. Refer to the [Document Finder](https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-5-collect-financial-evidence-and-other-supporting-documents/step-7-collect-civil-documents.html) for specific requirements.\n3. **Translations**: Any documents not in English or the official language of your country must be accompanied by certified translations. The translation must include a signed statement from the translator affirming accuracy and competence.\n\n## Important Notices\n- **Missing Documents**: If a required document is unavailable according to country-specific guidelines, you do not need to scan it into your CEAC. However, if you cannot obtain a required document for other reasons, you must submit a detailed written explanation to the NVC when scanning other documents. The consular officer will determine if the missing document is necessary during your visa interview.\n- **Consequences of Missing Documents**: Failure to obtain all required documents may delay your visa application process.\n\n## Required Civil Documents\n- **Birth Certificates**: Original or certified copies for each family member.\n- **Marriage Certificates**: Original or certified copies of all marriage certificates.\n- **Adoption Documents**: If applicable, provide a certified copy of the adoption decree and custody documents.\n- **Court and Prison Records**: Certified copies of records for any criminal convictions.\n- **Military Records**: Photocopy of military records if applicable.\n- **Police Certificates**: Required for individuals aged 16 or older from all countries lived in for more than 6 months.\n- **Photocopy of Valid Passport Biographic Data Page**: Required for each family member.\n\n## Additional Documentation for Petitioners\n- **Petitioner Birth Certificate**: Original or certified copy for the petitioner.\n- **Marriage Termination Documentation**: Evidence of termination of all prior marriages for petitioners who have been previously married.\n\n## Conclusion\nCollecting the appropriate civil documents is a critical step in the immigrant visa process. Ensure that all documents are accurate, complete, and submitted in a timely manner to avoid delays in your application."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-5-collect-financial-evidence-and-other-supporting-documents/step-7-collect-civil-documents.html",
+  "discovered_by_query": "USA Work Visa visa supporting documents government",
+  "downloaded_file_path": "downloads/usa/batch_process/step-7-collect-civil-documents.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:09:24.939613",
+  "updated_at": "2025-07-23T10:09:24.939613"
+}

@@ -1,0 +1,62 @@
+{
+  "id": 37,
+  "country": "USA",
+  "visa_category": "Student Visa",
+  "form_name": "Student Visa Application",
+  "form_id": "DS-160",
+  "description": "Application for a visa to study in the United States.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "SEVIS I-901 fee and visa application fee",
+    "country": "USA",
+    "form_id": "DS-160",
+    "language": "English",
+    "form_name": "Student Visa Application",
+    "description": "Application for a visa to study in the United States.",
+    "last_fetched": "2025-07-23T10:13:06.987723",
+    "visa_category": "Student Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies by location and season; apply early",
+    "required_fields": [
+      {
+        "name": "Online Nonimmigrant Visa Application",
+        "type": "text",
+        "description": "Complete the online visa application form.",
+        "example_value": "Form DS-160"
+      },
+      {
+        "name": "Photo",
+        "type": "image",
+        "description": "Upload a photo that meets the specified requirements.",
+        "example_value": "Photograph meeting requirements"
+      }
+    ],
+    "submission_method": "Online application followed by an in-person interview at a U.S. Embassy or Consulate",
+    "target_applicants": "Foreign nationals wishing to study in the United States.",
+    "discovered_by_query": "USA official immigration website Student Visa",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html",
+    "downloaded_file_path": "downloads/usa/batch_process/student-visa.html",
+    "supporting_documents": [
+      "Form I-20 from SEVP-approved school",
+      "Proof of payment of SEVIS I-901 fee"
+    ],
+    "extracted_text_length": 18619,
+    "full_markdown_summary": "# Student Visa Overview\n\nForeign nationals wishing to study in the United States must obtain a student visa, either an **F visa** for academic studies or an **M visa** for vocational studies. This document outlines the requirements and steps necessary to apply for a student visa.\n\n## Visa Categories\n- **F Visa**: For students attending universities, colleges, high schools, private elementary schools, seminaries, conservatories, and other academic institutions.\n- **M Visa**: For students attending vocational or other recognized nonacademic institutions, excluding language training programs.\n\n## Important Notes\n- Students cannot travel on the Visa Waiver Program or with Visitor Visas for study purposes.\n- A visitor (B) visa allows for short recreational courses but does not permit enrollment in degree or certificate programs.\n\n## Steps to Apply for a Student Visa\n1. **Acceptance at a SEVP-Approved School**: \n   - Apply to a school certified by the Student and Exchange Visitor Program (SEVP).\n   - Upon acceptance, the school will issue a **Form I-20** and register you in the **Student and Exchange Visitor Information System (SEVIS)**.\n   - Pay the **SEVIS I-901 fee**.\n\n2. **Complete the Online Visa Application**:\n   - Fill out the **Online Nonimmigrant Visa Application (Form DS-160)**.\n   - Upload a compliant photo during the application process.\n   - Print the application confirmation page for your interview.\n\n3. **Schedule an Interview**:\n   - Generally required for applicants aged 14-79.\n   - Schedule your interview at the U.S. Embassy or Consulate in your home country.\n   - Be aware of varying wait times for interview appointments.\n\n## Additional Information\n- New students can apply for their student visa up to 365 days before their course starts but cannot enter the U.S. more than 30 days before the start date.\n- If dependents (spouse/children) will accompany the student, they must also obtain individual Form I-20s and apply for visas, but they do not pay the SEVIS fee.\n\nFor more detailed instructions, applicants should consult the specific U.S. Embassy or Consulate website where they will apply."
+  },
+  "validation_warnings": [
+    "Fee amount for the SEVIS I-901 fee not specified",
+    "Processing times for visa application and interview scheduling not mentioned",
+    "Submission method for Form DS-160 not detailed",
+    "No information on required documentation for the visa interview",
+    "Unclear if additional fees apply for dependents' visa applications"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/study/student-visa.html",
+  "discovered_by_query": "USA official immigration website Student Visa",
+  "downloaded_file_path": "downloads/usa/batch_process/student-visa.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:13:11.662537",
+  "updated_at": "2025-07-23T10:13:11.662537"
+}

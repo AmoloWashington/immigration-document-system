@@ -1,0 +1,81 @@
+{
+  "id": 13,
+  "country": "USA",
+  "visa_category": "Work Visa",
+  "form_name": "Immigrant Petition for Alien Workers",
+  "form_id": "I-140",
+  "description": "This form is used to petition for an alien worker to become a permanent resident in the United States based on employment.",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$700",
+    "country": "USA",
+    "form_id": "I-140",
+    "language": "English",
+    "form_name": "Immigrant Petition for Alien Workers",
+    "description": "This form is used to petition for an alien worker to become a permanent resident in the United States based on employment.",
+    "last_fetched": "2025-07-23T10:03:31.099373",
+    "visa_category": "Work Visa",
+    "document_format": "PDF",
+    "processing_time": "6-12 months",
+    "required_fields": [
+      {
+        "name": "Family Name",
+        "type": "text",
+        "description": "Last name of the person for whom the petition is being filed.",
+        "example_value": "Doe"
+      },
+      {
+        "name": "Given Name",
+        "type": "text",
+        "description": "First name of the person for whom the petition is being filed.",
+        "example_value": "John"
+      },
+      {
+        "name": "Company or Organization Name",
+        "type": "text",
+        "description": "Name of the company or organization filing the petition.",
+        "example_value": "Tech Innovations Inc."
+      },
+      {
+        "name": "IRS Employer Identification Number (EIN)",
+        "type": "text",
+        "description": "The EIN of the employer filing the petition.",
+        "example_value": "12-3456789"
+      },
+      {
+        "name": "Country of Birth",
+        "type": "text",
+        "description": "Country where the person for whom the petition is filed was born.",
+        "example_value": "Canada"
+      },
+      {
+        "name": "Date of Last Arrival",
+        "type": "date",
+        "description": "Date when the person last entered the United States.",
+        "example_value": "2023-01-15"
+      }
+    ],
+    "submission_method": "Mail or Online",
+    "target_applicants": "Employers filing for foreign workers or individuals seeking permanent residency based on employment.",
+    "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-140.pdf",
+    "downloaded_file_path": "downloads/usa/batch_process/i-140.pdf",
+    "supporting_documents": [
+      "Labor Certification (if applicable)",
+      "Evidence of qualifications (degrees, experience)",
+      "Proof of ability to pay the offered wage"
+    ],
+    "extracted_text_length": 14236,
+    "full_markdown_summary": "# Immigrant Petition for Alien Workers (Form I-140)\n\n## Overview\nThe **Form I-140** is an immigration petition used by employers to sponsor foreign workers for permanent residency in the United States. This form is filed with the **U.S. Citizenship and Immigration Services (USCIS)** and is essential for various employment-based immigration categories.\n\n## Purpose\nThe form serves to classify an alien worker under specific employment categories, including:\n- **203(b)(1)(A)**: Alien of extraordinary ability\n- **203(b)(1)(B)**: Outstanding professor or researcher\n- **203(b)(1)(C)**: Multinational executive or manager\n- **203(b)(2)**: Member of professions with advanced degrees or exceptional ability\n- **203(b)(3)**: Skilled workers, professionals, and other workers\n\n## Eligibility\nTo file this petition, the petitioner must demonstrate that the alien worker meets the qualifications for the selected classification. This may include:\n- Evidence of extraordinary ability or achievements\n- Academic qualifications and professional experience\n- Labor certification (if required)\n\n## Required Information\nThe form requires detailed information about both the petitioner (employer) and the beneficiary (foreign worker), including:\n- Names and addresses\n- Employment details\n- Immigration status and history\n\n## Supporting Documents\nWhen submitting Form I-140, the following supporting documents may be required:\n- Labor Certification (if applicable)\n- Evidence of qualifications (degrees, experience)\n- Proof of ability to pay the offered wage\n\n## Submission\nThe petition can be submitted either by mail or online through the USCIS website. It is crucial to ensure that all required fields are completed accurately to avoid delays in processing.\n\n## Fees\nThe filing fee for Form I-140 is **$700**. Additional fees may apply depending on the specific circumstances of the petition.\n\n## Processing Time\nThe expected processing time for Form I-140 is typically between **6 to 12 months**, depending on the service center and the complexity of the case.\n\n## Conclusion\nForm I-140 is a critical step for employers seeking to hire foreign workers permanently. Proper completion and submission of this form, along with the necessary supporting documents, are essential for a successful petition."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-140.pdf",
+  "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+  "downloaded_file_path": "downloads/usa/batch_process/i-140.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-23T10:03:34.334809",
+  "updated_at": "2025-07-23T10:03:34.334809"
+}

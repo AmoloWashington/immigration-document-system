@@ -1,0 +1,59 @@
+{
+  "id": 2,
+  "country": "USA",
+  "visa_category": "Work Visa",
+  "form_name": "Application for Employment Authorization",
+  "form_id": "I-765",
+  "description": "Application for Employment Authorization to request an Employment Authorization Document (EAD)",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "$410",
+    "country": "USA",
+    "form_id": "I-765",
+    "language": "English",
+    "form_name": "Application for Employment Authorization",
+    "description": "Application for Employment Authorization to request an Employment Authorization Document (EAD)",
+    "last_fetched": "2025-07-22T10:47:58.092935",
+    "visa_category": "Work Visa",
+    "document_format": "PDF",
+    "processing_time": "Varies; consult USCIS for updates",
+    "required_fields": [
+      {
+        "name": "Eligibility Category",
+        "type": "text",
+        "description": "Field to indicate eligibility category for employment authorization",
+        "example_value": "(a)(3)"
+      },
+      {
+        "name": "Personal Information",
+        "type": "text",
+        "description": "Fields for personal and contact information of the applicant",
+        "example_value": "John Doe, 123 Main St, Anytown, USA"
+      }
+    ],
+    "submission_method": "Online or Mail",
+    "target_applicants": "Foreign nationals in the USA seeking employment authorization or EAD",
+    "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf",
+    "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr.pdf",
+    "supporting_documents": [
+      "Stamped Form I-94",
+      "Final Notice of Eligibility for Resettlement",
+      "USCIS Asylum approval letter",
+      "Order granting asylum",
+      "Form I-797 Notice for derivative status"
+    ],
+    "extracted_text_length": 95848,
+    "full_markdown_summary": "# Instructions for Application for Employment Authorization (Form I-765)\n\n## Overview\nThe **Form I-765** is used by specific foreign nationals in the United States to request employment authorization and obtain an Employment Authorization Document (EAD). This document is essential for individuals who need to legally work in the U.S.\n\n## Purpose of the Form\n- The Form I-765 allows eligible individuals to apply for:\n  - **Initial EAD**: For first-time applicants.\n  - **Renewal EAD**: For individuals seeking to renew their expired EAD.\n  - **Replacement EAD**: For those whose EADs were lost, stolen, damaged, or contained errors.\n\n## Eligibility\nYou may file Form I-765 if you meet any of the following conditions:\n- You are a refugee or asylee.\n- You have pending asylum or withholding of removal applications.\n- You are a nonimmigrant authorized to work.\n\n### Categories for Asylees and Refugees\n- **Refugee**: Use category \n  - (a)(3) with required documentation like the stamped Form I-94.\n- **Asylee**: Use category \n  - (a)(5) with documents such as your stamped Form I-94 or the USCIS approval letter.\n- **Granted Withholding**: Use category \n  - (a)(10) with the signed order from EOIR.\n\n## Required Documentation\nWhen submitting Form I-765, include appropriate documentation based on your eligibility category:\n- For refugees: Copy of passport or travel documents.\n- For asylees: USCIS approval letter or signed asylum order.\n- For pending applicants: Refer to the Special Filing Instructions for pending asylum applications.\n\n## Important Notes\n- If you have multiple applications pending, your eligibility category may differ.\n- Ensure to enter the correct eligibility category in Part 2, Item Number 27 of the application.\n\n## Submission Process\n- **How to Submit**: Applications can be submitted either online through the USCIS portal or via mail to the designated address.\n- **Processing Time**: Processing times can vary depending on the application volume, so it's advisable to check the USCIS website for updates.\n\n## Fees\n- A fee of **$410** is required when submitting Form I-765. Waivers may be available in some cases.\n\nFor more information about the employment authorization process, consult the official USCIS website or refer to the complete instructions available [here](https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf)."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf",
+  "discovered_by_query": "USA immigration Work Visa requirements PDF official",
+  "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-22T07:48:08.079372",
+  "updated_at": "2025-07-22T07:48:08.079372"
+}

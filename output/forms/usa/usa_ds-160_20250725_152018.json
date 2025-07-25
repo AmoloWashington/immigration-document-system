@@ -1,0 +1,74 @@
+{
+  "id": 20,
+  "country": "USA",
+  "visa_category": "Exchange Visitor Visa",
+  "form_name": "Online Nonimmigrant Visa Application",
+  "form_id": "DS-160",
+  "description": "Application for individuals wishing to participate in exchange visitor programs in the United States.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "$185 application fee; issuance fee may apply based on nationality.",
+    "country": "USA",
+    "form_id": "DS-160",
+    "language": "English",
+    "form_name": "Online Nonimmigrant Visa Application",
+    "description": "Application for individuals wishing to participate in exchange visitor programs in the United States.",
+    "last_fetched": "2025-07-23T10:06:20.538742",
+    "visa_category": "Exchange Visitor Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies by location and season; applicants should apply early.",
+    "required_fields": [
+      {
+        "name": "Full Name",
+        "type": "text",
+        "description": "Applicant's full legal name as it appears on their passport.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Applicant's date of birth.",
+        "example_value": "1990-01-01"
+      },
+      {
+        "name": "Passport Number",
+        "type": "text",
+        "description": "The number of the applicant's passport.",
+        "example_value": "123456789"
+      },
+      {
+        "name": "SEVIS ID",
+        "type": "text",
+        "description": "The unique identifier for the applicant's SEVIS registration.",
+        "example_value": "N1234567890"
+      }
+    ],
+    "submission_method": "Online",
+    "target_applicants": "Foreign nationals wishing to participate in exchange visitor programs.",
+    "discovered_by_query": "USA consulate Work Visa visa application",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/study/exchange.html",
+    "downloaded_file_path": "downloads/usa/batch_process/exchange.html",
+    "supporting_documents": [
+      "Passport",
+      "Form DS-2019, Certificate of Eligibility for Exchange Visitor Status",
+      "SEVIS I-901 fee payment receipt",
+      "Photo meeting the specified requirements"
+    ],
+    "extracted_text_length": 20270,
+    "full_markdown_summary": "# Exchange Visitor Visa Overview\n\nThe Exchange Visitor Visa (J visa) is a nonimmigrant visa for individuals approved to participate in exchange visitor programs in the United States. This visa is essential for foreign nationals who wish to engage in various educational and cultural exchange activities.\n\n## Categories of Exchange Visitors\nExchange visitor categories include:\n- Au pair and EduCare\n- Camp Counselor\n- Government Visitor\n- Intern\n- International Visitor\n- Physician\n- Professor and Research Scholar\n- Short-term Scholar\n- Specialist\n- Student (college/university)\n- Student (secondary)\n- Summer Work Travel\n- Teacher\n- Trainee\n\n## Important Notes\n- Exchange Visitors cannot travel on the Visa Waiver Program or with Visitor (B1/B2) Visas.\n- Acceptance into an exchange visitor program is mandatory for obtaining a J visa.\n\n## Steps to Apply\n1. **Apply for an Exchange Visitor Program**: You must apply through a pre-approved organization in the U.S.\n2. **Acceptance**: Once accepted, you will be registered in the Student and Exchange Visitor Information System (SEVIS).\n3. **Pay the SEVIS I-901 Fee**: After registration, pay the SEVIS fee unless exempted.\n\n## How to Apply for the Visa\n1. **Complete the Online Visa Application**: Fill out Form DS-160 and print the confirmation page.\n2. **Schedule an Interview**: Required for most applicants aged 14-79. Check wait times at your local U.S. Embassy or Consulate.\n3. **Prepare for Your Interview**: Pay the non-refundable visa application fee of $185 and gather required documents.\n\n## Required Documents\n- Valid passport\n- Form DS-2019\n- SEVIS fee payment receipt\n- Photo meeting the specified requirements\n\n## Fees\n- **Application Fee**: $185\n- **Issuance Fee**: May apply based on nationality.\n\n## Conclusion\nThe Exchange Visitor Visa is crucial for individuals looking to participate in cultural and educational exchange programs in the U.S. It is important to follow the outlined steps carefully and prepare all necessary documentation to ensure a smooth application process."
+  },
+  "validation_warnings": [
+    "Processing times for visa application not specified",
+    "Submission methods for required documents not detailed",
+    "No mention of potential additional fees based on nationality beyond issuance fee"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/study/exchange.html",
+  "discovered_by_query": "USA consulate Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/exchange.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:06:24.109392",
+  "updated_at": "2025-07-23T10:06:24.109392"
+}

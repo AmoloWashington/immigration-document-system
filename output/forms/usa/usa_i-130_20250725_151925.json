@@ -1,0 +1,62 @@
+{
+  "id": 31,
+  "country": "USA",
+  "visa_category": "Immigrant Visa",
+  "form_name": "Petition for Alien Relative",
+  "form_id": "I-130",
+  "description": "Form used by U.S. citizens and lawful permanent residents to petition for a relative to immigrate to the United States.",
+  "governing_authority": "USCIS",
+  "structured_data": {
+    "fees": "$535",
+    "country": "USA",
+    "form_id": "I-130",
+    "language": "English",
+    "form_name": "Petition for Alien Relative",
+    "description": "Form used by U.S. citizens and lawful permanent residents to petition for a relative to immigrate to the United States.",
+    "last_fetched": "2025-07-23T10:10:40.814518",
+    "visa_category": "Immigrant Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies based on case load, typically several months",
+    "required_fields": [
+      {
+        "name": "Petitioner Information",
+        "type": "text",
+        "description": "Details about the petitioner including name, address, and relationship to the applicant.",
+        "example_value": "John Doe, 123 Main St, Anytown, USA"
+      },
+      {
+        "name": "Applicant Information",
+        "type": "text",
+        "description": "Details about the applicant including name, address, and relationship to the petitioner.",
+        "example_value": "Jane Doe, 456 Elm St, Othertown, USA"
+      }
+    ],
+    "submission_method": "Electronically or by mail to USCIS Chicago Lockbox facility",
+    "target_applicants": "U.S. citizens and lawful permanent residents filing for family members or employees.",
+    "discovered_by_query": "USA department of home affairs Work Visa visa information",
+    "governing_authority": "USCIS",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-1-submit-a-petition.html",
+    "downloaded_file_path": "downloads/usa/batch_process/step-1-submit-a-petition.html",
+    "supporting_documents": [
+      "Proof of U.S. citizenship or lawful permanent residency (e.g., birth certificate, naturalization certificate)",
+      "Proof of relationship to the applicant (e.g., marriage certificate, birth certificate)"
+    ],
+    "extracted_text_length": 4655,
+    "full_markdown_summary": "# Submit a Petition for Immigrant Visa\n\n## Overview\nThis document outlines the first step in the immigrant visa process for individuals wishing to immigrate to the United States. It details the requirements and procedures for submitting a petition.\n\n## Steps in the Immigrant Visa Process\n1. **Submit a Petition**\n2. **NVC Processing**\n3. **Pay Fees**\n4. **Affidavit of Support**\n5. **Financial Documents**\n6. **Online Application**\n7. **Civil Documents**\n8. **Scan Documents**\n9. **Submit Documents**\n10. **Interview Preparation**\n11. **Applicant Interview**\n12. **After the Interview**\n\n## Who is Involved?\n- **Petitioner**: A U.S. citizen or lawful permanent resident who files a petition for a family member or employee.\n- **USCIS**: The U.S. Citizenship and Immigration Services, which oversees immigration and approves or denies petitions.\n\n## Filing Petitions\n### From Inside the United States\n- U.S. citizens and lawful permanent residents must file **Form I-130** with USCIS.\n- Employers must file **Form I-140** for employment-based petitions.\n\n### From Outside the United States\n- Certain petitions can be filed from outside the U.S. Consult the USCIS website for more information.\n\n## Petition Approval\n- The immigrant petition must be approved by USCIS before proceeding to the National Visa Center (NVC).\n\n## Additional Information\nFor more details and to access forms, visit [USCIS](http://www.uscis.gov/).\n\nThis summary captures the essential details regarding the submission of a petition for an immigrant visa, including the necessary forms, filing locations, and the roles of involved parties."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear",
+    "No specific details on required civil documents",
+    "Lack of clarity on the timeline for NVC processing"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/the-immigrant-visa-process/step-1-submit-a-petition.html",
+  "discovered_by_query": "USA department of home affairs Work Visa visa information",
+  "downloaded_file_path": "downloads/usa/batch_process/step-1-submit-a-petition.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:10:44.634566",
+  "updated_at": "2025-07-23T10:10:44.634566"
+}

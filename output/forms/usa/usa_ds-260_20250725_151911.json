@@ -1,0 +1,64 @@
+{
+  "id": 35,
+  "country": "USA",
+  "visa_category": "Immigrant Visa",
+  "form_name": "DS-260 Immigrant Visa Electronic Application",
+  "form_id": "DS-260",
+  "description": "Application form for individuals seeking an immigrant visa to the United States.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "Varies by visa category",
+    "country": "USA",
+    "form_id": "DS-260",
+    "language": "English",
+    "form_name": "DS-260 Immigrant Visa Electronic Application",
+    "description": "Application form for individuals seeking an immigrant visa to the United States.",
+    "last_fetched": "2025-07-23T10:12:23.513990",
+    "visa_category": "Immigrant Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies by case",
+    "required_fields": [
+      {
+        "name": "Personal Information",
+        "type": "text",
+        "description": "Full name, date of birth, and other identifying information.",
+        "example_value": "John Doe, 01/01/1990"
+      },
+      {
+        "name": "Passport Information",
+        "type": "text",
+        "description": "Details regarding the applicant's passport.",
+        "example_value": "Passport Number: 123456789"
+      },
+      {
+        "name": "Address",
+        "type": "text",
+        "description": "Current residential address.",
+        "example_value": "123 Main St, Anytown, USA"
+      }
+    ],
+    "submission_method": "Online",
+    "target_applicants": "Individuals applying for an immigrant visa to the United States.",
+    "discovered_by_query": "USA Student Visa visa application forms official government",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/online-immigrant-visa-forms/ds-260-faqs.html",
+    "downloaded_file_path": "downloads/usa/batch_process/ds-260-faqs.html",
+    "supporting_documents": [
+      "Passport",
+      "Birth Certificate",
+      "Police Clearance Certificate",
+      "Medical Examination Results"
+    ],
+    "extracted_text_length": 15532,
+    "full_markdown_summary": "# DS-260 Immigrant Visa Electronic Application - Frequently Asked Questions (FAQs)\n\nThe **DS-260** is the official application form for individuals seeking an **immigrant visa** to the United States. This document is crucial for those who wish to immigrate and must be completed accurately to ensure a smooth application process.\n\n## Purpose of the DS-260\nThe DS-260 form is designed to collect essential information from applicants, which will be used to determine their eligibility for an immigrant visa. It is a mandatory step in the visa application process for individuals who have been approved for an immigrant visa petition.\n\n## Key Features\n- **Governing Authority**: U.S. Department of State\n- **Target Applicants**: Individuals applying for an immigrant visa to the United States.\n- **Submission Method**: The form must be submitted online through the Consular Electronic Application Center (CEAC).\n\n## Required Fields\nApplicants must provide various details, including but not limited to:\n- **Personal Information**: Full name, date of birth, and other identifying information.\n- **Passport Information**: Details regarding the applicant's passport.\n- **Address**: Current residential address.\n\n## Supporting Documents\nAlong with the DS-260, applicants are required to submit several supporting documents, including:\n- Passport\n- Birth Certificate\n- Police Clearance Certificate\n- Medical Examination Results\n\n## Processing Time\nThe processing time for the DS-260 can vary based on individual circumstances and the specific visa category applied for. Applicants should be prepared for potential delays and check the status of their application regularly.\n\n## Fees\nThe fees associated with the DS-260 application vary depending on the visa category. It is important for applicants to verify the current fee structure on the official U.S. Department of State website.\n\n## Conclusion\nThe DS-260 is a critical component of the immigrant visa application process. Applicants are encouraged to read all instructions carefully and ensure that all information provided is accurate and complete to avoid delays in processing."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/visa-information-resources/forms/online-immigrant-visa-forms/ds-260-faqs.html",
+  "discovered_by_query": "USA Student Visa visa application forms official government",
+  "downloaded_file_path": "downloads/usa/batch_process/ds-260-faqs.html",
+  "document_format": "HTML",
+  "processing_status": "validated",
+  "created_at": "2025-07-23T10:12:26.469519",
+  "updated_at": "2025-07-23T10:12:26.469519"
+}

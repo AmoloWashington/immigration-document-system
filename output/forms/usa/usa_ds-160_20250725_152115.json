@@ -1,0 +1,74 @@
+{
+  "id": 17,
+  "country": "USA",
+  "visa_category": "Work Visa",
+  "form_name": "Nonimmigrant Visa Application",
+  "form_id": "DS-160",
+  "description": "Application form for nonimmigrant visas to the United States.",
+  "governing_authority": "U.S. Department of State",
+  "structured_data": {
+    "fees": "Varies by visa category",
+    "country": "USA",
+    "form_id": "DS-160",
+    "language": "English",
+    "form_name": "Nonimmigrant Visa Application",
+    "description": "Application form for nonimmigrant visas to the United States.",
+    "last_fetched": "2025-07-23T10:05:17.737649",
+    "visa_category": "Work Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies by visa category and consulate",
+    "required_fields": [
+      {
+        "name": "Full Name",
+        "type": "text",
+        "description": "The applicant's full legal name.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "The applicant's date of birth.",
+        "example_value": "1990-01-01"
+      },
+      {
+        "name": "Passport Number",
+        "type": "text",
+        "description": "The number of the applicant's passport.",
+        "example_value": "123456789"
+      },
+      {
+        "name": "Purpose of Travel",
+        "type": "text",
+        "description": "The reason for traveling to the United States.",
+        "example_value": "Employment"
+      }
+    ],
+    "submission_method": "Online",
+    "target_applicants": "Foreign nationals seeking to work in the United States.",
+    "discovered_by_query": "USA consulate Work Visa visa application",
+    "governing_authority": "U.S. Department of State",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas.html",
+    "downloaded_file_path": "downloads/usa/batch_process/us-visas.html",
+    "supporting_documents": [
+      "Passport",
+      "Photograph",
+      "Employment Offer Letter",
+      "Form I-129 (if applicable)"
+    ],
+    "extracted_text_length": 5351,
+    "full_markdown_summary": "# U.S. Visas Overview\n\nThe U.S. visa system is designed for foreign nationals who wish to travel to the United States for various purposes, including tourism, business, employment, and study. Below is a detailed summary of the visa application process and requirements.\n\n## What is a U.S. Visa?\nA U.S. visa is a document that allows a foreign citizen to travel to the United States. It is typically placed in the traveler’s passport, which is issued by their country of citizenship. Certain travelers may qualify for visa-free travel under specific conditions.\n\n## Types of U.S. Visas\nVisas are categorized based on the purpose of travel:\n- **Tourism & Visit**\n- **Business**\n- **Employment**\n- **Study & Exchange**\n- **Immigration**\n- **Other Visa Categories**\n\n## Visa Application Process\n1. **Determine Visa Type**: Use the [Visa Wizard](https://travel.state.gov/content/travel/en/us-visas.html) to find the appropriate visa type based on your travel purpose.\n2. **Complete the Application**: Fill out the **DS-160** form, the online nonimmigrant visa application.\n3. **Prepare Supporting Documents**: Gather necessary documents such as your passport, photographs, and any employment-related documents.\n4. **Submit Application**: Applications are submitted online.\n5. **Pay Fees**: Fees vary depending on the visa category.\n6. **Attend Interview**: Some applicants may be required to attend an interview at a U.S. embassy or consulate.\n\n## Important Links\n- [Visa Categories](https://travel.state.gov/content/travel/en/us-visas.html)\n- [Find a U.S. Embassy or Consulate](https://travel.state.gov/content/travel/en/us-visas.html)\n- [Visa Bulletin](https://travel.state.gov/content/travel/en/us-visas.html)\n\n## Additional Information\n- **Processing Times**: Varies by visa category and consulate.\n- **Rights and Protections**: Information is available regarding the rights and protections for temporary workers.\n- **Fraud Protection**: The U.S. Department of State provides resources to protect against visa fraud.\n\nFor more detailed information, please visit the [U.S. Department of State's visa page](https://travel.state.gov/content/travel/en/us-visas.html)."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas.html",
+  "discovered_by_query": "USA consulate Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/us-visas.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:05:21.367238",
+  "updated_at": "2025-07-23T10:05:21.367238"
+}

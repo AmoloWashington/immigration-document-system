@@ -1,0 +1,70 @@
+{
+  "id": 24,
+  "country": "USA",
+  "visa_category": "Employment-Based Immigrant Visa",
+  "form_name": "Immigrant Petition for Alien Worker",
+  "form_id": "I-140",
+  "description": "This form is used to petition for an immigrant visa under employment-based categories.",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$700 (as of current fee schedule)",
+    "country": "USA",
+    "form_id": "I-140",
+    "language": "English",
+    "form_name": "Immigrant Petition for Alien Worker",
+    "description": "This form is used to petition for an immigrant visa under employment-based categories.",
+    "last_fetched": "2025-07-23T10:07:57.230184",
+    "visa_category": "Employment-Based Immigrant Visa",
+    "document_format": "HTML",
+    "processing_time": "Varies, typically several months",
+    "required_fields": [
+      {
+        "name": "Employer Information",
+        "type": "text",
+        "description": "Details about the employer filing the petition.",
+        "example_value": "ABC Corporation, 123 Main St, Anytown, USA"
+      },
+      {
+        "name": "Beneficiary Information",
+        "type": "text",
+        "description": "Information about the individual for whom the petition is being filed.",
+        "example_value": "John Doe, 456 Elm St, Othertown, USA"
+      },
+      {
+        "name": "Job Offer Details",
+        "type": "text",
+        "description": "Details of the job offer including title, duties, and salary.",
+        "example_value": "Software Engineer, Develop software applications, $100,000/year"
+      }
+    ],
+    "submission_method": "Mail to USCIS or online through USCIS website",
+    "target_applicants": "Individuals seeking employment-based immigrant visas in the U.S.",
+    "discovered_by_query": "USA embassy Work Visa visa application",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/employment-based-immigrant-visas.html",
+    "downloaded_file_path": "downloads/usa/batch_process/employment-based-immigrant-visas.html",
+    "supporting_documents": [
+      "Labor Certification (if required)",
+      "Evidence of qualifications (degrees, experience)",
+      "Job offer letter from employer",
+      "Form I-140 filing fee"
+    ],
+    "extracted_text_length": 25444,
+    "full_markdown_summary": "# Employment-Based Immigrant Visas\n\n## Overview\nEvery fiscal year (October 1st – September 30th), approximately 140,000 employment-based immigrant visas are available to qualified applicants under U.S. immigration law. These visas are divided into five preference categories, and certain spouses and children may accompany or follow-to-join employment-based immigrants.\n\n## First Steps Toward an Immigrant Visa\nTo be considered for an immigrant visa under some employment-based categories, the applicant's prospective employer or agent must first obtain a labor certification approval from the Department of Labor. Once received, the employer files an **Immigrant Petition for Alien Worker, Form I-140** with the U.S. Citizenship and Immigration Services (USCIS) for the appropriate employment-based preference category. \n\n**Note:** Persons with extraordinary abilities in the Employment First preference category can file their own petitions.\n\n## Employment Preference Categories\n1. **Employment First Preference (E1):** Priority Workers and Persons of Extraordinary Ability\n   - **Sub-groups:** \n     - Persons with extraordinary ability in sciences, arts, education, business, or athletics.\n     - Outstanding professors and researchers with at least three years of experience.\n     - Multinational managers or executives.\n\n2. **Employment Second Preference (E2):** Professionals Holding Advanced Degrees and Persons of Exceptional Ability\n   - Requires labor certification and a job offer, but may apply for a National Interest Waiver.\n\n3. **Employment Third Preference (E3):** Skilled Workers, Professionals, and Unskilled Workers.\n\n4. **Employment Fourth Preference (E4):** Certain Special Immigrants.\n\n5. **Employment Fifth Preference (E5):** Immigrant Investors.\n\n## Next Steps\n- **Fees and Visa Application:** Applicants must be aware of the associated fees and the visa application process.\n- **Family Members:** Information on whether family members can also receive immigrant visas.\n- **Numerical Limitations:** There are limits on the number of visas available in each category.\n- **Visa Interview:** Applicants may need to attend a visa interview.\n- **Medical Examinations and Vaccinations:** Requirements for medical exams and vaccinations.\n- **Processing Time:** The time it takes to process the visa application can vary.\n- **Visa Ineligibility:** Information on grounds for visa ineligibility, including misrepresentation or fraud.\n\n## Important Information\n- After receiving an immigrant visa, applicants should know how to enter the U.S. and apply for a Social Security Number.\n- Guidance on what to expect when becoming a permanent resident.\n\nFor more detailed information, applicants should refer to the USCIS Permanent Workers webpage and the specific instructions for Form I-140."
+  },
+  "validation_warnings": [
+    "Fee amount missing",
+    "Processing time not specified",
+    "Submission method unclear",
+    "Information on family members receiving visas is vague",
+    "Details on medical examinations and vaccinations are not specified"
+  ],
+  "lawyer_review": {},
+  "official_source_url": "https://travel.state.gov/content/travel/en/us-visas/immigrate/employment-based-immigrant-visas.html",
+  "discovered_by_query": "USA embassy Work Visa visa application",
+  "downloaded_file_path": "downloads/usa/batch_process/employment-based-immigrant-visas.html",
+  "document_format": "HTML",
+  "processing_status": "validated_with_warnings",
+  "created_at": "2025-07-23T10:08:01.150713",
+  "updated_at": "2025-07-23T10:08:01.150713"
+}
