@@ -1660,7 +1660,6 @@ def export_panel_page(db, export_service):
                 test_forms = db.get_forms()[:5]  # Get only first 5 records
                 if test_forms:
                     import io
-                    import pandas as pd
 
                     # Simple test export
                     test_df = pd.DataFrame([{
