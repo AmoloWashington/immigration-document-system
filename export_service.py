@@ -7,6 +7,8 @@ from datetime import datetime
 from database import DatabaseManager
 import cloudinary
 import cloudinary.uploader
+import tempfile
+import os
 
 class ExportService:
     def __init__(self, output_dir: str, db_manager: DatabaseManager, cloudinary_url: Optional[str] = None):
@@ -333,102 +335,201 @@ class ExportService:
         cloudinary_url = None
 
         try:
+            # Check database connection first
+            if not self.db_manager or not self.db_manager.database_url:
+                st.error("Database connection not available. Cannot export data.")
+                return "", None, None
+
             # Get all forms with complete data
-            all_forms = self.db_manager.get_forms()
+            try:
+                all_forms = self.db_manager.get_forms()
+            except Exception as db_error:
+                st.error(f"Database error: {str(db_error)}")
+                return "", None, None
 
             if not all_forms:
                 st.warning("No data found in database to export.")
                 return "", None, None
 
-            # Flatten all data including structured_data fields
+            # Flatten all data including structured_data fields with error handling
             flattened_data = []
-            for form in all_forms:
-                row = {}
 
-                # Basic form fields
-                row['id'] = form.get('id')
-                row['country'] = form.get('country')
-                row['visa_category'] = form.get('visa_category')
-                row['form_name'] = form.get('form_name')
-                row['form_id'] = form.get('form_id')
-                row['description'] = form.get('description')
-                row['governing_authority'] = form.get('governing_authority')
-                row['official_source_url'] = form.get('official_source_url')
-                row['discovered_by_query'] = form.get('discovered_by_query')
-                row['downloaded_file_path'] = form.get('downloaded_file_path')
-                row['document_format'] = form.get('document_format')
-                row['processing_status'] = form.get('processing_status')
-                row['created_at'] = form.get('created_at')
-                row['updated_at'] = form.get('updated_at')
+            st.info(f"Processing {len(all_forms)} forms for export...")
 
-                # Validation warnings
-                warnings = form.get('validation_warnings', [])
-                row['validation_warnings'] = '; '.join(warnings) if warnings else ''
-                row['validation_warnings_count'] = len(warnings) if warnings else 0
+            for i, form in enumerate(all_forms):
+                try:
+                    row = {}
 
-                # Lawyer review data
-                lawyer_review = form.get('lawyer_review', {})
-                row['lawyer_review_status'] = lawyer_review.get('approval_status', 'Pending Review')
-                row['lawyer_reviewer_name'] = lawyer_review.get('reviewer_name', '')
-                row['lawyer_review_date'] = lawyer_review.get('review_date', '')
-                row['lawyer_review_comments'] = lawyer_review.get('comments', '')
+                    # Basic form fields with safe extraction
+                    row['id'] = form.get('id', '')
+                    row['country'] = form.get('country', '')
+                    row['visa_category'] = form.get('visa_category', '')
+                    row['form_name'] = form.get('form_name', '')
+                    row['form_id'] = form.get('form_id', '')
+                    row['description'] = form.get('description', '')
+                    row['governing_authority'] = form.get('governing_authority', '')
+                    row['official_source_url'] = form.get('official_source_url', '')
+                    row['discovered_by_query'] = form.get('discovered_by_query', '')
+                    row['downloaded_file_path'] = form.get('downloaded_file_path', '')
+                    row['document_format'] = form.get('document_format', '')
+                    row['processing_status'] = form.get('processing_status', '')
 
-                # Structured data fields
-                structured_data = form.get('structured_data', {})
-                if structured_data:
-                    row['target_applicants'] = structured_data.get('target_applicants', '')
-                    row['submission_method'] = structured_data.get('submission_method', '')
-                    row['processing_time'] = structured_data.get('processing_time', '')
-                    row['fees'] = structured_data.get('fees', '')
-                    row['language'] = structured_data.get('language', '')
+                    # Handle datetime fields safely
+                    try:
+                        row['created_at'] = str(form.get('created_at', '')) if form.get('created_at') else ''
+                        row['updated_at'] = str(form.get('updated_at', '')) if form.get('updated_at') else ''
+                    except Exception:
+                        row['created_at'] = ''
+                        row['updated_at'] = ''
 
-                    # Required fields
-                    required_fields = structured_data.get('required_fields', [])
-                    if required_fields:
-                        for i, field in enumerate(required_fields, 1):
-                            if i <= 10:  # Limit to first 10 fields to avoid too many columns
-                                row[f'required_field_{i}_name'] = field.get('name', '')
-                                row[f'required_field_{i}_type'] = field.get('type', '')
-                                row[f'required_field_{i}_description'] = field.get('description', '')
-                                row[f'required_field_{i}_example'] = field.get('example_value', '')
+                    # Validation warnings with safe handling
+                    try:
+                        warnings = form.get('validation_warnings', [])
+                        if isinstance(warnings, list):
+                            row['validation_warnings'] = '; '.join(str(w) for w in warnings) if warnings else ''
+                            row['validation_warnings_count'] = len(warnings)
+                        else:
+                            row['validation_warnings'] = str(warnings) if warnings else ''
+                            row['validation_warnings_count'] = 1 if warnings else 0
+                    except Exception:
+                        row['validation_warnings'] = ''
+                        row['validation_warnings_count'] = 0
 
-                    # Supporting documents
-                    supporting_docs = structured_data.get('supporting_documents', [])
-                    row['supporting_documents'] = '; '.join(supporting_docs) if supporting_docs else ''
-                    row['supporting_documents_count'] = len(supporting_docs) if supporting_docs else 0
+                    # Lawyer review data with safe handling
+                    try:
+                        lawyer_review = form.get('lawyer_review', {})
+                        if isinstance(lawyer_review, dict):
+                            row['lawyer_review_status'] = lawyer_review.get('approval_status', 'Pending Review')
+                            row['lawyer_reviewer_name'] = lawyer_review.get('reviewer_name', '')
+                            row['lawyer_review_date'] = str(lawyer_review.get('review_date', '')) if lawyer_review.get('review_date') else ''
+                            row['lawyer_review_comments'] = lawyer_review.get('comments', '')
+                        else:
+                            row['lawyer_review_status'] = 'Pending Review'
+                            row['lawyer_reviewer_name'] = ''
+                            row['lawyer_review_date'] = ''
+                            row['lawyer_review_comments'] = ''
+                    except Exception:
+                        row['lawyer_review_status'] = 'Pending Review'
+                        row['lawyer_reviewer_name'] = ''
+                        row['lawyer_review_date'] = ''
+                        row['lawyer_review_comments'] = ''
 
-                    # Extract text length
-                    row['extracted_text_length'] = structured_data.get('extracted_text_length', 0)
-                else:
-                    # Set empty values for structured data fields
-                    row['target_applicants'] = ''
-                    row['submission_method'] = ''
-                    row['processing_time'] = ''
-                    row['fees'] = ''
-                    row['language'] = ''
-                    row['supporting_documents'] = ''
-                    row['supporting_documents_count'] = 0
-                    row['extracted_text_length'] = 0
+                    # Structured data fields with safe handling
+                    try:
+                        structured_data = form.get('structured_data', {})
+                        if isinstance(structured_data, dict) and structured_data:
+                            row['target_applicants'] = structured_data.get('target_applicants', '')
+                            row['submission_method'] = structured_data.get('submission_method', '')
+                            row['processing_time'] = structured_data.get('processing_time', '')
+                            row['fees'] = structured_data.get('fees', '')
+                            row['language'] = structured_data.get('language', '')
 
-                # Get document information
-                document_info = self.db_manager.get_document_by_form_id(form['id'])
-                if document_info:
-                    row['document_filename'] = document_info.get('filename', '')
-                    row['document_file_format'] = document_info.get('file_format', '')
-                    row['document_file_size_bytes'] = document_info.get('file_size_bytes', 0)
-                    row['document_cloudinary_url'] = document_info.get('cloudinary_url', '')
-                else:
-                    row['document_filename'] = ''
-                    row['document_file_format'] = ''
-                    row['document_file_size_bytes'] = 0
-                    row['document_cloudinary_url'] = ''
+                            # Required fields with safe handling
+                            try:
+                                required_fields = structured_data.get('required_fields', [])
+                                if isinstance(required_fields, list) and required_fields:
+                                    for field_idx, field in enumerate(required_fields, 1):
+                                        if field_idx <= 10:  # Limit to first 10 fields to avoid too many columns
+                                            if isinstance(field, dict):
+                                                row[f'required_field_{field_idx}_name'] = field.get('name', '')
+                                                row[f'required_field_{field_idx}_type'] = field.get('type', '')
+                                                row[f'required_field_{field_idx}_description'] = field.get('description', '')
+                                                row[f'required_field_{field_idx}_example'] = field.get('example_value', '')
+                                            else:
+                                                row[f'required_field_{field_idx}_name'] = str(field) if field else ''
+                                                row[f'required_field_{field_idx}_type'] = ''
+                                                row[f'required_field_{field_idx}_description'] = ''
+                                                row[f'required_field_{field_idx}_example'] = ''
+                            except Exception:
+                                pass  # Skip required fields if there's an error
 
-                flattened_data.append(row)
+                            # Supporting documents with safe handling
+                            try:
+                                supporting_docs = structured_data.get('supporting_documents', [])
+                                if isinstance(supporting_docs, list):
+                                    row['supporting_documents'] = '; '.join(str(doc) for doc in supporting_docs) if supporting_docs else ''
+                                    row['supporting_documents_count'] = len(supporting_docs)
+                                else:
+                                    row['supporting_documents'] = str(supporting_docs) if supporting_docs else ''
+                                    row['supporting_documents_count'] = 1 if supporting_docs else 0
+                            except Exception:
+                                row['supporting_documents'] = ''
+                                row['supporting_documents_count'] = 0
+
+                            # Extract text length
+                            try:
+                                row['extracted_text_length'] = int(structured_data.get('extracted_text_length', 0))
+                            except (ValueError, TypeError):
+                                row['extracted_text_length'] = 0
+                        else:
+                            # Set empty values for structured data fields
+                            row['target_applicants'] = ''
+                            row['submission_method'] = ''
+                            row['processing_time'] = ''
+                            row['fees'] = ''
+                            row['language'] = ''
+                            row['supporting_documents'] = ''
+                            row['supporting_documents_count'] = 0
+                            row['extracted_text_length'] = 0
+                    except Exception:
+                        # Set empty values if structured data processing fails
+                        row['target_applicants'] = ''
+                        row['submission_method'] = ''
+                        row['processing_time'] = ''
+                        row['fees'] = ''
+                        row['language'] = ''
+                        row['supporting_documents'] = ''
+                        row['supporting_documents_count'] = 0
+                        row['extracted_text_length'] = 0
+
+                    # Get document information with error handling
+                    try:
+                        if form.get('id'):
+                            document_info = self.db_manager.get_document_by_form_id(form['id'])
+                            if document_info and isinstance(document_info, dict):
+                                row['document_filename'] = document_info.get('filename', '')
+                                row['document_file_format'] = document_info.get('file_format', '')
+                                try:
+                                    row['document_file_size_bytes'] = int(document_info.get('file_size_bytes', 0))
+                                except (ValueError, TypeError):
+                                    row['document_file_size_bytes'] = 0
+                                row['document_cloudinary_url'] = document_info.get('cloudinary_url', '')
+                            else:
+                                row['document_filename'] = ''
+                                row['document_file_format'] = ''
+                                row['document_file_size_bytes'] = 0
+                                row['document_cloudinary_url'] = ''
+                        else:
+                            row['document_filename'] = ''
+                            row['document_file_format'] = ''
+                            row['document_file_size_bytes'] = 0
+                            row['document_cloudinary_url'] = ''
+                    except Exception:
+                        row['document_filename'] = ''
+                        row['document_file_format'] = ''
+                        row['document_file_size_bytes'] = 0
+                        row['document_cloudinary_url'] = ''
+
+                    flattened_data.append(row)
+
+                except Exception as form_error:
+                    st.warning(f"Skipping form {i+1} due to processing error: {str(form_error)}")
+                    continue
 
             # Export based on format
             if export_format.lower() == "json":
                 filename = f"complete_database_export_{timestamp}.json"
-                file_path = self.output_dir / filename
+
+                # Try main output directory, fallback to temp directory
+                try:
+                    self.output_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = self.output_dir / filename
+                except (PermissionError, OSError):
+                    # Fallback to temporary directory for deployment
+                    temp_dir = Path(tempfile.gettempdir()) / "immigration_exports"
+                    temp_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = temp_dir / filename
+                    st.warning(f"Using temporary directory for export: {temp_dir}")
 
                 json_content = json.dumps(flattened_data, indent=2, ensure_ascii=False, default=self._json_serializer)
                 with open(file_path, 'w', encoding='utf-8') as f:
@@ -439,49 +540,100 @@ class ExportService:
 
             elif export_format.lower() == "csv":
                 filename = f"complete_database_export_{timestamp}.csv"
-                file_path = self.output_dir / filename
 
-                df = pd.DataFrame(flattened_data)
-                df.to_csv(file_path, index=False, encoding='utf-8')
+                # Try main output directory, fallback to temp directory
+                try:
+                    self.output_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = self.output_dir / filename
+                except (PermissionError, OSError):
+                    # Fallback to temporary directory for deployment
+                    temp_dir = Path(tempfile.gettempdir()) / "immigration_exports"
+                    temp_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = temp_dir / filename
+                    st.warning(f"Using temporary directory for export: {temp_dir}")
 
-                with open(file_path, 'rb') as f:
-                    content = f.read()
+                try:
+                    df = pd.DataFrame(flattened_data)
 
-                st.success(f"Complete database exported as CSV: {file_path}")
+                    # Handle potential encoding issues by replacing problematic characters
+                    for col in df.columns:
+                        if df[col].dtype == 'object':
+                            df[col] = df[col].astype(str).str.encode('utf-8', errors='ignore').str.decode('utf-8')
+
+                    df.to_csv(file_path, index=False, encoding='utf-8')
+
+                    with open(file_path, 'rb') as f:
+                        content = f.read()
+
+                    st.success(f"Complete database exported as CSV: {file_path}")
+
+                except Exception as csv_error:
+                    st.error(f"Error creating CSV: {str(csv_error)}")
+                    return "", None, None
 
             elif export_format.lower() == "xlsx":
                 filename = f"complete_database_export_{timestamp}.xlsx"
-                file_path = self.output_dir / filename
 
-                df = pd.DataFrame(flattened_data)
+                # Try main output directory, fallback to temp directory
+                try:
+                    self.output_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = self.output_dir / filename
+                except (PermissionError, OSError):
+                    # Fallback to temporary directory for deployment
+                    temp_dir = Path(tempfile.gettempdir()) / "immigration_exports"
+                    temp_dir.mkdir(parents=True, exist_ok=True)
+                    file_path = temp_dir / filename
+                    st.warning(f"Using temporary directory for export: {temp_dir}")
 
-                with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
-                    df.to_excel(writer, sheet_name='Complete Database', index=False)
+                try:
+                    df = pd.DataFrame(flattened_data)
 
-                with open(file_path, 'rb') as f:
-                    content = f.read()
+                    # Clean data for Excel compatibility
+                    for col in df.columns:
+                        if df[col].dtype == 'object':
+                            df[col] = df[col].astype(str).str.replace('\x00', '', regex=False)  # Remove null bytes
 
-                st.success(f"Complete database exported as Excel: {file_path}")
+                    with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                        df.to_excel(writer, sheet_name='Complete Database', index=False)
+
+                    with open(file_path, 'rb') as f:
+                        content = f.read()
+
+                    st.success(f"Complete database exported as Excel: {file_path}")
+
+                except Exception as excel_error:
+                    st.error(f"Error creating Excel file: {str(excel_error)}")
+                    return "", None, None
 
             else:
                 st.error(f"Unsupported export format: {export_format}")
                 return "", None, None
 
-            # Upload to Cloudinary
-            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder="immigration_exports/database")
+            # Upload to Cloudinary with error handling
+            try:
+                cloudinary_url = self._upload_to_cloudinary(str(file_path), folder="immigration_exports/database")
+            except Exception as cloud_error:
+                st.warning(f"Cloudinary upload failed: {str(cloud_error)}. File saved locally only.")
+                cloudinary_url = None
 
-            # Log export
-            if self.db_manager:
-                exported_form_ids = [form['id'] for form in all_forms]
-                self.db_manager.insert_export_log(
-                    document_ids=exported_form_ids,
-                    export_formats=[f"database_{export_format}"],
-                    file_path=str(file_path),
-                    cloudinary_url=cloudinary_url
-                )
+            # Log export with error handling
+            try:
+                if self.db_manager and all_forms:
+                    exported_form_ids = [form.get('id') for form in all_forms if form.get('id')]
+                    if exported_form_ids:
+                        self.db_manager.insert_export_log(
+                            document_ids=exported_form_ids,
+                            export_formats=[f"database_{export_format}"],
+                            file_path=str(file_path),
+                            cloudinary_url=cloudinary_url
+                        )
+            except Exception as log_error:
+                st.warning(f"Export logging failed: {str(log_error)}. Export completed but not logged.")
 
             return str(file_path), content, cloudinary_url
 
         except Exception as e:
-            st.error(f"Error exporting complete database: {e}")
+            st.error(f"Error exporting complete database: {str(e)}")
+            import traceback
+            st.error(f"Full traceback: {traceback.format_exc()}")
             return "", None, None

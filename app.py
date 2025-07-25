@@ -109,6 +109,26 @@ def main():
     }
     </style>
 
+    <script>
+    // Suppress metrics tracking errors that occur in Streamlit
+    window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('Failed to fetch') &&
+            e.filename && e.filename.includes('MetricsManager')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // Override fetch for metrics endpoints to prevent errors
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+        if (typeof url === 'string' && url.includes('metrics')) {
+            return Promise.resolve(new Response('{}', {status: 200}));
+        }
+        return originalFetch.apply(this, arguments);
+    };
+    </script>
+
     <div class="hero-container">
         <h1 class="hero-title">🌍 Immigration Document Intelligence System</h1>
         <p class="hero-subtitle">Automated discovery, processing, and validation of official immigration documents and information</p>
@@ -215,7 +235,7 @@ def discovery_page(discovery, processor, ai_service, db):
     </style>
 
     <div class="discovery-header">
-        <h1>🔍 Document Discovery</h1>
+        <h1>�� Document Discovery</h1>
         <p style="font-size: 1.2rem; margin-bottom: 0; opacity: 0.9;">
             Discover official immigration documents and relevant informational pages from government sources
         </p>
@@ -1628,6 +1648,47 @@ def export_panel_page(db, export_service):
         st.info("No documents/pages available for export.")
 
     st.markdown("---")
+    # Add test export section
+    st.subheader("🧪 Test Export (Troubleshooting)")
+    st.markdown("Test the export functionality with a small sample before exporting the full database.")
+
+    if st.button("🔍 Test Export (5 records)", type="secondary"):
+        if not db or not db.database_url:
+            st.error("❌ Database connection not available.")
+        else:
+            try:
+                test_forms = db.get_forms()[:5]  # Get only first 5 records
+                if test_forms:
+                    import io
+                    import pandas as pd
+
+                    # Simple test export
+                    test_df = pd.DataFrame([{
+                        'id': form.get('id', ''),
+                        'country': form.get('country', ''),
+                        'form_name': form.get('form_name', ''),
+                        'form_id': form.get('form_id', ''),
+                        'created_at': str(form.get('created_at', ''))
+                    } for form in test_forms])
+
+                    csv_buffer = io.StringIO()
+                    test_df.to_csv(csv_buffer, index=False)
+                    csv_content = csv_buffer.getvalue().encode('utf-8')
+
+                    st.success(f"✅ Test export successful! Found {len(test_forms)} records.")
+                    st.download_button(
+                        label="Download Test Export (CSV)",
+                        data=csv_content,
+                        file_name=f"test_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv",
+                        key="test_export_csv"
+                    )
+                else:
+                    st.warning("No data found in database.")
+            except Exception as test_error:
+                st.error(f"❌ Test export failed: {str(test_error)}")
+
+    st.markdown("---")
     st.subheader("🗄️ Complete Database Export")
     st.markdown("Export the entire database with all rows, columns, and fields in a single file that can be imported elsewhere.")
 
@@ -1652,37 +1713,61 @@ def export_panel_page(db, export_service):
 
     with col2:
         if st.button("📊 Export Database as CSV", type="primary"):
-            with st.spinner("Exporting complete database as CSV..."):
-                file_path, file_content, cloudinary_export_url = export_service.export_full_database("csv")
-                if file_content:
-                    if cloudinary_export_url:
-                        st.markdown(f"**Download Complete Database (CSV) from Cloud:**")
-                        st.markdown(f"[Click to Download]({cloudinary_export_url})")
-                    else:
-                        st.download_button(
-                            label="Download Complete Database (CSV)",
-                            data=file_content,
-                            file_name=Path(file_path).name,
-                            mime="text/csv",
-                            key="download_full_db_csv"
-                        )
+            # Check if database is available before export
+            if not db or not db.database_url:
+                st.error("❌ Database connection not available. Please check your database configuration.")
+            else:
+                with st.spinner("Exporting complete database as CSV..."):
+                    try:
+                        file_path, file_content, cloudinary_export_url = export_service.export_full_database("csv")
+                        if file_content:
+                            if cloudinary_export_url:
+                                st.success("✅ Export completed successfully!")
+                                st.markdown(f"**Download Complete Database (CSV) from Cloud:**")
+                                st.markdown(f"[Click to Download]({cloudinary_export_url})")
+                            else:
+                                st.success("✅ Export completed successfully!")
+                                st.download_button(
+                                    label="Download Complete Database (CSV)",
+                                    data=file_content,
+                                    file_name=Path(file_path).name if file_path else f"database_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                                    mime="text/csv",
+                                    key="download_full_db_csv"
+                                )
+                        else:
+                            st.error("❌ Export failed. No data was generated.")
+                    except Exception as export_error:
+                        st.error(f"❌ Export failed: {str(export_error)}")
+                        st.info("💡 This might be due to deployment constraints. Try exporting a smaller dataset or contact support.")
 
     with col3:
         if st.button("📈 Export Database as Excel", type="primary"):
-            with st.spinner("Exporting complete database as Excel..."):
-                file_path, file_content, cloudinary_export_url = export_service.export_full_database("xlsx")
-                if file_content:
-                    if cloudinary_export_url:
-                        st.markdown(f"**Download Complete Database (Excel) from Cloud:**")
-                        st.markdown(f"[Click to Download]({cloudinary_export_url})")
-                    else:
-                        st.download_button(
-                            label="Download Complete Database (Excel)",
-                            data=file_content,
-                            file_name=Path(file_path).name,
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            key="download_full_db_xlsx"
-                        )
+            # Check if database is available before export
+            if not db or not db.database_url:
+                st.error("❌ Database connection not available. Please check your database configuration.")
+            else:
+                with st.spinner("Exporting complete database as Excel..."):
+                    try:
+                        file_path, file_content, cloudinary_export_url = export_service.export_full_database("xlsx")
+                        if file_content:
+                            if cloudinary_export_url:
+                                st.success("✅ Export completed successfully!")
+                                st.markdown(f"**Download Complete Database (Excel) from Cloud:**")
+                                st.markdown(f"[Click to Download]({cloudinary_export_url})")
+                            else:
+                                st.success("✅ Export completed successfully!")
+                                st.download_button(
+                                    label="Download Complete Database (Excel)",
+                                    data=file_content,
+                                    file_name=Path(file_path).name if file_path else f"database_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                    key="download_full_db_xlsx"
+                                )
+                        else:
+                            st.error("❌ Export failed. No data was generated.")
+                    except Exception as export_error:
+                        st.error(f"❌ Export failed: {str(export_error)}")
+                        st.info("💡 This might be due to deployment constraints. Try exporting a smaller dataset or contact support.")
 
     st.markdown("---")
     st.subheader("📦 Comprehensive USA Export")

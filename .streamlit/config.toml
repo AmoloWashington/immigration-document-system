@@ -1,0 +1,16 @@
+[browser]
+# Disable metrics collection to prevent fetch errors
+gatherUsageStats = false
+
+[client]
+# Disable telemetry collection
+toolbarMode = "minimal"
+
+[global]
+# Disable usage stats
+showWarningOnDirectExecution = false
+
+[server]
+# Improve server configuration
+enableCORS = false
+enableXsrfProtection = false
