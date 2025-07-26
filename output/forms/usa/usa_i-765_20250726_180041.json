@@ -1,0 +1,75 @@
+{
+  "id": 11,
+  "form_name": "Application for Employment Authorization",
+  "form_slug": "application-for-employment-authorization-i765",
+  "country_code": "USA",
+  "country_name": "United States",
+  "category": "Work Visa",
+  "form_description": "Form I-765 is used by certain foreign nationals in the United States to request employment authorization and an Employment Authorization Document (EAD). This form is applicable to individuals whose immigration status allows them to work in the U.S. without restrictions, as well as those who need to apply for an EAD to show their work authorization. The form includes specific instructions for various eligibility categories, including refugees, asylees, and others. Applicants must provide necessary documentation based on their eligibility category, such as Form I-94, approval letters, or other relevant documents. The form also allows applicants to request a Social Security number. It is crucial to enter the correct eligibility category in the application, as this affects the processing of the EAD. Common mistakes include using the wrong category number or failing to provide required supporting documents. The form must be submitted to USCIS, and applicants should be aware of the processing times and fees associated with the application.",
+  "form_id": "I-765",
+  "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+  "structured_data": {
+    "fees": "$410",
+    "form_id": "I-765",
+    "category": "Work Visa",
+    "language": "English",
+    "form_name": "Application for Employment Authorization",
+    "form_slug": "application-for-employment-authorization-i765",
+    "country_code": "USA",
+    "country_name": "United States",
+    "last_fetched": "2025-07-26T17:40:07.397511",
+    "document_format": "PDF",
+    "processing_time": "Varies, typically several months",
+    "required_fields": [
+      {
+        "name": "Eligibility Category",
+        "type": "text",
+        "description": "The category under which the applicant is applying for employment authorization.",
+        "example_value": "(a)(3)"
+      },
+      {
+        "name": "Name",
+        "type": "text",
+        "description": "Full legal name of the applicant.",
+        "example_value": "John Doe"
+      },
+      {
+        "name": "Address",
+        "type": "text",
+        "description": "Current residential address of the applicant.",
+        "example_value": "123 Main St, Anytown, USA"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Applicant's date of birth.",
+        "example_value": "1990-01-01"
+      }
+    ],
+    "form_description": "Form I-765 is used by certain foreign nationals in the United States to request employment authorization and an Employment Authorization Document (EAD). This form is applicable to individuals whose immigration status allows them to work in the U.S. without restrictions, as well as those who need to apply for an EAD to show their work authorization. The form includes specific instructions for various eligibility categories, including refugees, asylees, and others. Applicants must provide necessary documentation based on their eligibility category, such as Form I-94, approval letters, or other relevant documents. The form also allows applicants to request a Social Security number. It is crucial to enter the correct eligibility category in the application, as this affects the processing of the EAD. Common mistakes include using the wrong category number or failing to provide required supporting documents. The form must be submitted to USCIS, and applicants should be aware of the processing times and fees associated with the application.",
+    "submission_method": "Mail",
+    "target_applicants": "Foreign nationals in the U.S. seeking employment authorization.",
+    "discovered_by_query": "USA Work Visa visa application process official site",
+    "governing_authority": "U.S. Citizenship and Immigration Services (USCIS)",
+    "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf",
+    "validation_warnings": [],
+    "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr.pdf",
+    "supporting_documents": [
+      "Form I-94",
+      "Approval letters",
+      "Passport",
+      "Travel document"
+    ],
+    "extracted_text_length": 95848,
+    "full_markdown_summary": "# Instructions for Application for Employment Authorization (Form I-765)\n\n## Overview\nForm I-765, Application for Employment Authorization, is used by certain foreign nationals in the United States to request employment authorization and an Employment Authorization Document (EAD). This document is crucial for individuals who need to prove their eligibility to work in the U.S.\n\n## Purpose\nThe primary purpose of Form I-765 is to allow eligible foreign nationals to apply for an EAD, which serves as proof of their authorization to work in the United States. This form can also be used to apply for a Social Security number.\n\n## Who May File Form I-765?\nEligible applicants include:\n- **Refugees**: Must provide a stamped Form I-94 or approval letter.\n- **Asylees**: Must provide evidence of asylee status.\n- **Parolees**: Must provide relevant documentation.\n- **Individuals with pending asylum applications**: Must follow specific instructions for pending cases.\n\n## Required Documentation\nApplicants must submit supporting documents based on their eligibility category, including:\n- Stamped Form I-94\n- Approval letters from USCIS\n- Passport or travel document\n\n## Common Mistakes to Avoid\n- Using the wrong eligibility category number.\n- Failing to provide required supporting documents.\n\n## Submission\nThe completed Form I-765 must be submitted to USCIS by mail. Ensure all required documents are included to avoid delays.\n\n## Fees\nThe application fee for Form I-765 is $410. Check the USCIS website for any updates on fees.\n\n## Processing Time\nProcessing times can vary, but applicants should expect several months for their applications to be processed.\n\n## Additional Information\nFor more detailed instructions, including specific eligibility categories and documentation requirements, refer to the official USCIS website or the full instructions document."
+  },
+  "validation_warnings": [],
+  "lawyer_review": {},
+  "official_source_url": "https://www.uscis.gov/sites/default/files/document/forms/i-765instr.pdf",
+  "discovered_by_query": "USA Work Visa visa application process official site",
+  "downloaded_file_path": "downloads\\usa\\work_visa\\i-765instr.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated",
+  "created_at": "2025-07-26T14:40:15.757552",
+  "updated_at": "2025-07-26T14:40:15.757552"
+}

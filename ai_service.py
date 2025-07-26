@@ -135,12 +135,14 @@ class AIExtractionService:
             return {}
         
         json_schema = {
-            "country": "Country name (e.g., USA, Canada)",
-            "visa_category": "Type of visa/immigration category (e.g., Work Visa, Student Visa)",
             "form_name": "Official form name (e.g., Petition for a Nonimmigrant Worker)",
-            "form_id": "Official form number/ID (e.g., I-129)",
-            "description": "Brief, concise description of the form's purpose.",
-            "governing_authority": "Government agency responsible (e.g., USCIS, IRCC)",
+            "form_slug": "URL-friendly slug generated from form name and ID (e.g., petition-nonimmigrant-worker-i129, ds156-tourist-visa)",
+            "country_code": "ISO 3-letter country code (e.g., USA, CAN, ARE)",
+            "country_name": "Full country name (e.g., United States, Canada, United Arab Emirates)",
+            "category": "Immigration category (e.g., Work Visa, Student Visa, Tourist Visa, Citizenship)",
+            "form_description": "Comprehensive description of the form including all information an immigrant would need to understand how to fill it, what fields are required, what documents to have, potential pitfalls to avoid, and complete step-by-step guidance. This should be detailed enough that someone with no prior knowledge could understand and complete the form successfully.",
+            "form_id": "Official form number/ID (e.g., I-129, DS-156)",
+            "governing_authority": "Government agency responsible (e.g., USCIS, U.S. Department of State, IRCC)",
             "target_applicants": "Who should use this form (e.g., Employers filing for nonimmigrant workers)",
             "required_fields": [{"name": "field name", "type": "text/number/date/etc", "description": "field description", "example_value": "example data"}],
             "supporting_documents": ["list of required supporting documents (e.g., Passport, Birth Certificate)"],
@@ -155,7 +157,6 @@ class AIExtractionService:
             "discovered_by_query": "Query or method used to discover this document (e.g., Google Search, API Call)",
             "extracted_text_length": "Length of the extracted text in characters",
             "validation_warnings": "List of validation warnings or issues found during extraction",
-            "full_markdown_summary": "A comprehensive Markdown summary of the document, capturing all details, instructions, and nuances.",
             "full_markdown_summary": "A comprehensive, detailed summary of the document, formatted in Markdown. This field should elaborate on all aspects of the form, including its purpose, detailed instructions, eligibility, process, and any other relevant information found in the document, even if it doesn't fit into the structured fields above. Use Markdown headings (##, ###), lists, and bold text for clarity and readability. Ensure this summary is exhaustive and captures all nuances, acting as the primary source of truth for detailed document intelligence. If information is found that doesn't fit the specific structured keys, include it here."
         }
 
@@ -165,7 +166,12 @@ class AIExtractionService:
 Return a JSON object that strictly adheres to the following schema.
 For the "full_markdown_summary" field, provide an extensive summary of the document, formatted in Markdown, capturing ALL available details, instructions, and nuances. For other fields, be concise.
 
-**IMPORTANT:** If the 'Document Text' is empty or very short, you MUST infer the 'country', 'visa_category', 'form_name', 'form_id', 'description', and 'governing_authority' fields primarily from the 'Document Info' (filename, URL, discovered query) provided in the user prompt. Only set these fields to null if absolutely no information can be inferred from any source.
+**IMPORTANT:**
+1. If the 'Document Text' is empty or very short, you MUST infer the 'country_name', 'country_code', 'category', 'form_name', 'form_id', 'form_description', and 'governing_authority' fields primarily from the 'Document Info' (filename, URL, discovered query) provided in the user prompt. 
+2. For country_name: Use the full official country name (e.g., "United States", "Canada", "United Kingdom", "Australia"). Never use "Unknown" unless absolutely no country information can be determined.
+3. For country_code: Use the official 3-letter ISO code (e.g., "USA", "CAN", "GBR", "AUS"). Never use "UNK" unless absolutely no country can be determined.
+4. For category: Use specific immigration categories like "Work Visa", "Student Visa", "Tourist Visa", "Family Visa", "Permanent Residence", "Citizenship", "Business Visa". Never use "Unknown" unless the document type cannot be determined.
+5. Extract country and category information from URLs, filenames, and any text content available. Look for patterns like "uscis.gov" (USA), "canada.ca" (Canada), "gov.uk" (United Kingdom), etc.
 
 JSON Schema:
 {json.dumps(json_schema, indent=2)}
@@ -191,10 +197,17 @@ Document Info:
 - File Type: {document_info.get('file_format', 'Unknown')}
 - Discovered by Query: {document_info.get('discovered_by_query', 'Unknown')}
 
+COUNTRY DETECTION HINTS:
+- If URL contains "uscis.gov", "state.gov", "dhs.gov" → Country: "United States", Code: "USA"
+- If URL contains "canada.ca", "ircc.gc.ca" → Country: "Canada", Code: "CAN"  
+- If URL contains "gov.uk", "ukvi.homeoffice.gov.uk" → Country: "United Kingdom", Code: "GBR"
+- If URL contains "homeaffairs.gov.au", "immi.gov.au" → Country: "Australia", Code: "AUS"
+- If URL contains "germany.travel", "bamf.de" → Country: "Germany", Code: "DEU"
+
 Document Text:
 {ai_document_text}
 
-Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'full_markdown_summary' field with all details from the document, using proper Markdown formatting. If the 'Document Text' explicitly states that text extraction failed, ensure the 'full_markdown_summary' clearly communicates this and provides any summary based on available metadata.
+Extract all relevant information according to the JSON schema provided in the system prompt. Pay special attention to populating the 'country_name', 'country_code', and 'category' fields accurately based on the URL patterns and document content above.
 **Remember to infer basic fields like country, visa_category, form_name, form_id, description, and governing_authority from the 'Document Info' if the 'Document Text' is insufficient.**"""
 
         response_content = None
@@ -249,6 +262,18 @@ Extract all relevant information according to the JSON schema provided in the sy
         try:
             extracted_data = json.loads(extracted_json_str) # Use the extracted string
             
+            # Ensure form_slug is generated if not provided by AI
+            if not extracted_data.get('form_slug') and extracted_data.get('form_name'):
+                form_name = extracted_data.get('form_name', '').lower()
+                form_id = extracted_data.get('form_id', '').lower()
+                # Create slug from form name and ID
+                slug_parts = []
+                if form_name:
+                    slug_parts.append(re.sub(r'[^a-z0-9\s-]', '', form_name).replace(' ', '-'))
+                if form_id:
+                    slug_parts.append(re.sub(r'[^a-z0-9\s-]', '', form_id).replace(' ', '-'))
+                extracted_data['form_slug'] = '-'.join(slug_parts)[:200]  # Limit to 200 chars
+
             extracted_data.update({
                 "official_source_url": document_info.get('download_url'),
                 "downloaded_file_path": document_info.get('file_path'),

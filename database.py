@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 import streamlit as st
 import uuid # For generating unique export IDs
+import re
 
 class DatabaseManager:
     def __init__(self, database_url: str):
@@ -26,15 +27,17 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 with conn.cursor() as cur:
-                    # Forms table
+                    # Forms table with all required fields
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS public.forms (
                             id SERIAL PRIMARY KEY,
-                            country VARCHAR(100) NOT NULL,
-                            visa_category VARCHAR(200),
-                            form_name VARCHAR(300),
+                            form_name VARCHAR(300) NOT NULL,
+                            form_slug VARCHAR(200) NOT NULL UNIQUE,
+                            country_code VARCHAR(3) NOT NULL,
+                            country_name VARCHAR(100) NOT NULL,
+                            category VARCHAR(200) NOT NULL,
+                            form_description TEXT NOT NULL,
                             form_id VARCHAR(100),
-                            description TEXT,
                             governing_authority VARCHAR(200),
                             structured_data JSONB,
                             validation_warnings JSONB,
@@ -92,9 +95,11 @@ class DatabaseManager:
                     """)
                     
                     # Create indexes
-                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country ON public.forms(country)")
-                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_visa_category ON public.forms(visa_category)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country_code ON public.forms(country_code)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country_name ON public.forms(country_name)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_category ON public.forms(category)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_form_name ON public.forms(form_name)")
+                    cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_form_slug ON public.forms(form_slug)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_documents_form_id ON public.documents(form_id)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
@@ -129,8 +134,40 @@ class DatabaseManager:
         except Exception as e:
             st.error(f"Database initialization error: {e}")
     
+    def _generate_form_slug(self, form_name: str, form_id: str, country_code: str) -> str:
+        """Generate a URL-friendly slug from form name and ID"""
+        # Clean and combine form name and ID
+        slug_parts = []
+        
+        if form_name and form_name != 'Unknown Form/Page':
+            clean_name = re.sub(r'[^a-zA-Z0-9\s-]', '', form_name.lower())
+            clean_name = re.sub(r'\s+', '-', clean_name.strip())
+            if clean_name:
+                slug_parts.append(clean_name)
+        
+        if form_id and form_id != 'N/A':
+            clean_id = re.sub(r'[^a-zA-Z0-9\s-]', '', form_id.lower())
+            clean_id = re.sub(r'\s+', '-', clean_id.strip())
+            if clean_id:
+                slug_parts.append(clean_id)
+        
+        if country_code:
+            slug_parts.append(country_code.lower())
+        
+        # If no valid parts, create a generic slug
+        if not slug_parts:
+            slug_parts = ['immigration-form', str(uuid.uuid4())[:8]]
+        
+        slug = '-'.join(slug_parts)
+        
+        # Ensure slug is not too long
+        if len(slug) > 200:
+            slug = slug[:200]
+        
+        return slug
+    
     def insert_form(self, form_data: Dict[str, Any]) -> Optional[int]:
-        """Insert a new form record"""
+        """Insert a new form record with proper slug generation"""
         if not self.database_url:
             st.warning("Database URL not configured. Skipping form insertion.")
             return None
@@ -138,20 +175,59 @@ class DatabaseManager:
         try:
             with self.get_connection() as conn:
                 with conn.cursor() as cur:
+                    # Extract data from structured_data if available
+                    structured_data = form_data.get('structured_data', {})
+                    
+                    # Generate form_slug if not provided
+                    form_slug = structured_data.get('form_slug')
+                    if not form_slug:
+                        form_slug = self._generate_form_slug(
+                            form_data.get('form_name', ''),
+                            form_data.get('form_id', ''),
+                            structured_data.get('country_code', form_data.get('country', ''))
+                        )
+                    
+                    # Extract required fields with fallbacks
+                    country_code = (
+                        structured_data.get('country_code') or 
+                        form_data.get('country', '')[:3].upper() if form_data.get('country') and form_data.get('country') != 'Unknown' else 
+                        'UNK'
+                    )
+
+                    country_name = (
+                        structured_data.get('country_name') or 
+                        form_data.get('country', '') if form_data.get('country') and form_data.get('country') != 'Unknown' else 
+                        'Unknown'
+                    )
+
+                    category = (
+                        structured_data.get('category') or 
+                        form_data.get('visa_category', '') if form_data.get('visa_category') and form_data.get('visa_category') != 'Unknown' else 
+                        'Unknown'
+                    )
+                    
+                    form_description = (
+                        structured_data.get('form_description') or 
+                        form_data.get('description', '') if form_data.get('description') and form_data.get('description') != 'No description available' else 
+                        ''
+                    )
+                    
                     cur.execute("""
                         INSERT INTO public.forms (
-                            country, visa_category, form_name, form_id, description,
-                            governing_authority, structured_data, validation_warnings,
-                            lawyer_review, official_source_url, discovered_by_query,
-                            downloaded_file_path, document_format, processing_status
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            form_name, form_slug, country_code, country_name, category,
+                            form_description, form_id, governing_authority, structured_data,
+                            validation_warnings, lawyer_review, official_source_url,
+                            discovered_by_query, downloaded_file_path, document_format, processing_status
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         RETURNING id
                     """, (
-                        form_data.get('country'),
-                        form_data.get('visa_category'),
                         form_data.get('form_name'),
+                        form_slug,
+                        country_code,
+                        country_name,
+                        category,
+                        form_description,
                         form_data.get('form_id'),
-                        form_data.get('description'),
                         form_data.get('governing_authority'),
                         Json(form_data.get('structured_data', {})),
                         Json(form_data.get('validation_warnings', [])),
@@ -166,9 +242,49 @@ class DatabaseManager:
                     conn.commit()
                     st.success(f"Form '{form_data.get('form_name', 'Unknown')}' inserted with ID: {inserted_id}")
                     return inserted_id
-        except psycopg2.errors.UniqueViolation:
-            st.warning(f"Form with URL '{form_data.get('official_source_url')}' already exists. Skipping insertion.")
-            return None
+        except psycopg2.errors.UniqueViolation as e:
+            if 'form_slug' in str(e):
+                # Try with a unique suffix
+                try:
+                    with self.get_connection() as conn:
+                        with conn.cursor() as cur:
+                            unique_slug = form_slug + '-' + str(uuid.uuid4())[:8]
+                            cur.execute("""
+                                INSERT INTO public.forms (
+                                    form_name, form_slug, country_code, country_name, category,
+                                    form_description, form_id, governing_authority, structured_data,
+                                    validation_warnings, lawyer_review, official_source_url,
+                                    discovered_by_query, downloaded_file_path, document_format, processing_status
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                RETURNING id
+                            """, (
+                                form_data.get('form_name'),
+                                unique_slug,
+                                country_code,
+                                country_name,
+                                category,
+                                form_description,
+                                form_data.get('form_id'),
+                                form_data.get('governing_authority'),
+                                Json(form_data.get('structured_data', {})),
+                                Json(form_data.get('validation_warnings', [])),
+                                Json(form_data.get('lawyer_review', {})),
+                                form_data.get('official_source_url'),
+                                form_data.get('discovered_by_query'),
+                                form_data.get('downloaded_file_path'),
+                                form_data.get('document_format'),
+                                form_data.get('processing_status')
+                            ))
+                            inserted_id = cur.fetchone()['id']
+                            conn.commit()
+                            st.success(f"Form '{form_data.get('form_name', 'Unknown')}' inserted with unique slug: {unique_slug}")
+                            return inserted_id
+                except Exception as retry_error:
+                    st.error(f"Error inserting form even with unique slug: {retry_error}")
+                    return None
+            else:
+                st.warning(f"Form with URL '{form_data.get('official_source_url')}' already exists. Skipping insertion.")
+                return None
         except Exception as e:
             st.error(f"Error inserting form: {e}")
             return None
@@ -205,7 +321,7 @@ class DatabaseManager:
             st.error(f"Error inserting document: {e}")
             return None
 
-    def get_forms(self, country: str = None, visa_category: str = None) -> List[Dict]:
+    def get_forms(self, country_code: str = None, category: str = None) -> List[Dict]:
         """Retrieve forms with optional filtering"""
         if not self.database_url:
             return []
@@ -216,13 +332,13 @@ class DatabaseManager:
                     query = "SELECT * FROM public.forms WHERE 1=1"
                     params = []
                     
-                    if country:
-                        query += " AND country = %s"
-                        params.append(country)
-                    
-                    if visa_category:
-                        query += " AND visa_category = %s"
-                        params.append(visa_category)
+                    if country_code:
+                        query += " AND country_code = %s"
+                        params.append(country_code)
+
+                    if category:
+                        query += " AND category = %s"
+                        params.append(category)
                     
                     query += " ORDER BY created_at DESC"
                     

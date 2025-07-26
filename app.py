@@ -235,7 +235,7 @@ def discovery_page(discovery, processor, ai_service, db):
     </style>
 
     <div class="discovery-header">
-        <h1>�� Document Discovery</h1>
+        <h1>🔍 Document Discovery</h1>
         <p style="font-size: 1.2rem; margin-bottom: 0; opacity: 0.9;">
             Discover official immigration documents and relevant informational pages from government sources
         </p>
@@ -273,7 +273,7 @@ def discovery_page(discovery, processor, ai_service, db):
     st.markdown("### ⚙️ Processing Options")
 
     # Information about balanced document discovery
-    st.info("�� **Enhanced Discovery**: The system now equally prioritizes PDF, Excel, Word, and other critical document formats alongside web pages for comprehensive immigration intelligence.")
+    st.info("ℹ️ **Enhanced Discovery**: The system now equally prioritizes PDF, Excel, Word, and other critical document formats alongside web pages for comprehensive immigration intelligence.")
 
     col1, col2 = st.columns(2)
 
@@ -454,15 +454,33 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                     form_data_to_save["validation_warnings"].append("AI extraction failed or returned invalid data")
                     form_data_to_save["processing_status"] = "ai_extraction_failed"
                 else:
-                    form_data_to_save["structured_data"] = ai_extracted_data
+                    # Update form data with AI extracted information, ensuring no "Unknown" values when better data exists
+                    if ai_extracted_data:
+                        form_data_to_save["structured_data"] = ai_extracted_data
 
-                    form_data_to_save['country'] = ai_extracted_data.get('country', country)
-                    form_data_to_save['visa_category'] = ai_extracted_data.get('visa_category', visa_type)
+                        # Use AI extracted data if it's better than our defaults
+                        if ai_extracted_data.get('country_name') and ai_extracted_data.get('country_name') != 'Unknown':
+                            form_data_to_save['country'] = ai_extracted_data['country_name']
+                        elif country and country != 'Unknown':
+                            form_data_to_save['country'] = country
+                            
+                        if ai_extracted_data.get('category') and ai_extracted_data.get('category') != 'Unknown':
+                            form_data_to_save['visa_category'] = ai_extracted_data['category']
+                        elif visa_type and visa_type != 'Unknown':
+                            form_data_to_save['visa_category'] = visa_type
 
-                    form_data_to_save['form_name'] = ai_extracted_data.get('form_name', form_data_to_save['form_name'])
-                    form_data_to_save['form_id'] = ai_extracted_data.get('form_id', form_data_to_save['form_id'])
-                    form_data_to_save['description'] = ai_extracted_data.get('description', form_data_to_save['description'])
-                    form_data_to_save['governing_authority'] = ai_extracted_data.get('governing_authority', form_data_to_save['governing_authority'])
+                        # Update other fields only if AI provided better data
+                        if ai_extracted_data.get('form_name') and ai_extracted_data.get('form_name') not in ['Unknown Form/Page', 'Unknown']:
+                            form_data_to_save['form_name'] = ai_extracted_data['form_name']
+                            
+                        if ai_extracted_data.get('form_id') and ai_extracted_data.get('form_id') not in ['N/A', 'Unknown']:
+                            form_data_to_save['form_id'] = ai_extracted_data['form_id']
+                            
+                        if ai_extracted_data.get('form_description') and len(ai_extracted_data.get('form_description', '')) > len(form_data_to_save.get('description', '')):
+                            form_data_to_save['description'] = ai_extracted_data['form_description']
+                            
+                        if ai_extracted_data.get('governing_authority') and ai_extracted_data.get('governing_authority') not in ['N/A', 'Unknown']:
+                            form_data_to_save['governing_authority'] = ai_extracted_data['governing_authority']
 
                     validation_warnings = ai_service.validate_form_data(form_data_to_save["structured_data"])
                     form_data_to_save['validation_warnings'] = validation_warnings
@@ -470,11 +488,10 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             else:
                 form_data_to_save["validation_warnings"].append("AI processing skipped by user")
                 form_data_to_save["processing_status"] = "downloaded_only"
-                # FIX 1: Removed invalid escape sequences
                 form_data_to_save["structured_data"] = {
                     "extracted_text_length": len(extracted_text),
                     "file_info": file_info,
-                    "full_markdown_summary": f"Document text extracted (AI processing skipped):\n\n```\n{extracted_text[:1000]}...\n```"
+                    "full_markdown_summary": f"Document text extracted (AI processing skipped):\n\n\`\`\`\n{extracted_text[:1000]}...\n\`\`\`"
                 }
 
             if save_to_db:
@@ -502,7 +519,7 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
             with st.expander(f"Debug Info for {doc['title'][:50]}..."):
                 st.code(traceback.format_exc())
 
-    progress_bar.progress(current_progress)
+        progress_bar.progress(current_progress)
 
     with results_container:
         st.subheader("📊 Processing Results")
@@ -540,11 +557,12 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                     with col2:
                         st.write(f"**Processing Status:** {form.get('processing_status', 'N/A')}")
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
-                        document_info_from_db = db.get_document_by_form_id(form['id'])
-                        if document_info_from_db and document_info_from_db.get('cloudinary_url'):
-                            st.write(f"**Cloudinary URL:** [Link]({document_info_from_db['cloudinary_url']})")
-                        else:
-                            st.write(f"**Cloudinary URL:** N/A")
+                        if form.get('id'):
+                            document_info_from_db = db.get_document_by_form_id(form['id'])
+                            if document_info_from_db and document_info_from_db.get('cloudinary_url'):
+                                st.write(f"**Cloudinary URL:** [Link]({document_info_from_db['cloudinary_url']})")
+                            else:
+                                st.write(f"**Cloudinary URL:** N/A")
                         st.write(f"**Text Length:** {form.get('structured_data', {}).get('extracted_text_length', 'N/A')} chars")
                         st.write(f"**Fees:** {form.get('structured_data', {}).get('fees', 'N/A')}")
 
@@ -822,7 +840,7 @@ def document_viewer_page(db, processor, ai_service):
                 st.rerun()
 
         document_info_from_db = db.get_document_by_form_id(selected_form['id'])
-        downloaded_file_path = selected_form.get('downloaded_file_path')  # FIX 3: Defined here for all tabs
+        downloaded_file_path = selected_form.get('downloaded_file_path')
 
         # Tab Content
         if st.session_state.current_tab == "overview":
@@ -843,7 +861,7 @@ def document_viewer_page(db, processor, ai_service):
 
             with col2:
                 st.markdown("### ⚙️ Processing Details")
-                structured_data = selected_form.get('structured_data', {})  # FIX 4: Defined here
+                structured_data = selected_form.get('structured_data', {})
                 st.write(f"**Processing Status:** {selected_form.get('processing_status', 'N/A').replace('_', ' ').title()}")
                 st.write(f"**Processing Time:** {structured_data.get('processing_time', 'N/A')}")
                 st.write(f"**Fees:** {structured_data.get('fees', 'N/A')}")
@@ -928,7 +946,7 @@ def document_viewer_page(db, processor, ai_service):
 
         elif st.session_state.current_tab == "ai":
             # AI Analysis Tab
-            structured_data = selected_form.get('structured_data', {})  # FIX 4: Defined here
+            structured_data = selected_form.get('structured_data', {})
             full_markdown = structured_data.get('full_markdown_summary') if structured_data else None
 
             if full_markdown:
@@ -989,7 +1007,7 @@ def document_viewer_page(db, processor, ai_service):
 
         # AI Summary
         with col2:
-            structured_data = selected_form.get('structured_data', {})  # Define structured_data here
+            structured_data = selected_form.get('structured_data', {})
             if structured_data and structured_data.get('full_markdown_summary'):
                 st.download_button(
                     "📄 AI Summary",
@@ -1131,7 +1149,6 @@ def document_viewer_page(db, processor, ai_service):
 
         if search_query:
             search_query_lower = search_query.lower()
-            # FIX 2: Handle None values in search
             filtered_forms = [
                 f for f in filtered_forms
                 if (search_query_lower in (f.get('form_name') or '').lower() or
@@ -1305,12 +1322,12 @@ def validation_panel_page(db, processor, ai_service):
         if filtered_forms:
             for form in filtered_forms:
                 clean_form_name = clean_html_text(form['form_name'])
-                clean_country = clean_html_text(form['country'])
+                clean_country = clean_html_text(form.get('country', 'Unknown'))
                 with st.expander(f"📋 {clean_form_name} - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
                     col1, col2 = st.columns([2, 1])
 
                     with col1:
-                        st.write(f"**Form ID:** {clean_html_text(form['form_id'])}")
+                        st.write(f"**Form ID:** {clean_html_text(form.get('form_id', 'N/A'))}")
                         st.write(f"**Description:** {clean_html_text(form.get('description', 'N/A'))}")
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
                         st.write(f"**Official Source URL:** {form.get('official_source_url', 'N/A')}")
@@ -1408,12 +1425,12 @@ def validation_panel_page(db, processor, ai_service):
                                                             "structured_data": re_extracted_data,
                                                             "validation_warnings": validation_warnings,
                                                             "processing_status": new_processing_status,
-                                                            "country": re_extracted_data.get('country', form['country']),
-                                                            "visa_category": re_extracted_data.get('visa_category', form['visa_category']),
-                                                            "form_name": re_extracted_data.get('form_name', form['form_name']),
-                                                            "form_id": re_extracted_data.get('form_id', form['form_id']),
-                                                            "description": re_extracted_data.get('description', form['description']),
-                                                            "governing_authority": re_extracted_data.get('governing_authority', form['governing_authority'])
+                                                            "country": re_extracted_data.get('country_name', form.get('country', 'Unknown')),
+                                                            "visa_category": re_extracted_data.get('category', form.get('visa_category', 'Unknown')),
+                                                            "form_name": re_extracted_data.get('form_name', form.get('form_name', 'Unknown')),
+                                                            "form_id": re_extracted_data.get('form_id', form.get('form_id', 'N/A')),
+                                                            "description": re_extracted_data.get('form_description', form.get('description', '')),
+                                                            "governing_authority": re_extracted_data.get('governing_authority', form.get('governing_authority', 'N/A'))
                                                         }
                                                     )
 
@@ -1427,10 +1444,10 @@ def validation_panel_page(db, processor, ai_service):
                                             except Exception as e:
                                                 st.error(f"Error during AI re-validation: {e}")
                                                 st.code(traceback.format_exc())
+        else:
+            st.info(f"No forms/pages found with status: {review_filter}")
     else:
-        st.info(f"No forms/pages found with status: {review_filter}")
-
-    st.info("No documents/pages found for review.")
+        st.info("No documents/pages found for review.")
 
 def export_panel_page(db, export_service):
     st.markdown("""
@@ -1473,6 +1490,9 @@ def export_panel_page(db, export_service):
     """, unsafe_allow_html=True)
 
     forms = db.get_forms()
+    
+    # Initialize filtered_forms at the beginning to fix the UnboundLocalError
+    filtered_forms = []
 
     if forms:
         st.success(f"✅ Found {len(forms)} documents/pages available for export")
@@ -1485,7 +1505,7 @@ def export_panel_page(db, export_service):
         with col1:
             country_filter = st.selectbox(
                 "Filter by Country:",
-                ["All"] + list(set(form['country'] for form in forms))
+                ["All"] + list(set(form.get('country', 'Unknown') for form in forms if form.get('country')))
             )
 
         with col2:
@@ -1496,7 +1516,7 @@ def export_panel_page(db, export_service):
 
         filtered_forms = forms
         if country_filter != "All":
-            filtered_forms = [form for form in filtered_forms if form['country'] == country_filter]
+            filtered_forms = [form for form in filtered_forms if form.get('country') == country_filter]
 
         if status_filter != "All":
             if status_filter == "Pending Review":
@@ -1539,7 +1559,6 @@ def export_panel_page(db, export_service):
         with col1:
             if st.button("📄 Export as JSON"):
                 if len(filtered_forms) == 1:
-                    form_data = filtered_forms[0].get('structured_data', {})
                     file_path, file_content, cloudinary_export_url = export_service.export_json(filtered_forms[0])
                     if file_content:
                         if cloudinary_export_url:
@@ -1564,10 +1583,6 @@ def export_panel_page(db, export_service):
                         st.success(f"Exported {exported_files_count} JSON files to server and Cloudinary.")
                 else:
                     st.warning("No forms/pages selected for JSON export.")
-                if cloudinary_export_url:
-                    st.info(f"Debug: Cloudinary URL for JSON export: {cloudinary_export_url}")
-                else:
-                    st.warning("Debug: No Cloudinary URL returned for JSON export.")
 
         with col2:
             if st.button("📊 Export as Excel"):
@@ -1594,17 +1609,12 @@ def export_panel_page(db, export_service):
                             )
                 else:
                     st.warning("No forms/pages selected for Excel export.")
-                if cloudinary_export_url:
-                    st.info(f"Debug: Cloudinary URL for Excel export: {cloudinary_export_url}")
-                else:
-                    st.warning("Debug: No Cloudinary URL returned for Excel export.")
 
         with col3:
             if st.button("📋 Export Summaries (Markdown)"):
                 if filtered_forms:
                     exported_files_count = 0
                     for form in filtered_forms:
-                        summary_data_to_export = form.get('structured_data', {})
                         file_path, file_content, cloudinary_export_url = export_service.export_summary_markdown(form)
                         if file_content:
                             if cloudinary_export_url:
@@ -1623,23 +1633,27 @@ def export_panel_page(db, export_service):
                         st.success(f"Exported {exported_files_count} summary files.")
                 else:
                     st.warning("No forms/pages selected for summary export.")
-                if cloudinary_export_url:
-                    st.info(f"Debug: Cloudinary URL for Summary export: {cloudinary_export_url}")
-                else:
-                    st.warning("Debug: No Cloudinary URL returned for Summary export.")
 
+    # Show preview of forms to export
     if filtered_forms:
         st.subheader("Preview of Forms/Pages to Export")
 
         preview_data = []
         for form in filtered_forms:
+            # Extract structured data for preview
+            structured_data = form.get('structured_data', {})
+            
             preview_data.append({
-                "Country": clean_html_text(form['country']),
-                "Form Name": clean_html_text(form['form_name']),
-                "Form ID": clean_html_text(form['form_id']),
-                "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
+                "Form Name": clean_html_text(form.get('form_name', 'Unknown')),
+                "Form Slug": structured_data.get('form_slug', 'N/A'),
+                "Country Code": structured_data.get('country_code', 'N/A'),
+                "Country Name": clean_html_text(form.get('country', 'Unknown')),
+                "Category": clean_html_text(form.get('visa_category', 'Unknown')),
+                "Form ID": clean_html_text(form.get('form_id', 'N/A')),
+                "Governing Authority": clean_html_text(form.get('governing_authority', 'N/A')),
                 "Processing Status": form.get('processing_status', 'N/A'),
-                "Last Updated": form['created_at']
+                "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
+                "Last Updated": str(form.get('created_at', 'N/A'))
             })
 
         df = pd.DataFrame(preview_data)
@@ -1773,7 +1787,7 @@ def export_panel_page(db, export_service):
     st.markdown("Generate a single report with all USA immigration forms, including links to original documents, JSON data, and Markdown summaries on Cloudinary.")
     if st.button("🚀 Generate Comprehensive USA Export Report", type="primary"):
         with st.spinner("Generating comprehensive USA export report..."):
-            usa_forms = db.get_forms(country="USA")
+            usa_forms = db.get_forms(country_code="USA")
             if usa_forms:
                 report_path, report_content, cloudinary_report_url = export_service.generate_comprehensive_report(usa_forms)
                 if report_content:
@@ -1851,7 +1865,7 @@ def database_viewer_page(db):
             """, unsafe_allow_html=True)
 
         with col2:
-            countries_in_db = set(form['country'] for form in forms)
+            countries_in_db = set(form.get('country', 'Unknown') for form in forms)
             st.markdown(f"""
             <div class="stat-card">
                 <h3 style="color: #11998e; margin: 0;">🌍 {len(countries_in_db)}</h3>
@@ -1894,7 +1908,7 @@ def database_viewer_page(db):
         with col2:
             country_filter = st.selectbox(
                 "Filter by Country:",
-                ["All"] + sorted(list(set(form['country'] for form in forms)))
+                ["All"] + sorted(list(set(form.get('country', 'Unknown') for form in forms)))
             )
         with col3:
             processing_status_filter = st.selectbox(
@@ -1913,28 +1927,28 @@ def database_viewer_page(db):
             ]
 
         if country_filter != "All":
-            filtered_forms = [form for form in filtered_forms if form['country'] == country_filter]
+            filtered_forms = [form for form in filtered_forms if form.get('country') == country_filter]
 
         if processing_status_filter != "All":
             filtered_forms = [form for form in filtered_forms if form.get('processing_status') == processing_status_filter]
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown(f"### ���� Forms/Pages ({len(filtered_forms)} found)")
+        st.markdown(f"### 📄 Forms/Pages ({len(filtered_forms)} found)")
 
         for form in filtered_forms:
-            clean_form_name = clean_html_text(form['form_name'])
-            clean_form_id = clean_html_text(form['form_id'])
-            clean_country = clean_html_text(form['country'])
+            clean_form_name = clean_html_text(form.get('form_name', 'Unknown'))
+            clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
+            clean_country = clean_html_text(form.get('country', 'Unknown'))
             with st.expander(f"📋 {clean_form_name} ({clean_form_id}) - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
                 col1, col2 = st.columns(2)
 
                 with col1:
                     st.write(f"**Country:** {clean_country}")
-                    st.write(f"**Visa Category:** {clean_html_text(form['visa_category'])}")
+                    st.write(f"**Visa Category:** {clean_html_text(form.get('visa_category', 'Unknown'))}")
                     st.write(f"**Form ID:** {clean_form_id}")
                     st.write(f"**Authority:** {clean_html_text(form.get('governing_authority', 'N/A'))}")
-                    st.write(f"**Created:** {form['created_at']}")
+                    st.write(f"**Created:** {form.get('created_at', 'N/A')}")
 
                 with col2:
                     review_status = (form.get('lawyer_review') or {}).get('approval_status', 'Pending Review')
@@ -2002,9 +2016,9 @@ def cloudinary_browser_page(db):
         if document_info and document_info.get('cloudinary_url'):
             cloudinary_docs.append({
                 "form_id": form['id'],
-                "country": form['country'],
-                "visa_category": form['visa_category'],
-                "form_name": form['form_name'],
+                "country": form.get('country', 'Unknown'),
+                "visa_category": form.get('visa_category', 'Unknown'),
+                "form_name": form.get('form_name', 'Unknown'),
                 "cloudinary_url": document_info['cloudinary_url'],
                 "file_format": document_info['file_format'],
                 "filename": document_info['filename']
@@ -2040,7 +2054,7 @@ def cloudinary_browser_page(db):
 
                 for doc in docs:
                     clean_doc_form_name = clean_html_text(doc['form_name'])
-                    clean_doc_form_id = clean_html_text(doc['form_id'])
+                    clean_doc_form_id = clean_html_text(str(doc['form_id']))
 
                     st.markdown(f"""
                     <div style="background: white; padding: 15px; border-radius: 8px; margin: 8px 0;
@@ -2101,7 +2115,7 @@ def database_health_check_page(database_url: str):
         st.error("Database URL is not configured in `config.py` or Streamlit secrets.")
         return
 
-    required_forms_columns = ["downloaded_file_path", "document_format", "processing_status"]
+    required_forms_columns = ["form_slug", "country_code", "country_name", "category", "form_description", "downloaded_file_path", "document_format", "processing_status"]
     required_documents_columns = ["cloudinary_url"]
     required_export_logs_columns = ["cloudinary_url"]
 
@@ -2195,4 +2209,4 @@ DROP TABLE IF EXISTS forms CASCADE;
 
 
 if __name__ == "__main__":
-      main()
+    main()

@@ -32,16 +32,18 @@ def setup_database(database_url):
         cur.execute("""
             CREATE TABLE IF NOT EXISTS public.forms (
                 id SERIAL PRIMARY KEY,
-                country VARCHAR(100) NOT NULL,
-                visa_category VARCHAR(200),
-                form_name VARCHAR(300),
+                form_name VARCHAR(300) NOT NULL,
+                form_slug VARCHAR(200) NOT NULL UNIQUE,
+                country_code VARCHAR(3) NOT NULL,
+                country_name VARCHAR(100) NOT NULL,
+                category VARCHAR(200) NOT NULL,
+                form_description TEXT NOT NULL,
                 form_id VARCHAR(100),
-                description TEXT,
                 governing_authority VARCHAR(200),
                 structured_data JSONB,
                 validation_warnings JSONB,
                 lawyer_review JSONB,
-                official_source_url TEXT,
+                official_source_url TEXT UNIQUE,
                 discovered_by_query TEXT,
                 downloaded_file_path TEXT,
                 document_format VARCHAR(20),
@@ -62,6 +64,7 @@ def setup_database(database_url):
                 file_size_bytes INTEGER,
                 mime_type VARCHAR(100),
                 download_url TEXT,
+                cloudinary_url TEXT,
                 downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -87,16 +90,19 @@ def setup_database(database_url):
                 export_formats JSONB NOT NULL,
                 exported_by VARCHAR(200),
                 export_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                file_path TEXT
+                file_path TEXT,
+                cloudinary_url TEXT
             )
         """)
         
         # Create indexes
         print("🔍 Creating indexes...")
         
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country ON public.forms(country)")
-        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_visa_category ON public.forms(visa_category)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country_code ON public.forms(country_code)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_country_name ON public.forms(country_name)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_category ON public.forms(category)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_form_name ON public.forms(form_name)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_form_slug ON public.forms(form_slug)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_documents_form_id ON public.documents(form_id)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")

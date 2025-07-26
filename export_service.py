@@ -69,14 +69,14 @@ class ExportService:
     def export_json(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes], Optional[str]]:
         """Export form data as JSON, save locally, upload to Cloudinary, and return file path, content, and Cloudinary URL."""
 
-        # Fix: Ensure country and form_id are strings before calling .lower()
-        country = (form_data.get('country') or 'unknown').lower()
+        # Fix: Ensure country_code and form_id are strings before calling .lower()
+        country_code = (form_data.get('country_code') or 'unknown').lower()
         form_id = (form_data.get('form_id') or 'unknown').lower()
 
         if not filename:
-            filename = f"{country}_{form_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = f"{country_code}_{form_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
 
-        country_dir = self.output_dir / "forms" / country
+        country_dir = self.output_dir / "forms" / country_code
         country_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = country_dir / filename
@@ -89,7 +89,7 @@ class ExportService:
             
             st.success(f"JSON exported to server: {file_path}")
             
-            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder=f"immigration_exports/json/{country}")
+            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder=f"immigration_exports/json/{country_code}")
 
             if self.db_manager and form_data.get('id'):
                 self.db_manager.insert_export_log(
@@ -119,19 +119,21 @@ class ExportService:
             df_data = []
             for form in forms_data:
                 row = {
-                    'Country': form.get('country', ''),
-                    'Visa Category': form.get('visa_category', ''),
                     'Form Name': form.get('form_name', ''),
+                    'Form Slug': form.get('form_slug', ''),
+                    'Country Code': form.get('country_code', ''),
+                    'Country Name': form.get('country_name', ''),
+                    'Category': form.get('category', ''),
+                    'Form Description': form.get('form_description', ''),
                     'Form ID': form.get('form_id', ''),
-                    'Description': form.get('description', ''),
                     'Governing Authority': form.get('governing_authority', ''),
-                    'Target Applicants': form.get('target_applicants', ''),
-                    'Submission Method': form.get('submission_method', ''),
-                    'Processing Time': form.get('processing_time', ''),
-                    'Fees': form.get('fees', ''),
+                    'Target Applicants': form.get('structured_data', {}).get('target_applicants', ''),
+                    'Submission Method': form.get('structured_data', {}).get('submission_method', ''),
+                    'Processing Time': form.get('structured_data', {}).get('processing_time', ''),
+                    'Fees': form.get('structured_data', {}).get('fees', ''),
                     'Official Source URL': form.get('official_source_url', ''),
                     'Validation Warnings': '; '.join(form.get('validation_warnings', [])),
-                    'Last Fetched': form.get('last_fetched', ''),
+                    'Last Fetched': form.get('structured_data', {}).get('last_fetched', ''),
                     'Lawyer Review Status': form.get('lawyer_review', {}).get('approval_status', 'Pending')
                 }
                 df_data.append(row)
@@ -181,14 +183,14 @@ class ExportService:
     def export_summary_markdown(self, form_data: Dict[str, Any], filename: str = None) -> Tuple[str, Optional[bytes], Optional[str]]:
         """Export form summary as Markdown, save locally, upload to Cloudinary, and return file path, content, and Cloudinary URL."""
         
-        # Fix: Ensure country and form_id are strings before calling .lower()
-        country = (form_data.get('country') or 'unknown').lower()
+        # Fix: Ensure country_code and form_id are strings before calling .lower()
+        country_code = (form_data.get('country_code') or 'unknown').lower()
         form_id = (form_data.get('form_id') or 'unknown').lower()
 
         if not filename:
-            filename = f"{country}_{form_id}_summary.md"
-        
-        country_dir = self.output_dir / "forms" / country
+            filename = f"{country_code}_{form_id}_summary.md"
+
+        country_dir = self.output_dir / "forms" / country_code
         country_dir.mkdir(parents=True, exist_ok=True)
 
         file_path = country_dir / filename
@@ -203,11 +205,11 @@ class ExportService:
             else:
                 summary_content_lines = []
                 summary_content_lines.append(f"# Immigration Form Summary: {form_data.get('form_name', 'N/A')}\n\n")
-                summary_content_lines.append(f"**Country:** {form_data.get('country', 'N/A')}\n")
-                summary_content_lines.append(f"**Visa Category:** {form_data.get('visa_category', 'N/A')}\n")
+                summary_content_lines.append(f"**Country:** {form_data.get('country_name', 'N/A')} ({form_data.get('country_code', 'N/A')})\n")
+                summary_content_lines.append(f"**Category:** {form_data.get('category', 'N/A')}\n")
                 summary_content_lines.append(f"**Form ID:** {form_data.get('form_id', 'N/A')}\n")
                 summary_content_lines.append(f"**Governing Authority:** {form_data.get('governing_authority', 'N/A')}\n\n")
-                summary_content_lines.append(f"**Description:** {form_data.get('description', 'N/A')}\n\n")
+                summary_content_lines.append(f"**Description:** {form_data.get('form_description', 'N/A')}\n\n")
                 
                 if form_data.get('structured_data', {}).get('target_applicants'):
                     summary_content_lines.append(f"**Target Applicants:** {form_data['structured_data']['target_applicants']}\n\n")
@@ -239,7 +241,7 @@ class ExportService:
             
             st.success(f"Summary exported to server: {file_path}")
 
-            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder=f"immigration_exports/summaries/{country}")
+            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder=f"immigration_exports/summaries/{country_code}")
 
             if self.db_manager and form_data.get('id'):
                 self.db_manager.insert_export_log(

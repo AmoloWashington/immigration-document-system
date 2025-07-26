@@ -1,0 +1,161 @@
+{
+  "form_name": "Nonimmigrant Visa Application",
+  "form_slug": "nonimmigrant-visa-application-ds156",
+  "country_code": "USA",
+  "country_name": "United States",
+  "category": "Tourist Visa",
+  "form_description": "The DS-156 Nonimmigrant Visa Application is required for foreign nationals seeking to visit the United States temporarily for tourism (B-2) or business (B-1) purposes. This comprehensive form collects detailed personal information, travel plans, and background details to help the U.S. Department of State evaluate visa eligibility.\n\n## Required Information:\n\n### Personal Details\n- **Full name** (surname and given names as shown in passport)\n- **Other names used** (including maiden names, aliases, or previous names)\n- **Date and place of birth** (city and country)\n- **Nationality and gender**\n- **Complete home address** with postal code\n- **Contact information** (telephone numbers for home, work, and mobile)\n\n### Passport Information\n- **Passport number** (must be machine-readable passport)\n- **Place of issuance** (city and country where passport was issued)\n- **Date of issuance and expiration date**\n- **Previous passports** if applicable\n\n### Family Information\n- **Current marital status** (single, married, divorced, widowed)\n- **Spouse's full name and date of birth** (if married)\n- **Names and addresses of relatives in the U.S.** (if any)\n\n### Travel Information\n- **Purpose of trip** (tourism, business, transit, etc.)\n- **Intended date of arrival** in the United States\n- **Address where you will stay** in the U.S. (hotel, relative's address, etc.)\n- **Intended length of stay**\n- **Name and contact of person/organization paying for trip**\n\n### Background and Security Questions\n- **Previous visits to the U.S.** (dates, duration, purpose)\n- **U.S. visa history** (previous visas issued, denied, or revoked)\n- **Criminal history** (arrests, convictions, or immigration violations)\n- **Health-related questions** (certain diseases or medical conditions)\n- **Security-related questions** (involvement with terrorist organizations, etc.)\n\n## Important Instructions:\n\n### Before Filling Out the Form\n1. **Read all instructions carefully** - Incorrect or incomplete information can result in visa denial\n2. **Gather required documents** - Have your passport, previous visas, travel itinerary, and supporting documents ready\n3. **Use English only** - All responses must be in English using block letters\n4. **Be honest and accurate** - False information can result in permanent visa ineligibility\n\n### Completing the Form\n1. **Type or print clearly** in black ink\n2. **Answer all questions** - Write 'N/A' if a question doesn't apply to you\n3. **Use exact names** as they appear in your passport\n4. **Provide complete addresses** including postal codes\n5. **Include country codes** for all telephone numbers\n\n### Required Documents to Attach\n1. **Recent photograph** (2x2 inches, color, white background, taken within 6 months)\n2. **Passport** (must be valid for at least 6 months beyond intended stay)\n3. **Previous U.S. visas** (if applicable)\n4. **Supporting documents** depending on purpose of visit:\n   - Business: Letter from employer, invitation from U.S. company\n   - Tourism: Travel itinerary, hotel reservations, financial documents\n   - Family visit: Invitation letter from U.S. relative, proof of relationship\n\n### Common Mistakes to Avoid\n1. **Inconsistent information** - Ensure all details match across documents\n2. **Incomplete addresses** - Always include complete street addresses, not just P.O. boxes\n3. **Missing signatures** - Form must be signed and dated\n4. **Old photographs** - Photos must be recent (within 6 months)\n5. **Leaving questions blank** - Answer all questions or write 'N/A'\n\n### Financial Requirements\n- **Proof of financial support** during your stay in the U.S.\n- **Bank statements** showing sufficient funds\n- **Sponsorship letter** if someone else is paying for your trip\n- **Employment verification** showing ties to your home country\n\n### Processing Information\n- **Submit in person** at U.S. Embassy or Consulate in your country\n- **Interview required** for most applicants\n- **Processing time** varies by location (typically 3-5 business days after interview)\n- **Visa fee** must be paid before interview (amount varies by nationality)\n\n### After Submission\n1. **Attend your visa interview** at the scheduled time\n2. **Bring all original documents** for verification\n3. **Answer questions honestly** during the interview\n4. **Passport will be retained** during processing if visa is approved\n\nThis form is the foundation of your visa application. Complete accuracy and honesty are essential for a successful application. Any false statements can result in denial and future ineligibility for U.S. visas.",
+  "form_id": "DS-156",
+  "governing_authority": "U.S. Department of State",
+  "official_source_url": "https://travel.state.gov/content/dam/visas/DS-156.pdf",
+  "structured_data": {
+    "target_applicants": "Foreign nationals applying for B-1 (business) or B-2 (tourism) nonimmigrant visas to visit the United States temporarily",
+    "required_fields": [
+      {
+        "name": "Surname/Family Name",
+        "type": "text",
+        "description": "Your family name or surname exactly as shown in your passport",
+        "example_value": "Smith"
+      },
+      {
+        "name": "Given Names",
+        "type": "text", 
+        "description": "Your first and middle names exactly as shown in your passport",
+        "example_value": "John Michael"
+      },
+      {
+        "name": "Other Names Used",
+        "type": "text",
+        "description": "Any other names you have used, including maiden names, aliases, or nicknames",
+        "example_value": "Johnny, J. Smith"
+      },
+      {
+        "name": "Date of Birth",
+        "type": "date",
+        "description": "Your birth date in DD-MMM-YYYY format",
+        "example_value": "15-JAN-1985"
+      },
+      {
+        "name": "Place of Birth",
+        "type": "text",
+        "description": "City and country where you were born",
+        "example_value": "London, United Kingdom"
+      },
+      {
+        "name": "Nationality",
+        "type": "text",
+        "description": "Your current nationality/citizenship",
+        "example_value": "British"
+      },
+      {
+        "name": "Gender",
+        "type": "radio",
+        "description": "Select Male or Female",
+        "example_value": "Male"
+      },
+      {
+        "name": "Marital Status",
+        "type": "select",
+        "description": "Your current marital status: Single, Married, Divorced, Widowed, etc.",
+        "example_value": "Married"
+      },
+      {
+        "name": "Passport Number",
+        "type": "text",
+        "description": "The unique number of your current passport",
+        "example_value": "123456789"
+      },
+      {
+        "name": "Passport Issuance Date",
+        "type": "date",
+        "description": "Date your passport was issued in DD-MMM-YYYY format",
+        "example_value": "01-JUN-2020"
+      },
+      {
+        "name": "Passport Expiration Date",
+        "type": "date",
+        "description": "Date your passport expires in DD-MMM-YYYY format",
+        "example_value": "01-JUN-2030"
+      },
+      {
+        "name": "Home Address",
+        "type": "textarea",
+        "description": "Complete address including street, city, state/province, postal code, and country",
+        "example_value": "123 Main Street, Apartment 4B, Manchester, England M1 1AA, United Kingdom"
+      },
+      {
+        "name": "Phone Numbers",
+        "type": "text",
+        "description": "Home, work, and mobile phone numbers with country codes",
+        "example_value": "Home: +44-161-123-4567, Mobile: +44-7123-456789"
+      },
+      {
+        "name": "Purpose of Trip",
+        "type": "select",
+        "description": "Primary reason for visiting the U.S.: Tourism, Business, Transit, etc.",
+        "example_value": "Tourism"
+      },
+      {
+        "name": "Intended Date of Arrival",
+        "type": "date",
+        "description": "When you plan to arrive in the United States",
+        "example_value": "15-JUL-2024"
+      },
+      {
+        "name": "Address in U.S.",
+        "type": "textarea",
+        "description": "Where you will be staying in the United States (hotel, relative's address, etc.)",
+        "example_value": "Marriott Hotel, 123 Broadway, New York, NY 10001"
+      },
+      {
+        "name": "Length of Stay",
+        "type": "text",
+        "description": "How long you intend to stay in the United States",
+        "example_value": "2 weeks"
+      },
+      {
+        "name": "Previous U.S. Visits",
+        "type": "textarea",
+        "description": "Details of any previous visits to the United States including dates and purpose",
+        "example_value": "Yes, visited for tourism in July 2019 for 10 days"
+      },
+      {
+        "name": "U.S. Visa History",
+        "type": "textarea",
+        "description": "Information about any previous U.S. visas (issued, denied, or revoked)",
+        "example_value": "B-2 tourist visa issued in 2019, valid until 2029"
+      }
+    ],
+    "supporting_documents": [
+      "Valid passport (must be valid for at least 6 months beyond intended stay)",
+      "Recent color photograph (2x2 inches, white background, taken within 6 months)",
+      "Completed DS-156 form",
+      "Visa application fee receipt",
+      "Proof of financial support (bank statements, employment letter, sponsorship)",
+      "Travel itinerary (flight reservations, hotel bookings)",
+      "Letter of invitation (if visiting family or friends)",
+      "Business letter (if traveling for business purposes)",
+      "Previous U.S. visas (if applicable)",
+      "Marriage certificate (if married)",
+      "Birth certificates for children (if traveling with minors)"
+    ],
+    "submission_method": "In-person at U.S. Embassy or Consulate with required interview",
+    "processing_time": "Typically 3-5 business days after interview, but can vary by location and time of year",
+    "fees": "Visa application fee varies by nationality (typically $160 USD), payable before interview",
+    "language": "English",
+    "last_fetched": "2025-01-25T10:30:00.000Z",
+    "extracted_text_length": 7223,
+    "full_markdown_summary": "# Nonimmigrant Visa Application (DS-156)\n\n## Overview\nThe **Nonimmigrant Visa Application (DS-156)** is an application required for foreign nationals seeking to visit the United States for tourism (B-2) or business (B-1) purposes. This form collects personal information and travel-related details, helping the U.S. Department of State evaluate the eligibility of applicants for nonimmigrant visas.\n\n## Applicant Information Required\n1. **Passport Information**\n   - Passport Number\n   - Place of Issuance (City, Country)\n   - Date of Issuance\n   - Expiration Date\n2. **Personal Details**\n   - Surname and First Names\n   - Other Names Used (including maiden names)\n   - Date and Place of Birth\n   - Nationality\n   - Gender\n   - Home Address (full residential details)\n   - Contact Numbers (home, mobile, and business)\n3. **Marital Status and Family Details**\n   - Current marital status (Married, Single, etc.)\n   - Spouse's Name and Date of Birth\n4. **Travel Plans**\n   - Intended Arrival Date in the U.S.\n   - Address during stay in the U.S.\n   - Purpose of visit (tourism, business, etc.)\n5. **Background Information**\n   - Previous visits to the U.S. (dates, purpose, duration)\n   - Visa history (any previously issued or denied U.S. visas)\n   - Criminal history (arrests, convictions, or immigration violations)\n\n## Important Instructions\n- Applicants must **type or print** their answers clearly.\n- Include a recent passport-size photograph in the provided space.\n- After filling out the form, applicants should ensure honesty in all responses, as any **false information** can lead to visa denial.\n\n## Submission\n- The application can be submitted **online**, via **mail**, or in **person** at the consulate or embassy.\n- Fees and processing times may vary based on the specific situation and location of application submission.\n\n## Additional Considerations\n- Applicants should also be prepared to submit **supporting documents** including their passport, proof of financial capacity, and travel itinerary.\n- The application is subject to various eligibility criteria defined by U.S. immigration laws, including inadmissibility factors, which applicants should review carefully before applying.\n\nFor more detailed instructions, refer to the U.S. Department of State guidelines on the Nonimmigrant Visa Application process."
+  },
+  "validation_warnings": [
+    "Fees and processing times are mentioned but not specified in the content.",
+    "Submission methods are described but not detailed, lacking specific options for online, mail, or in-person submission.",
+    "Potential ambiguity in intended address during stay in the U.S., as it requires a full address not specified in the content.",
+    "Passport-size photograph requirement is mentioned but lacks details on specific dimensions or recentness.",
+    "No information provided on supporting document requirements beyond general mention."
+  ],
+  "discovered_by_query": "USA immigration Tourist Visa requirements PDF official",
+  "downloaded_file_path": "downloads/usa/tourist_visa/DS-156.pdf",
+  "document_format": "PDF",
+  "processing_status": "validated_with_warnings"
+}
