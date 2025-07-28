@@ -37,6 +37,168 @@ def clean_html_text(text):
 
     return text
 
+def render_bulk_export_buttons(extracted_docs_list):
+    """Render bulk export buttons for all document formats"""
+    import io
+    import json
+    import pandas as pd
+    from datetime import datetime
+    
+    if not extracted_docs_list:
+        st.warning("No documents available for bulk export.")
+        return
+    
+    st.markdown("### 📦 Bulk Export All Documents")
+    st.info(f"Ready to export {len(extracted_docs_list)} documents in various formats")
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    # JSON Export
+    with col1:
+        if st.button("📄 Export JSON", use_container_width=True):
+            json_data = json.dumps(extracted_docs_list, indent=2, ensure_ascii=False, default=str)
+            st.download_button(
+                label="Download JSON",
+                data=json_data.encode('utf-8'),
+                file_name=f"bulk_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                key="bulk_json"
+            )
+    
+    # CSV Export
+    with col2:
+        if st.button("📊 Export CSV", use_container_width=True):
+            # Flatten the data for CSV
+            flattened_data = []
+            for doc in extracted_docs_list:
+                flat_doc = {}
+                for key, value in doc.items():
+                    if key == 'required_fields' and isinstance(value, list):
+                        # Flatten required_fields
+                        for i, field in enumerate(value):
+                            if isinstance(field, dict):
+                                flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                                flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                                flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                    elif isinstance(value, (dict, list)):
+                        flat_doc[key] = json.dumps(value) if value else ''
+                    else:
+                        flat_doc[key] = str(value) if value is not None else ''
+                flattened_data.append(flat_doc)
+            
+            df = pd.DataFrame(flattened_data)
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            
+            st.download_button(
+                label="Download CSV",
+                data=csv_buffer.getvalue().encode('utf-8'),
+                file_name=f"bulk_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                key="bulk_csv"
+            )
+    
+    # Excel Export
+    with col3:
+        if st.button("📈 Export Excel", use_container_width=True):
+            # Flatten the data for Excel
+            flattened_data = []
+            for doc in extracted_docs_list:
+                flat_doc = {}
+                for key, value in doc.items():
+                    if key == 'required_fields' and isinstance(value, list):
+                        # Flatten required_fields
+                        for i, field in enumerate(value):
+                            if isinstance(field, dict):
+                                flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                                flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                                flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                    elif isinstance(value, (dict, list)):
+                        flat_doc[key] = json.dumps(value) if value else ''
+                    else:
+                        flat_doc[key] = str(value) if value is not None else ''
+                flattened_data.append(flat_doc)
+            
+            df = pd.DataFrame(flattened_data)
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Immigration_Forms', index=False)
+            
+            st.download_button(
+                label="Download Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"bulk_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key="bulk_excel"
+            )
+    
+    # Markdown Export
+    with col4:
+        if st.button("📝 Export Markdown", use_container_width=True):
+            markdown_content = f"# Immigration Forms Export\n\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\nTotal Documents: {len(extracted_docs_list)}\n\n---\n\n"
+            
+            for i, doc in enumerate(extracted_docs_list, 1):
+                markdown_content += f"## {i}. {doc.get('form_name', 'Unknown Form')}\n\n"
+                markdown_content += f"**Form ID:** {doc.get('form_id', 'N/A')}\n\n"
+                markdown_content += f"**Description:** {doc.get('description', 'N/A')}\n\n"
+                markdown_content += f"**Governing Authority:** {doc.get('governing_authority', 'N/A')}\n\n"
+                markdown_content += f"**Target Users:** {doc.get('target_users', 'N/A')}\n\n"
+                markdown_content += f"**Submission Method:** {doc.get('submission_method', 'N/A')}\n\n"
+                markdown_content += f"**Frequency/Deadline:** {doc.get('frequency_or_deadline', 'N/A')}\n\n"
+                markdown_content += f"**Supporting Documents:** {doc.get('supporting_documents', 'N/A')}\n\n"
+                
+                if doc.get('required_fields') and isinstance(doc['required_fields'], list):
+                    markdown_content += "**Required Fields:**\n\n"
+                    for field in doc['required_fields']:
+                        if isinstance(field, dict):
+                            markdown_content += f"- **{field.get('name', 'Unknown')}** ({field.get('type', 'Unknown type')}): {field.get('description', 'No description')}\n"
+                    markdown_content += "\n"
+                
+                markdown_content += f"**Official Source:** {doc.get('official_source_url', 'N/A')}\n\n"
+                markdown_content += f"**Notes:** {doc.get('notes_or_instructions', 'N/A')}\n\n"
+                markdown_content += "---\n\n"
+            
+            st.download_button(
+                label="Download Markdown",
+                data=markdown_content.encode('utf-8'),
+                file_name=f"bulk_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                key="bulk_markdown"
+            )
+    
+    # TXT Export
+    with col5:
+        if st.button("📄 Export TXT", use_container_width=True):
+            txt_content = f"IMMIGRATION FORMS EXPORT\n{'='*50}\n\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nTotal Documents: {len(extracted_docs_list)}\n\n"
+            
+            for i, doc in enumerate(extracted_docs_list, 1):
+                txt_content += f"{i}. {doc.get('form_name', 'Unknown Form')}\n{'-'*50}\n"
+                txt_content += f"Form ID: {doc.get('form_id', 'N/A')}\n"
+                txt_content += f"Description: {doc.get('description', 'N/A')}\n"
+                txt_content += f"Governing Authority: {doc.get('governing_authority', 'N/A')}\n"
+                txt_content += f"Target Users: {doc.get('target_users', 'N/A')}\n"
+                txt_content += f"Submission Method: {doc.get('submission_method', 'N/A')}\n"
+                txt_content += f"Frequency/Deadline: {doc.get('frequency_or_deadline', 'N/A')}\n"
+                txt_content += f"Supporting Documents: {doc.get('supporting_documents', 'N/A')}\n"
+                
+                if doc.get('required_fields') and isinstance(doc['required_fields'], list):
+                    txt_content += "Required Fields:\n"
+                    for field in doc['required_fields']:
+                        if isinstance(field, dict):
+                            txt_content += f"  - {field.get('name', 'Unknown')} ({field.get('type', 'Unknown type')}): {field.get('description', 'No description')}\n"
+                
+                txt_content += f"Official Source: {doc.get('official_source_url', 'N/A')}\n"
+                txt_content += f"Notes: {doc.get('notes_or_instructions', 'N/A')}\n"
+                txt_content += "\n" + "="*50 + "\n\n"
+            
+            st.download_button(
+                label="Download TXT",
+                data=txt_content.encode('utf-8'),
+                file_name=f"bulk_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                key="bulk_txt"
+            )
+
 # Initialize services
 def init_services():
     db = DatabaseManager(config.DATABASE_URL)
@@ -1065,8 +1227,25 @@ def document_viewer_page(db, processor, ai_service):
 
         # Calculate statistics
         total_docs = len(forms)
-        pdf_docs = len([f for f in forms if db.get_document_by_form_id(f['id']) and db.get_document_by_form_id(f['id']).get('file_format') == 'PDF'])
-        html_docs = len([f for f in forms if db.get_document_by_form_id(f['id']) and db.get_document_by_form_id(f['id']).get('file_format') == 'HTML'])
+        
+        pdf_docs = 0
+        for f in forms:
+            try:
+                doc_info = db.get_document_by_form_id(f['id'])
+                if doc_info and doc_info.get('file_format') == 'PDF':
+                    pdf_docs += 1
+            except:
+                continue
+        
+        html_docs = 0
+        for f in forms:
+            try:
+                doc_info = db.get_document_by_form_id(f['id'])
+                if doc_info and doc_info.get('file_format') == 'HTML':
+                    html_docs += 1
+            except:
+                continue
+        
         ai_processed = len([f for f in forms if f.get('structured_data', {}).get('full_markdown_summary')])
 
         col1, col2, col3, col4 = st.columns(4)
@@ -1234,6 +1413,19 @@ def document_viewer_page(db, processor, ai_service):
                                 st.session_state.selected_form_id = form['id']
                                 st.session_state.current_tab = "overview"
                                 st.rerun()
+        
+            # Add bulk export functionality
+            if filtered_forms:
+                st.markdown("---")
+                # Extract all structured data for bulk export
+                extracted_docs_list = []
+                for form in filtered_forms:
+                    structured_data = form.get('structured_data', {})
+                    if structured_data:
+                        extracted_docs_list.append(structured_data)
+                
+                if extracted_docs_list:
+                    render_bulk_export_buttons(extracted_docs_list)
         else:
             st.info("🔍 No documents match your current filters. Try adjusting the search criteria.")
 
