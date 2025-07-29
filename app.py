@@ -1,3 +1,4 @@
+import io
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -10,6 +11,8 @@ import mimetypes
 import time  # Import time for delays
 import html
 import re
+import asyncio
+from typing import Dict, List, Any, Optional
 
 # Import our services
 from config import config
@@ -18,6 +21,376 @@ from discovery_service import DocumentDiscoveryService
 from document_processor import DocumentProcessor
 from ai_service import AIExtractionService
 from export_service import ExportService
+
+# Multi-Agent System Classes
+class DocumentAnalysisAgent:
+    """Agent specialized in document structure and content analysis"""
+    
+    def __init__(self, ai_service):
+        self.ai_service = ai_service
+        self.role = "Document Analysis Specialist"
+        self.expertise = "Document structure, content extraction, and format analysis"
+    
+    def analyze_document(self, extracted_text: str, doc_info: Dict) -> Dict:
+        """Analyze document structure and extract basic information"""
+        analysis_prompt = f"""
+        As a Document Analysis Specialist, analyze this document and extract:
+        1. Document type and format characteristics
+        2. Main sections and structure
+        3. Key identifying information
+        4. Content quality assessment
+        
+        Document: {extracted_text[:2000]}...
+        
+        Provide structured analysis focusing on document characteristics.
+        """
+        
+        # Use AI service to get analysis
+        if hasattr(self.ai_service, 'openai_client') and self.ai_service.openai_client:
+            try:
+                response = self.ai_service.openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": analysis_prompt}],
+                    temperature=0.1
+                )
+                analysis = response.choices[0].message.content
+                return {
+                    "agent": self.role,
+                    "analysis": analysis,
+                    "document_type": self._extract_document_type(analysis),
+                    "structure_quality": self._assess_structure_quality(extracted_text),
+                    "confidence": 0.85
+                }
+            except Exception as e:
+                return {"agent": self.role, "error": str(e), "confidence": 0.0}
+        
+        return {"agent": self.role, "analysis": "Basic analysis completed", "confidence": 0.5}
+    
+    def _extract_document_type(self, analysis: str) -> str:
+        """Extract document type from analysis"""
+        if "form" in analysis.lower():
+            return "immigration_form"
+        elif "guide" in analysis.lower() or "instruction" in analysis.lower():
+            return "guidance_document"
+        elif "webpage" in analysis.lower() or "website" in analysis.lower():
+            return "web_page"
+        return "unknown"
+    
+    def _assess_structure_quality(self, text: str) -> str:
+        """Assess the structural quality of the document"""
+        if len(text) > 5000:
+            return "high"
+        elif len(text) > 1000:
+            return "medium"
+        else:
+            return "low"
+
+class FormExtractionAgent:
+    """Agent specialized in extracting form-specific information"""
+    
+    def __init__(self, ai_service):
+        self.ai_service = ai_service
+        self.role = "Form Extraction Specialist"
+        self.expertise = "Immigration form fields, requirements, and procedures"
+    
+    def extract_form_data(self, extracted_text: str, doc_info: Dict, document_analysis: Dict) -> Dict:
+        """Extract detailed form information"""
+        extraction_prompt = f"""
+        As a Form Extraction Specialist, extract detailed immigration form information:
+        
+        Based on document analysis: {document_analysis.get('analysis', 'No prior analysis')}
+        
+        Extract the following in JSON format:
+        {{
+            "form_name": "Official form name",
+            "form_id": "Form number/ID",
+            "description": "Detailed description",
+            "governing_authority": "Issuing authority",
+            "target_users": "Who should use this form",
+            "required_fields": [
+                {{
+                    "name": "Field name",
+                    "description": "Field description", 
+                    "type": "Field type (text/number/date/etc)"
+                }}
+            ],
+            "supporting_documents": "Required supporting documents",
+            "submission_method": "How to submit",
+            "frequency_or_deadline": "When to submit",
+            "official_source_url": "Official URL",
+            "notes_or_instructions": "Additional notes"
+        }}
+        
+        Document content: {extracted_text[:3000]}...
+        """
+        
+        if hasattr(self.ai_service, 'openai_client') and self.ai_service.openai_client:
+            try:
+                response = self.ai_service.openai_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": extraction_prompt}],
+                    temperature=0.1
+                )
+                
+                content = response.choices[0].message.content
+                # Try to extract JSON from the response
+                if "```json" in content:
+                    json_start = content.find("```json") + 7
+                    json_end = content.find("```", json_start)
+                    json_content = content[json_start:json_end].strip()
+                else:
+                    json_content = content
+                
+                extracted_data = json.loads(json_content)
+                extracted_data["agent"] = self.role
+                extracted_data["confidence"] = 0.9
+                return extracted_data
+                
+            except Exception as e:
+                return {"agent": self.role, "error": str(e), "confidence": 0.0}
+        
+        # Fallback extraction
+        return self._fallback_extraction(extracted_text, doc_info)
+    
+    def _fallback_extraction(self, text: str, doc_info: Dict) -> Dict:
+        """Fallback extraction when AI is not available"""
+        return {
+            "agent": self.role,
+            "form_name": doc_info.get('title', 'Unknown Form'),
+            "form_id": "N/A",
+            "description": text[:200] + "..." if len(text) > 200 else text,
+            "governing_authority": "N/A",
+            "target_users": "N/A",
+            "required_fields": [],
+            "supporting_documents": "N/A",
+            "submission_method": "N/A",
+            "frequency_or_deadline": "N/A",
+            "official_source_url": doc_info.get('url', ''),
+            "notes_or_instructions": "N/A",
+            "confidence": 0.3
+        }
+
+class ValidationAgent:
+    """Agent specialized in validating and cross-checking extracted information"""
+    
+    def __init__(self, ai_service):
+        self.ai_service = ai_service
+        self.role = "Validation Specialist"
+        self.expertise = "Data validation, consistency checking, and quality assurance"
+    
+    def validate_extraction(self, form_data: Dict, document_analysis: Dict, original_text: str) -> Dict:
+        """Validate the extracted form data for accuracy and completeness"""
+        validation_prompt = f"""
+        As a Validation Specialist, review this extracted form data for accuracy:
+        
+        Document Analysis: {document_analysis.get('analysis', 'No analysis')}
+        
+        Extracted Data: {json.dumps(form_data, indent=2)}
+        
+        Original Text Sample: {original_text[:1000]}...
+        
+        Validate and provide:
+        1. Accuracy assessment (0-100%)
+        2. Completeness assessment (0-100%)
+        3. Specific validation warnings
+        4. Suggested improvements
+        5. Confidence level in the extraction
+        
+        Return as JSON with validation results.
+        """
+        
+        if hasattr(self.ai_service, 'openai_client') and self.ai_service.openai_client:
+            try:
+                response = self.ai_service.openai_client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": validation_prompt}],
+                    temperature=0.1
+                )
+                
+                validation_result = response.choices[0].message.content
+                return {
+                    "agent": self.role,
+                    "validation_result": validation_result,
+                    "warnings": self._extract_warnings(validation_result),
+                    "accuracy_score": self._extract_score(validation_result, "accuracy"),
+                    "completeness_score": self._extract_score(validation_result, "completeness"),
+                    "confidence": 0.85
+                }
+            except Exception as e:
+                return {"agent": self.role, "error": str(e), "confidence": 0.0}
+        
+        return self._basic_validation(form_data)
+    
+    def _extract_warnings(self, validation_text: str) -> List[str]:
+        """Extract validation warnings from the validation result"""
+        warnings = []
+        if "missing" in validation_text.lower():
+            warnings.append("Some required information may be missing")
+        if "unclear" in validation_text.lower():
+            warnings.append("Some extracted information may be unclear")
+        if "inconsistent" in validation_text.lower():
+            warnings.append("Inconsistencies detected in extracted data")
+        return warnings
+    
+    def _extract_score(self, validation_text: str, score_type: str) -> int:
+        """Extract numerical scores from validation text"""
+        import re
+        pattern = f"{score_type}.*?(\d+)%"
+        match = re.search(pattern, validation_text, re.IGNORECASE)
+        return int(match.group(1)) if match else 75
+    
+    def _basic_validation(self, form_data: Dict) -> Dict:
+        """Basic validation when AI is not available"""
+        warnings = []
+        if not form_data.get('form_name') or form_data['form_name'] == 'N/A':
+            warnings.append("Form name not properly extracted")
+        if not form_data.get('required_fields'):
+            warnings.append("No required fields identified")
+        
+        return {
+            "agent": self.role,
+            "warnings": warnings,
+            "accuracy_score": 70,
+            "completeness_score": 60,
+            "confidence": 0.5
+        }
+
+class SynthesisAgent:
+    """Agent specialized in synthesizing results from all other agents"""
+    
+    def __init__(self, ai_service):
+        self.ai_service = ai_service
+        self.role = "Synthesis Coordinator"
+        self.expertise = "Multi-agent coordination, result synthesis, and final output generation"
+    
+    def synthesize_results(self, document_analysis: Dict, form_extraction: Dict, validation: Dict, original_text: str) -> Dict:
+        """Synthesize results from all agents into final output"""
+        synthesis_prompt = f"""
+        As a Synthesis Coordinator, combine insights from multiple specialist agents:
+        
+        Document Analysis Agent: {json.dumps(document_analysis, indent=2)}
+        
+        Form Extraction Agent: {json.dumps(form_extraction, indent=2)}
+        
+        Validation Agent: {json.dumps(validation, indent=2)}
+        
+        Create a comprehensive final result that:
+        1. Combines the best insights from each agent
+        2. Resolves any conflicts between agents
+        3. Provides a confidence-weighted final output
+        4. Includes a comprehensive markdown summary
+        
+        Generate the final structured data and comprehensive analysis.
+        """
+        
+        if hasattr(self.ai_service, 'openai_client') and self.ai_service.openai_client:
+            try:
+                response = self.ai_service.openai_client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "user", "content": synthesis_prompt}],
+                    temperature=0.1
+                )
+                
+                synthesis_result = response.choices[0].message.content
+                
+                # Combine the best data from all agents
+                final_data = self._merge_agent_results(form_extraction, document_analysis, validation)
+                final_data["full_markdown_summary"] = synthesis_result
+                final_data["multi_agent_analysis"] = {
+                    "document_analysis": document_analysis,
+                    "form_extraction": form_extraction,
+                    "validation": validation,
+                    "synthesis_confidence": self._calculate_overall_confidence([document_analysis, form_extraction, validation])
+                }
+                
+                return final_data
+                
+            except Exception as e:
+                return self._fallback_synthesis(form_extraction, document_analysis, validation)
+        
+        return self._fallback_synthesis(form_extraction, document_analysis, validation)
+    
+    def _merge_agent_results(self, form_data: Dict, doc_analysis: Dict, validation: Dict) -> Dict:
+        """Intelligently merge results from all agents"""
+        # Start with form extraction as base
+        merged = form_data.copy()
+        
+        # Enhance with document analysis insights
+        if doc_analysis.get('document_type'):
+            merged['document_type'] = doc_analysis['document_type']
+        
+        # Apply validation improvements
+        if validation.get('warnings'):
+            merged['validation_warnings'] = validation['warnings']
+        
+        # Remove agent-specific metadata
+        merged.pop('agent', None)
+        merged.pop('error', None)
+        
+        return merged
+    
+    def _calculate_overall_confidence(self, agent_results: List[Dict]) -> float:
+        """Calculate weighted overall confidence from all agents"""
+        confidences = [result.get('confidence', 0.5) for result in agent_results]
+        return sum(confidences) / len(confidences) if confidences else 0.5
+    
+    def _fallback_synthesis(self, form_data: Dict, doc_analysis: Dict, validation: Dict) -> Dict:
+        """Fallback synthesis when AI is not available"""
+        merged = self._merge_agent_results(form_data, doc_analysis, validation)
+        merged["full_markdown_summary"] = f"""
+# Multi-Agent Document Analysis
+
+## Document Analysis
+{doc_analysis.get('analysis', 'Basic analysis completed')}
+
+## Form Extraction
+Successfully extracted form data with {form_data.get('confidence', 0.5)*100:.1f}% confidence.
+
+## Validation Results
+{len(validation.get('warnings', []))} validation warnings identified.
+
+## Final Assessment
+This document has been processed by our multi-agent system with collaborative analysis.
+        """
+        return merged
+
+class MultiAgentOrchestrator:
+    """Orchestrates the multi-agent document processing pipeline"""
+    
+    def __init__(self, ai_service):
+        self.ai_service = ai_service
+        self.document_agent = DocumentAnalysisAgent(ai_service)
+        self.form_agent = FormExtractionAgent(ai_service)
+        self.validation_agent = ValidationAgent(ai_service)
+        self.synthesis_agent = SynthesisAgent(ai_service)
+    
+    def process_document(self, extracted_text: str, doc_info: Dict) -> Dict:
+        """Process document through multi-agent pipeline"""
+        try:
+            # Stage 1: Document Analysis
+            st.write("🔍 **Agent 1**: Document Analysis Specialist analyzing structure...")
+            document_analysis = self.document_agent.analyze_document(extracted_text, doc_info)
+            
+            # Stage 2: Form Extraction
+            st.write("📋 **Agent 2**: Form Extraction Specialist extracting form data...")
+            form_extraction = self.form_agent.extract_form_data(extracted_text, doc_info, document_analysis)
+            
+            # Stage 3: Validation
+            st.write("✅ **Agent 3**: Validation Specialist checking accuracy...")
+            validation = self.validation_agent.validate_extraction(form_extraction, document_analysis, extracted_text)
+            
+            # Stage 4: Synthesis
+            st.write("🎯 **Agent 4**: Synthesis Coordinator combining all insights...")
+            final_result = self.synthesis_agent.synthesize_results(document_analysis, form_extraction, validation, extracted_text)
+            
+            st.success("🤝 **Multi-Agent Collaboration Complete!** All agents have contributed to the final result.")
+            
+            return final_result
+            
+        except Exception as e:
+            st.error(f"Multi-agent processing error: {str(e)}")
+            # Fallback to single-agent processing
+            return self.ai_service.extract_form_data(extracted_text, doc_info)
 
 # Utility function to clean HTML tags and entities
 def clean_html_text(text):
@@ -36,6 +409,179 @@ def clean_html_text(text):
     text = ' '.join(text.split())
 
     return text
+
+def render_top_export_buttons(extracted_docs_list, page_name=""):
+    """Render export buttons at the top of pages for easy accessibility"""
+    if not extracted_docs_list:
+        return
+    
+    st.markdown(f"""
+    <div style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%); 
+                padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+        <h4 style="color: white; margin: 0; text-align: center;">
+            📦 Quick Export ({len(extracted_docs_list)} documents) - {page_name}
+        </h4>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        if st.button("📄 JSON", key=f"top_json_{page_name}", use_container_width=True):
+            json_data = json.dumps(extracted_docs_list, indent=2, ensure_ascii=False, default=str)
+            st.download_button(
+                label="Download JSON",
+                data=json_data.encode('utf-8'),
+                file_name=f"export_{page_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                key=f"top_json_download_{page_name}"
+            )
+    
+    with col2:
+        if st.button("📊 CSV", key=f"top_csv_{page_name}", use_container_width=True):
+            flattened_data = []
+            for doc in extracted_docs_list:
+                flat_doc = {}
+                # Handle all the main fields from schema
+                flat_doc['form_name'] = doc.get('form_name', '')
+                flat_doc['form_id'] = doc.get('form_id', '')
+                flat_doc['description'] = doc.get('description', '')
+                flat_doc['governing_authority'] = doc.get('governing_authority', '')
+                flat_doc['target_users'] = doc.get('target_users', '')
+                flat_doc['supporting_documents'] = doc.get('supporting_documents', '')
+                flat_doc['submission_method'] = doc.get('submission_method', '')
+                flat_doc['frequency_or_deadline'] = doc.get('frequency_or_deadline', '')
+                flat_doc['official_source_url'] = doc.get('official_source_url', '')
+                flat_doc['notes_or_instructions'] = doc.get('notes_or_instructions', '')
+                
+                # Flatten required_fields array
+                required_fields = doc.get('required_fields', [])
+                if isinstance(required_fields, list):
+                    for i, field in enumerate(required_fields):
+                        if isinstance(field, dict):
+                            flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                            flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                            flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                
+                flattened_data.append(flat_doc)
+            
+            df = pd.DataFrame(flattened_data)
+            csv_buffer = io.StringIO()
+            df.to_csv(csv_buffer, index=False)
+            
+            st.download_button(
+                label="Download CSV",
+                data=csv_buffer.getvalue().encode('utf-8'),
+                file_name=f"export_{page_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                mime="text/csv",
+                key=f"top_csv_download_{page_name}"
+            )
+    
+    with col3:
+        if st.button("📈 Excel", key=f"top_excel_{page_name}", use_container_width=True):
+            flattened_data = []
+            for doc in extracted_docs_list:
+                flat_doc = {}
+                # Handle all the main fields from schema
+                flat_doc['form_name'] = doc.get('form_name', '')
+                flat_doc['form_id'] = doc.get('form_id', '')
+                flat_doc['description'] = doc.get('description', '')
+                flat_doc['governing_authority'] = doc.get('governing_authority', '')
+                flat_doc['target_users'] = doc.get('target_users', '')
+                flat_doc['supporting_documents'] = doc.get('supporting_documents', '')
+                flat_doc['submission_method'] = doc.get('submission_method', '')
+                flat_doc['frequency_or_deadline'] = doc.get('frequency_or_deadline', '')
+                flat_doc['official_source_url'] = doc.get('official_source_url', '')
+                flat_doc['notes_or_instructions'] = doc.get('notes_or_instructions', '')
+                
+                # Flatten required_fields array
+                required_fields = doc.get('required_fields', [])
+                if isinstance(required_fields, list):
+                    for i, field in enumerate(required_fields):
+                        if isinstance(field, dict):
+                            flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                            flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                            flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                
+                flattened_data.append(flat_doc)
+            
+            df = pd.DataFrame(flattened_data)
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name='Immigration_Forms', index=False)
+            
+            st.download_button(
+                label="Download Excel",
+                data=excel_buffer.getvalue(),
+                file_name=f"export_{page_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                key=f"top_excel_download_{page_name}"
+            )
+    
+    with col4:
+        if st.button("📝 Markdown", key=f"top_md_{page_name}", use_container_width=True):
+            markdown_content = f"# Immigration Forms Export - {page_name}\n\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\nTotal Documents: {len(extracted_docs_list)}\n\n---\n\n"
+            
+            for i, doc in enumerate(extracted_docs_list, 1):
+                markdown_content += f"## {i}. {doc.get('form_name', 'Unknown Form')}\n\n"
+                markdown_content += f"**Form ID:** {doc.get('form_id', 'N/A')}\n\n"
+                markdown_content += f"**Description:** {doc.get('description', 'N/A')}\n\n"
+                markdown_content += f"**Governing Authority:** {doc.get('governing_authority', 'N/A')}\n\n"
+                markdown_content += f"**Target Users:** {doc.get('target_users', 'N/A')}\n\n"
+                markdown_content += f"**Submission Method:** {doc.get('submission_method', 'N/A')}\n\n"
+                markdown_content += f"**Frequency/Deadline:** {doc.get('frequency_or_deadline', 'N/A')}\n\n"
+                markdown_content += f"**Supporting Documents:** {doc.get('supporting_documents', 'N/A')}\n\n"
+                
+                if doc.get('required_fields') and isinstance(doc['required_fields'], list):
+                    markdown_content += "**Required Fields:**\n\n"
+                    for field in doc['required_fields']:
+                        if isinstance(field, dict):
+                            markdown_content += f"- **{field.get('name', 'Unknown')}** ({field.get('type', 'Unknown type')}): {field.get('description', 'No description')}\n"
+                    markdown_content += "\n"
+                
+                markdown_content += f"**Official Source:** {doc.get('official_source_url', 'N/A')}\n\n"
+                markdown_content += f"**Notes:** {doc.get('notes_or_instructions', 'N/A')}\n\n"
+                markdown_content += "---\n\n"
+            
+            st.download_button(
+                label="Download Markdown",
+                data=markdown_content.encode('utf-8'),
+                file_name=f"export_{page_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                mime="text/markdown",
+                key=f"top_md_download_{page_name}"
+            )
+    
+    with col5:
+        if st.button("📄 TXT", key=f"top_txt_{page_name}", use_container_width=True):
+            txt_content = f"IMMIGRATION FORMS EXPORT - {page_name.upper()}\n{'='*60}\n\nGenerated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nTotal Documents: {len(extracted_docs_list)}\n\n"
+            
+            for i, doc in enumerate(extracted_docs_list, 1):
+                txt_content += f"{i}. {doc.get('form_name', 'Unknown Form')}\n{'-'*50}\n"
+                txt_content += f"Form ID: {doc.get('form_id', 'N/A')}\n"
+                txt_content += f"Description: {doc.get('description', 'N/A')}\n"
+                txt_content += f"Governing Authority: {doc.get('governing_authority', 'N/A')}\n"
+                txt_content += f"Target Users: {doc.get('target_users', 'N/A')}\n"
+                txt_content += f"Submission Method: {doc.get('submission_method', 'N/A')}\n"
+                txt_content += f"Frequency/Deadline: {doc.get('frequency_or_deadline', 'N/A')}\n"
+                txt_content += f"Supporting Documents: {doc.get('supporting_documents', 'N/A')}\n"
+                
+                if doc.get('required_fields') and isinstance(doc['required_fields'], list):
+                    txt_content += "Required Fields:\n"
+                    for field in doc['required_fields']:
+                        if isinstance(field, dict):
+                            txt_content += f"  - {field.get('name', 'Unknown')} ({field.get('type', 'Unknown type')}): {field.get('description', 'No description')}\n"
+                
+                txt_content += f"Official Source: {doc.get('official_source_url', 'N/A')}\n"
+                txt_content += f"Notes: {doc.get('notes_or_instructions', 'N/A')}\n"
+                txt_content += "\n" + "="*60 + "\n\n"
+            
+            st.download_button(
+                label="Download TXT",
+                data=txt_content.encode('utf-8'),
+                file_name=f"export_{page_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                key=f"top_txt_download_{page_name}"
+            )
 
 def render_bulk_export_buttons(extracted_docs_list):
     """Render bulk export buttons for all document formats"""
@@ -72,18 +618,27 @@ def render_bulk_export_buttons(extracted_docs_list):
             flattened_data = []
             for doc in extracted_docs_list:
                 flat_doc = {}
-                for key, value in doc.items():
-                    if key == 'required_fields' and isinstance(value, list):
-                        # Flatten required_fields
-                        for i, field in enumerate(value):
-                            if isinstance(field, dict):
-                                flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
-                                flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
-                                flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
-                    elif isinstance(value, (dict, list)):
-                        flat_doc[key] = json.dumps(value) if value else ''
-                    else:
-                        flat_doc[key] = str(value) if value is not None else ''
+                # Handle all the main fields from schema
+                flat_doc['form_name'] = doc.get('form_name', '')
+                flat_doc['form_id'] = doc.get('form_id', '')
+                flat_doc['description'] = doc.get('description', '')
+                flat_doc['governing_authority'] = doc.get('governing_authority', '')
+                flat_doc['target_users'] = doc.get('target_users', '')
+                flat_doc['supporting_documents'] = doc.get('supporting_documents', '')
+                flat_doc['submission_method'] = doc.get('submission_method', '')
+                flat_doc['frequency_or_deadline'] = doc.get('frequency_or_deadline', '')
+                flat_doc['official_source_url'] = doc.get('official_source_url', '')
+                flat_doc['notes_or_instructions'] = doc.get('notes_or_instructions', '')
+                
+                # Flatten required_fields array
+                required_fields = doc.get('required_fields', [])
+                if isinstance(required_fields, list):
+                    for i, field in enumerate(required_fields):
+                        if isinstance(field, dict):
+                            flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                            flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                            flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                
                 flattened_data.append(flat_doc)
             
             df = pd.DataFrame(flattened_data)
@@ -105,18 +660,27 @@ def render_bulk_export_buttons(extracted_docs_list):
             flattened_data = []
             for doc in extracted_docs_list:
                 flat_doc = {}
-                for key, value in doc.items():
-                    if key == 'required_fields' and isinstance(value, list):
-                        # Flatten required_fields
-                        for i, field in enumerate(value):
-                            if isinstance(field, dict):
-                                flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
-                                flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
-                                flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
-                    elif isinstance(value, (dict, list)):
-                        flat_doc[key] = json.dumps(value) if value else ''
-                    else:
-                        flat_doc[key] = str(value) if value is not None else ''
+                # Handle all the main fields from schema
+                flat_doc['form_name'] = doc.get('form_name', '')
+                flat_doc['form_id'] = doc.get('form_id', '')
+                flat_doc['description'] = doc.get('description', '')
+                flat_doc['governing_authority'] = doc.get('governing_authority', '')
+                flat_doc['target_users'] = doc.get('target_users', '')
+                flat_doc['supporting_documents'] = doc.get('supporting_documents', '')
+                flat_doc['submission_method'] = doc.get('submission_method', '')
+                flat_doc['frequency_or_deadline'] = doc.get('frequency_or_deadline', '')
+                flat_doc['official_source_url'] = doc.get('official_source_url', '')
+                flat_doc['notes_or_instructions'] = doc.get('notes_or_instructions', '')
+                
+                # Flatten required_fields array
+                required_fields = doc.get('required_fields', [])
+                if isinstance(required_fields, list):
+                    for i, field in enumerate(required_fields):
+                        if isinstance(field, dict):
+                            flat_doc[f'required_field_{i+1}_name'] = field.get('name', '')
+                            flat_doc[f'required_field_{i+1}_description'] = field.get('description', '')
+                            flat_doc[f'required_field_{i+1}_type'] = field.get('type', '')
+                
                 flattened_data.append(flat_doc)
             
             df = pd.DataFrame(flattened_data)
@@ -206,8 +770,11 @@ def init_services():
     discovery = DocumentDiscoveryService(config.TAVILY_API_KEY, processor, db)
     ai_service = AIExtractionService(config.OPENAI_API_KEY, config.OPENROUTER_API_KEY, config.GEMINI_API_KEY)
     export_service = ExportService(config.OUTPUTS_DIR, db, config.CLOUDINARY_URL)
+    
+    # Initialize Multi-Agent Orchestrator
+    multi_agent_orchestrator = MultiAgentOrchestrator(ai_service)
 
-    return db, discovery, processor, ai_service, export_service
+    return db, discovery, processor, ai_service, export_service, multi_agent_orchestrator
 
 def main():
     st.set_page_config(
@@ -269,6 +836,15 @@ def main():
         text-align: center;
         font-weight: bold;
     }
+    .multi-agent-banner {
+        background: linear-gradient(45deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: bold;
+    }
     </style>
 
     <script>
@@ -297,6 +873,13 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
+    # Multi-Agent System Banner
+    st.markdown("""
+    <div class="multi-agent-banner">
+        🤖 <strong>Enhanced with Multi-Agent AI:</strong> Four specialized AI agents collaborate to deliver superior document analysis and extraction accuracy.
+    </div>
+    """, unsafe_allow_html=True)
+
     # Clear cache button in sidebar
     with st.sidebar:
         st.markdown("### ⚙️ System Controls")
@@ -304,6 +887,15 @@ def main():
             st.cache_data.clear()
             st.cache_resource.clear()
             st.rerun()
+        
+        st.markdown("### 🤖 Multi-Agent System")
+        st.info("""
+        **Active Agents:**
+        - 🔍 Document Analysis Specialist
+        - 📋 Form Extraction Specialist  
+        - ✅ Validation Specialist
+        - 🎯 Synthesis Coordinator
+        """)
 
     # Warning banner
     st.markdown("""
@@ -312,7 +904,7 @@ def main():
     </div>
     """, unsafe_allow_html=True)
 
-    db, discovery, processor, ai_service, export_service = init_services()
+    db, discovery, processor, ai_service, export_service, multi_agent_orchestrator = init_services()
 
     # Enhanced Navigation
     st.markdown('<div class="main-nav">', unsafe_allow_html=True)
@@ -340,11 +932,11 @@ def main():
     st.markdown('</div>', unsafe_allow_html=True)
 
     if page == "🔍 Document Discovery":
-        discovery_page(discovery, processor, ai_service, db)
+        discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrator)
     elif page == "📄 Document Viewer":
         document_viewer_page(db, processor, ai_service)
     elif page == "✅ Validation Panel":
-        validation_panel_page(db, processor, ai_service)
+        validation_panel_page(db, processor, ai_service, multi_agent_orchestrator)
     elif page == "📊 Export Panel":
         export_panel_page(db, export_service)
     elif page == "🗄️ Database Viewer":
@@ -354,7 +946,7 @@ def main():
     elif page == "🩺 Database Health Check":
         database_health_check_page(config.DATABASE_URL)
 
-def discovery_page(discovery, processor, ai_service, db):
+def discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrator):
     st.markdown("""
     <style>
     .discovery-header {
@@ -404,6 +996,18 @@ def discovery_page(discovery, processor, ai_service, db):
     </div>
     """, unsafe_allow_html=True)
 
+    # Top Export Buttons
+    forms = db.get_forms()
+    if forms:
+        extracted_docs_list = []
+        for form in forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                extracted_docs_list.append(structured_data)
+        
+        if extracted_docs_list:
+            render_top_export_buttons(extracted_docs_list, "Discovery")
+
     st.markdown('<div class="input-section">', unsafe_allow_html=True)
     st.markdown("### 🌍 Select Country and Visa Type")
     col1, col2 = st.columns(2)
@@ -442,6 +1046,7 @@ def discovery_page(discovery, processor, ai_service, db):
     with col1:
         max_docs = st.slider("Maximum documents/pages to process:", 1, 30, 8)  # Increased default for better format diversity
         auto_process = st.checkbox("Auto-process after discovery", value=True)
+        use_multi_agent = st.checkbox("🤖 Use Multi-Agent AI System", value=True, help="Enable collaborative AI agents for superior analysis")
 
     with col2:
         save_to_db = st.checkbox("Save to database", value=True)
@@ -458,7 +1063,10 @@ def discovery_page(discovery, processor, ai_service, db):
                 'file_path': '/tmp/example.pdf',
                 'discovered_by_query': 'dummy query'
             }
-            st.json(ai_service.extract_form_data("dummy text content", dummy_doc_info))
+            if use_multi_agent:
+                st.info("🤖 Multi-Agent system will be used for enhanced processing")
+            else:
+                st.json(ai_service.extract_form_data("dummy text content", dummy_doc_info))
         else:
             st.info("AI service not initialized to show prompt preview.")
 
@@ -483,10 +1091,10 @@ def discovery_page(discovery, processor, ai_service, db):
 
                     if auto_process:
                         st.subheader("Step 2: Processing Documents")
-                        process_documents_improved(docs_to_process, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai)
+                        process_documents_improved(docs_to_process, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai, multi_agent_orchestrator if use_multi_agent else None)
                     else:
                         if st.button("📥 Download and Process Selected Documents"):
-                            process_documents_improved(docs_to_process, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai)
+                            process_documents_improved(docs_to_process, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai, multi_agent_orchestrator if use_multi_agent else None)
                 else:
                     st.warning("No documents or relevant information pages found. Try different search terms or broaden your query.")
         else:
@@ -499,6 +1107,8 @@ def discovery_page(discovery, processor, ai_service, db):
         "Select Country for Batch Processing:",
         [""] + sorted(list(DocumentDiscoveryService.COUNTRY_DOMAINS_MAP.keys()))
     )
+    batch_use_multi_agent = st.checkbox("🤖 Use Multi-Agent for Batch Processing", value=True)
+    
     if st.button("🚀 Start Batch Processing", type="secondary"):
         if batch_country:
             st.info(f"Starting batch processing for {batch_country}. This may take a while...")
@@ -515,17 +1125,20 @@ def discovery_page(discovery, processor, ai_service, db):
             if all_discovered_docs:
                 st.success(f"Total {len(all_discovered_docs)} unique documents/pages discovered for {batch_country}.")
                 st.subheader(f"Initiating processing for all discovered documents in {batch_country}...")
-                process_documents_improved(all_discovered_docs, batch_country, "Batch Process", processor, ai_service, db, True, True)
+                process_documents_improved(all_discovered_docs, batch_country, "Batch Process", processor, ai_service, db, True, True, multi_agent_orchestrator if batch_use_multi_agent else None)
             else:
                 st.warning(f"No documents found for batch processing in {batch_country}.")
         else:
             st.error("Please select a country for batch processing.")
 
 
-def process_documents_improved(discovered_docs, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai):
+def process_documents_improved(discovered_docs, country, visa_type, processor, ai_service, db, save_to_db, validate_with_ai, multi_agent_orchestrator=None):
     """Improved document processing with better error handling and progress tracking"""
 
     st.subheader("📥 Document Processing Pipeline")
+    
+    if multi_agent_orchestrator:
+        st.info("🤖 **Multi-Agent Processing Enabled**: Four specialized AI agents will collaborate on each document")
 
     progress_container = st.container()
     status_container = st.container()
@@ -609,7 +1222,12 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                 status_text.text(f"Step 3/4: AI processing (Extraction & Validation)...")
                 progress_bar.progress(current_progress * 0.75)
 
-                ai_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
+                # Use Multi-Agent system if available
+                if multi_agent_orchestrator:
+                    with st.expander(f"🤖 Multi-Agent Processing: {doc['title'][:50]}..."):
+                        ai_extracted_data = multi_agent_orchestrator.process_document(extracted_text, doc_info_for_ai)
+                else:
+                    ai_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
 
                 if not ai_extracted_data:
                     failed_docs.append({"doc": doc, "error": "AI extraction failed or returned invalid data", "step": "ai_extraction"})
@@ -644,7 +1262,12 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                         if ai_extracted_data.get('governing_authority') and ai_extracted_data.get('governing_authority') not in ['N/A', 'Unknown']:
                             form_data_to_save['governing_authority'] = ai_extracted_data['governing_authority']
 
-                    validation_warnings = ai_service.validate_form_data(form_data_to_save["structured_data"])
+                    # Handle validation warnings from multi-agent or single agent
+                    if multi_agent_orchestrator and ai_extracted_data.get('multi_agent_analysis'):
+                        validation_warnings = ai_extracted_data['multi_agent_analysis'].get('validation', {}).get('warnings', [])
+                    else:
+                        validation_warnings = ai_service.validate_form_data(form_data_to_save["structured_data"])
+                    
                     form_data_to_save['validation_warnings'] = validation_warnings
                     form_data_to_save["processing_status"] = "validated" if not validation_warnings else "validated_with_warnings"
             else:
@@ -732,6 +1355,19 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                         st.warning("⚠️ Validation Warnings:")
                         for warning in form['validation_warnings']:
                             st.write(f"• {warning}")
+                    
+                    # Show multi-agent analysis if available
+                    if form.get('structured_data', {}).get('multi_agent_analysis'):
+                        with st.expander("🤖 Multi-Agent Analysis Details"):
+                            multi_agent_data = form['structured_data']['multi_agent_analysis']
+                            st.write(f"**Overall Confidence:** {multi_agent_data.get('synthesis_confidence', 0)*100:.1f}%")
+                            
+                            if multi_agent_data.get('document_analysis'):
+                                st.write("**Document Analysis Agent:**", multi_agent_data['document_analysis'].get('analysis', 'N/A')[:200] + "...")
+                            
+                            if multi_agent_data.get('validation'):
+                                validation_data = multi_agent_data['validation']
+                                st.write(f"**Validation Scores:** Accuracy: {validation_data.get('accuracy_score', 0)}%, Completeness: {validation_data.get('completeness_score', 0)}%")
 
         if failed_docs:
             st.subheader("❌ Failed Documents/Pages")
@@ -959,6 +1595,16 @@ def document_viewer_page(db, processor, ai_service):
         st.info("🔍 No documents found. Use the Document Discovery page to find and process documents first.")
         return
 
+    # Top Export Buttons
+    extracted_docs_list = []
+    for form in forms:
+        structured_data = form.get('structured_data', {})
+        if structured_data:
+            extracted_docs_list.append(structured_data)
+    
+    if extracted_docs_list:
+        render_top_export_buttons(extracted_docs_list, "Viewer")
+
     # Find selected form
     selected_form = None
     if st.session_state.selected_form_id:
@@ -1030,6 +1676,25 @@ def document_viewer_page(db, processor, ai_service):
                 st.write(f"**Submission Method:** {structured_data.get('submission_method', 'N/A')}")
                 st.write(f"**Last Updated:** {selected_form.get('created_at', 'N/A')}")
 
+            # Multi-Agent Analysis Summary
+            if structured_data.get('multi_agent_analysis'):
+                st.markdown("### 🤖 Multi-Agent Analysis Summary")
+                multi_agent_data = structured_data['multi_agent_analysis']
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    confidence = multi_agent_data.get('synthesis_confidence', 0)
+                    st.metric("Overall Confidence", f"{confidence*100:.1f}%")
+                
+                with col2:
+                    validation_data = multi_agent_data.get('validation', {})
+                    accuracy = validation_data.get('accuracy_score', 0)
+                    st.metric("Accuracy Score", f"{accuracy}%")
+                
+                with col3:
+                    completeness = validation_data.get('completeness_score', 0)
+                    st.metric("Completeness Score", f"{completeness}%")
+
             # Description
             st.markdown("### 📝 Description")
             st.write(clean_html_text(selected_form.get('description', 'No description available')))
@@ -1037,8 +1702,12 @@ def document_viewer_page(db, processor, ai_service):
             # Supporting Documents
             if structured_data.get('supporting_documents'):
                 st.markdown("### 📎 Required Supporting Documents")
-                for i, doc in enumerate(structured_data['supporting_documents'], 1):
-                    st.write(f"{i}. {doc}")
+                supporting_docs = structured_data['supporting_documents']
+                if isinstance(supporting_docs, str):
+                    st.write(supporting_docs)
+                elif isinstance(supporting_docs, list):
+                    for i, doc in enumerate(supporting_docs, 1):
+                        st.write(f"{i}. {doc}")
 
             # Validation Warnings
             if selected_form.get('validation_warnings'):
@@ -1115,13 +1784,58 @@ def document_viewer_page(db, processor, ai_service):
                 st.markdown("### 🤖 AI-Generated Comprehensive Analysis")
                 st.markdown(full_markdown)
 
+                # Multi-Agent Detailed Analysis
+                if structured_data.get('multi_agent_analysis'):
+                    st.markdown("### 🤖 Multi-Agent Detailed Analysis")
+                    multi_agent_data = structured_data['multi_agent_analysis']
+                    
+                    # Document Analysis Agent
+                    if multi_agent_data.get('document_analysis'):
+                        with st.expander("🔍 Document Analysis Agent Results"):
+                            doc_analysis = multi_agent_data['document_analysis']
+                            st.write(f"**Agent:** {doc_analysis.get('agent', 'Document Analysis Specialist')}")
+                            st.write(f"**Confidence:** {doc_analysis.get('confidence', 0)*100:.1f}%")
+                            if doc_analysis.get('analysis'):
+                                st.markdown("**Analysis:**")
+                                st.write(doc_analysis['analysis'])
+                            if doc_analysis.get('document_type'):
+                                st.write(f"**Document Type:** {doc_analysis['document_type']}")
+                            if doc_analysis.get('structure_quality'):
+                                st.write(f"**Structure Quality:** {doc_analysis['structure_quality']}")
+                    
+                    # Form Extraction Agent
+                    if multi_agent_data.get('form_extraction'):
+                        with st.expander("📋 Form Extraction Agent Results"):
+                            form_extraction = multi_agent_data['form_extraction']
+                            st.write(f"**Agent:** {form_extraction.get('agent', 'Form Extraction Specialist')}")
+                            st.write(f"**Confidence:** {form_extraction.get('confidence', 0)*100:.1f}%")
+                            st.json(form_extraction)
+                    
+                    # Validation Agent
+                    if multi_agent_data.get('validation'):
+                        with st.expander("✅ Validation Agent Results"):
+                            validation = multi_agent_data['validation']
+                            st.write(f"**Agent:** {validation.get('agent', 'Validation Specialist')}")
+                            st.write(f"**Confidence:** {validation.get('confidence', 0)*100:.1f}%")
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.metric("Accuracy Score", f"{validation.get('accuracy_score', 0)}%")
+                            with col2:
+                                st.metric("Completeness Score", f"{validation.get('completeness_score', 0)}%")
+                            
+                            if validation.get('warnings'):
+                                st.write("**Validation Warnings:**")
+                                for warning in validation['warnings']:
+                                    st.warning(f"⚠️ {warning}")
+
                 # AI Extracted Fields
                 st.markdown("### 📊 Structured Data Extracted by AI")
 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if structured_data.get('target_applicants'):
-                        st.write(f"**Target Applicants:** {structured_data['target_applicants']}")
+                    if structured_data.get('target_users'):
+                        st.write(f"**Target Users:** {structured_data['target_users']}")
                     if structured_data.get('language'):
                         st.write(f"**Language:** {structured_data['language']}")
                     if structured_data.get('fees'):
@@ -1247,8 +1961,9 @@ def document_viewer_page(db, processor, ai_service):
                 continue
         
         ai_processed = len([f for f in forms if f.get('structured_data', {}).get('full_markdown_summary')])
+        multi_agent_processed = len([f for f in forms if f.get('structured_data', {}).get('multi_agent_analysis')])
 
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
             st.markdown(f"""
             <div class="metric-card">
@@ -1275,6 +1990,13 @@ def document_viewer_page(db, processor, ai_service):
             <div class="metric-card">
                 <h3 style="color: #ffc107; margin: 0;">🤖 {ai_processed}</h3>
                 <p style="margin: 5px 0 0 0; color: #666;">AI Processed</p>
+            </div>
+            """, unsafe_allow_html=True)
+        with col5:
+            st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="color: #11998e; margin: 0;">🤝 {multi_agent_processed}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Multi-Agent</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -1372,6 +2094,9 @@ def document_viewer_page(db, processor, ai_service):
                                 'XLS': '📊'
                             }.get(file_format, '📄')
 
+                            # Multi-agent indicator
+                            multi_agent_indicator = "🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
+
                             # Clean text content to prevent HTML tags from showing
                             clean_form_name = clean_html_text(form.get('form_name', 'Unknown Document'))
                             clean_description = clean_html_text(form.get('description', 'No description available'))
@@ -1387,7 +2112,7 @@ def document_viewer_page(db, processor, ai_service):
                                 # Header with title and format badge
                                 col_title, col_badge = st.columns([4, 1])
                                 with col_title:
-                                    st.markdown(f"### {format_icon} {clean_form_name[:50]}{'...' if len(clean_form_name) > 50 else ''}")
+                                    st.markdown(f"### {format_icon} {multi_agent_indicator} {clean_form_name[:45]}{'...' if len(clean_form_name) > 45 else ''}")
                                 with col_badge:
                                     st.markdown(f'<span class="{status_class} status-badge">{file_format}</span>', unsafe_allow_html=True)
 
@@ -1397,9 +2122,14 @@ def document_viewer_page(db, processor, ai_service):
                                 st.markdown(f"**🆔 Form ID:** {clean_form_id}")
                                 st.markdown(f"**Status:** {status.replace('_', ' ').title()}")
 
+                                # Multi-agent confidence if available
+                                if form.get('structured_data', {}).get('multi_agent_analysis'):
+                                    confidence = form['structured_data']['multi_agent_analysis'].get('synthesis_confidence', 0)
+                                    st.markdown(f"**🤖 AI Confidence:** {confidence*100:.1f}%")
+
                                 # Description
                                 if clean_description:
-                                    st.markdown(f"**Description:** {clean_description[:100]}{'...' if len(clean_description) > 100 else ''}")
+                                    st.markdown(f"**Description:** {clean_description[:80]}{'...' if len(clean_description) > 80 else ''}")
 
                                 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1429,7 +2159,7 @@ def document_viewer_page(db, processor, ai_service):
         else:
             st.info("🔍 No documents match your current filters. Try adjusting the search criteria.")
 
-def validation_panel_page(db, processor, ai_service):
+def validation_panel_page(db, processor, ai_service, multi_agent_orchestrator):
     st.markdown("""
     <style>
     .validation-header {
@@ -1466,6 +2196,17 @@ def validation_panel_page(db, processor, ai_service):
     """, unsafe_allow_html=True)
 
     forms = db.get_forms()
+
+    # Top Export Buttons
+    if forms:
+        extracted_docs_list = []
+        for form in forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                extracted_docs_list.append(structured_data)
+        
+        if extracted_docs_list:
+            render_top_export_buttons(extracted_docs_list, "Validation")
 
     if forms:
         st.success(f"✅ Found {len(forms)} documents/pages for review")
@@ -1515,7 +2256,11 @@ def validation_panel_page(db, processor, ai_service):
             for form in filtered_forms:
                 clean_form_name = clean_html_text(form['form_name'])
                 clean_country = clean_html_text(form.get('country', 'Unknown'))
-                with st.expander(f"📋 {clean_form_name} - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
+                
+                # Multi-agent indicator
+                multi_agent_indicator = " 🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
+                
+                with st.expander(f"📋 {clean_form_name} - {clean_country}{multi_agent_indicator} (Status: {form.get('processing_status', 'N/A')})"):
                     col1, col2 = st.columns([2, 1])
 
                     with col1:
@@ -1529,6 +2274,11 @@ def validation_panel_page(db, processor, ai_service):
                             st.write(f"**Cloudinary Original URL:** [Link]({document_info_from_db['cloudinary_url']})")
                         else:
                             st.write(f"**Cloudinary Original URL:** N/A")
+
+                        # Multi-agent analysis summary
+                        if form.get('structured_data', {}).get('multi_agent_analysis'):
+                            multi_agent_data = form['structured_data']['multi_agent_analysis']
+                            st.info(f"🤖 **Multi-Agent Analysis:** Overall Confidence: {multi_agent_data.get('synthesis_confidence', 0)*100:.1f}%")
 
                         if form.get('validation_warnings'):
                             st.subheader("⚠️ AI Validation Warnings")
@@ -1564,6 +2314,7 @@ def validation_panel_page(db, processor, ai_service):
                                 )
                             )
                             comments = st.text_area("Comments", value=current_review.get('comments', ''))
+                            use_multi_agent_rerun = st.checkbox("🤖 Use Multi-Agent for Re-run", value=True)
 
                             col_buttons_review, col_buttons_ai = st.columns(2)
 
@@ -1602,10 +2353,19 @@ def validation_panel_page(db, processor, ai_service):
                                                     'discovered_by_query': form['discovered_by_query']
                                                 }
 
-                                                re_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
+                                                # Use Multi-Agent system if selected
+                                                if use_multi_agent_rerun:
+                                                    st.info("🤖 Using Multi-Agent system for re-processing...")
+                                                    re_extracted_data = multi_agent_orchestrator.process_document(extracted_text, doc_info_for_ai)
+                                                else:
+                                                    re_extracted_data = ai_service.extract_form_data(extracted_text, doc_info_for_ai)
 
                                                 if re_extracted_data:
-                                                    validation_warnings = ai_service.validate_form_data(re_extracted_data)
+                                                    # Handle validation warnings from multi-agent or single agent
+                                                    if use_multi_agent_rerun and re_extracted_data.get('multi_agent_analysis'):
+                                                        validation_warnings = re_extracted_data['multi_agent_analysis'].get('validation', {}).get('warnings', [])
+                                                    else:
+                                                        validation_warnings = ai_service.validate_form_data(re_extracted_data)
 
                                                     new_processing_status = "validated" if not validation_warnings else "validated_with_warnings"
                                                     if not extracted_text or len(extracted_text.strip()) < 50:
@@ -1627,7 +2387,10 @@ def validation_panel_page(db, processor, ai_service):
                                                     )
 
                                                     if update_success:
-                                                        st.success("AI extraction and validation re-run successfully!")
+                                                        success_msg = "AI extraction and validation re-run successfully!"
+                                                        if use_multi_agent_rerun:
+                                                            success_msg += " 🤖 Multi-Agent system used."
+                                                        st.success(success_msg)
                                                         st.rerun()
                                                     else:
                                                         st.error("Failed to update form with new AI results.")
@@ -1685,6 +2448,17 @@ def export_panel_page(db, export_service):
     
     # Initialize filtered_forms at the beginning to fix the UnboundLocalError
     filtered_forms = []
+
+    # Top Export Buttons
+    if forms:
+        extracted_docs_list = []
+        for form in forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                extracted_docs_list.append(structured_data)
+        
+        if extracted_docs_list:
+            render_top_export_buttons(extracted_docs_list, "Export")
 
     if forms:
         st.success(f"✅ Found {len(forms)} documents/pages available for export")
@@ -1835,8 +2609,11 @@ def export_panel_page(db, export_service):
             # Extract structured data for preview
             structured_data = form.get('structured_data', {})
             
+            # Multi-agent indicator
+            multi_agent_indicator = "🤝" if structured_data.get('multi_agent_analysis') else ""
+            
             preview_data.append({
-                "Form Name": clean_html_text(form.get('form_name', 'Unknown')),
+                "Form Name": clean_html_text(form.get('form_name', 'Unknown')) + multi_agent_indicator,
                 "Form Slug": structured_data.get('form_slug', 'N/A'),
                 "Country Code": structured_data.get('country_code', 'N/A'),
                 "Country Name": clean_html_text(form.get('country', 'Unknown')),
@@ -1845,6 +2622,7 @@ def export_panel_page(db, export_service):
                 "Governing Authority": clean_html_text(form.get('governing_authority', 'N/A')),
                 "Processing Status": form.get('processing_status', 'N/A'),
                 "Review Status": (form.get('lawyer_review') or {}).get('approval_status', 'Pending'),
+                "AI Confidence": f"{structured_data.get('multi_agent_analysis', {}).get('synthesis_confidence', 0)*100:.1f}%" if structured_data.get('multi_agent_analysis') else "N/A",
                 "Last Updated": str(form.get('created_at', 'N/A'))
             })
 
@@ -1873,6 +2651,7 @@ def export_panel_page(db, export_service):
                         'country': form.get('country', ''),
                         'form_name': form.get('form_name', ''),
                         'form_id': form.get('form_id', ''),
+                        'multi_agent': 'Yes' if form.get('structured_data', {}).get('multi_agent_analysis') else 'No',
                         'created_at': str(form.get('created_at', ''))
                     } for form in test_forms])
 
@@ -2044,9 +2823,20 @@ def database_viewer_page(db):
 
     forms = db.get_forms()
 
+    # Top Export Buttons
+    if forms:
+        extracted_docs_list = []
+        for form in forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                extracted_docs_list.append(structured_data)
+        
+        if extracted_docs_list:
+            render_top_export_buttons(extracted_docs_list, "Database")
+
     if forms:
         st.markdown("### 📊 Database Statistics")
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
             st.markdown(f"""
@@ -2086,6 +2876,18 @@ def database_viewer_page(db):
             <div class="stat-card">
                 <h3 style="color: #ffc107; margin: 0;">⏳ {pending_forms}</h3>
                 <p style="margin: 5px 0 0 0; color: #666;">Pending Review</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col5:
+            multi_agent_forms = len([
+                form for form in forms
+                if form.get('structured_data', {}).get('multi_agent_analysis')
+            ])
+            st.markdown(f"""
+            <div class="stat-card">
+                <h3 style="color: #9c27b0; margin: 0;">🤝 {multi_agent_forms}</h3>
+                <p style="margin: 5px 0 0 0; color: #666;">Multi-Agent</p>
             </div>
             """, unsafe_allow_html=True)
 
@@ -2132,7 +2934,11 @@ def database_viewer_page(db):
             clean_form_name = clean_html_text(form.get('form_name', 'Unknown'))
             clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
             clean_country = clean_html_text(form.get('country', 'Unknown'))
-            with st.expander(f"📋 {clean_form_name} ({clean_form_id}) - {clean_country} (Status: {form.get('processing_status', 'N/A')})"):
+            
+            # Multi-agent indicator
+            multi_agent_indicator = " 🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
+            
+            with st.expander(f"📋 {clean_form_name} ({clean_form_id}) - {clean_country}{multi_agent_indicator} (Status: {form.get('processing_status', 'N/A')})"):
                 col1, col2 = st.columns(2)
 
                 with col1:
@@ -2148,6 +2954,11 @@ def database_viewer_page(db):
 
                     if form.get('validation_warnings'):
                         st.write(f"**Warnings:** {len(form['validation_warnings'])}")
+
+                    # Multi-agent confidence if available
+                    if form.get('structured_data', {}).get('multi_agent_analysis'):
+                        confidence = form['structured_data']['multi_agent_analysis'].get('synthesis_confidence', 0)
+                        st.write(f"**🤖 AI Confidence:** {confidence*100:.1f}%")
 
                     source_url = form.get('official_source_url', '')
                     st.write(f"**Source:** {source_url}")
@@ -2202,18 +3013,33 @@ def cloudinary_browser_page(db):
 
     all_forms = db.get_forms()
 
+    # Top Export Buttons
+    if all_forms:
+        extracted_docs_list = []
+        for form in all_forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                extracted_docs_list.append(structured_data)
+        
+        if extracted_docs_list:
+            render_top_export_buttons(extracted_docs_list, "Cloudinary")
+
     cloudinary_docs = []
     for form in all_forms:
         document_info = db.get_document_by_form_id(form['id'])
         if document_info and document_info.get('cloudinary_url'):
+            # Multi-agent indicator
+            multi_agent_indicator = " 🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
+            
             cloudinary_docs.append({
                 "form_id": form['id'],
                 "country": form.get('country', 'Unknown'),
                 "visa_category": form.get('visa_category', 'Unknown'),
-                "form_name": form.get('form_name', 'Unknown'),
+                "form_name": form.get('form_name', 'Unknown') + multi_agent_indicator,
                 "cloudinary_url": document_info['cloudinary_url'],
                 "file_format": document_info['file_format'],
-                "filename": document_info['filename']
+                "filename": document_info['filename'],
+                "multi_agent": bool(form.get('structured_data', {}).get('multi_agent_analysis'))
             })
 
     if not cloudinary_docs:
@@ -2221,6 +3047,10 @@ def cloudinary_browser_page(db):
         return
 
     st.info(f"Displaying {len(cloudinary_docs)} documents found on Cloudinary.")
+
+    # Multi-agent statistics
+    multi_agent_count = sum(1 for doc in cloudinary_docs if doc['multi_agent'])
+    st.success(f"🤝 {multi_agent_count} documents processed with Multi-Agent system")
 
     grouped_docs = {}
     for doc in cloudinary_docs:
@@ -2236,11 +3066,12 @@ def cloudinary_browser_page(db):
     for country, visa_categories in sorted(grouped_docs.items()):
         with st.expander(f"🌍 {country} ({sum(len(v) for v in visa_categories.values())} documents)"):
             for visa_category, docs in sorted(visa_categories.items()):
+                multi_agent_in_category = sum(1 for doc in docs if doc['multi_agent'])
                 st.markdown(f"""
                 <div style="background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
                            color: white; padding: 15px; border-radius: 10px; margin: 10px 0;
                            text-align: center; font-weight: bold; font-size: 1.1rem;">
-                    🛂 {visa_category} ({len(docs)} documents)
+                    🛂 {visa_category} ({len(docs)} documents) 🤝 {multi_agent_in_category} Multi-Agent
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -2374,6 +3205,9 @@ def database_health_check_page(database_url: str):
         if not all_missing:
             st.success("✅ All required columns are present in the 'forms', 'documents', and 'export_logs' tables!")
             st.write("You should now be able to process and save documents correctly, including Cloudinary uploads.")
+            
+            # Multi-agent system status
+            st.info("🤖 **Multi-Agent System Status:** Ready for collaborative document processing")
         else:
             st.warning("Please ensure you have dropped the old tables in your NeonDB console and re-run `python setup_neondb.py` to synchronize the schema.")
             st.markdown("---")

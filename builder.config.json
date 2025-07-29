@@ -1,6 +1,0 @@
-{
-  "command": "streamlit run app.py",
-  "serverUrl": "http://localhost:8501",
-  "authenticateProxy": false,
-  "commitMode": "commits"
-}
