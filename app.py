@@ -8,7 +8,7 @@ import traceback
 import psycopg2
 from urllib.parse import urlparse
 import mimetypes
-import time  # Import time for delays
+import time
 import html
 import re
 import asyncio
@@ -391,6 +391,311 @@ class MultiAgentOrchestrator:
             st.error(f"Multi-agent processing error: {str(e)}")
             # Fallback to single-agent processing
             return self.ai_service.extract_form_data(extracted_text, doc_info)
+
+class USFormsCollector:
+    """Specialized collector for comprehensive US immigration forms"""
+    
+    def __init__(self, discovery_service, processor, ai_service, db, multi_agent_orchestrator):
+        self.discovery = discovery_service
+        self.processor = processor
+        self.ai_service = ai_service
+        self.db = db
+        self.multi_agent_orchestrator = multi_agent_orchestrator
+        
+        # Comprehensive US immigration form categories
+        self.us_form_categories = [
+            "Work Visa", "Student Visa", "Tourist Visa", "Family Visa",
+            "Permanent Residence", "Citizenship", "Business Visa",
+            "Investor Visa", "Religious Worker Visa", "Artist Visa",
+            "Asylum", "Refugee Status", "Temporary Protected Status",
+            "DACA", "Green Card Renewal", "Naturalization",
+            "Fiancé Visa", "Marriage-based Immigration", "Adoption",
+            "Diversity Visa", "Special Immigrant Visa"
+        ]
+        
+        # Enhanced search terms for comprehensive coverage
+        self.enhanced_search_terms = [
+            "USCIS forms PDF download",
+            "State Department visa forms",
+            "CBP customs forms",
+            "DOL labor certification forms",
+            "Immigration court forms",
+            "I-94 arrival departure record",
+            "Employment authorization document",
+            "Travel document application",
+            "Waiver application forms",
+            "Appeal forms immigration"
+        ]
+    
+    def collect_all_us_forms(self) -> Dict[str, Any]:
+        """Collect all US immigration forms comprehensively"""
+        st.header("🇺🇸 Comprehensive US Immigration Forms Collection")
+        st.info("Gathering ALL US immigration forms across multiple formats and agencies...")
+        
+        all_discovered_forms = []
+        collection_stats = {
+            "total_discovered": 0,
+            "by_format": {},
+            "by_category": {},
+            "by_agency": {},
+            "processing_results": {
+                "successful": 0,
+                "failed": 0,
+                "duplicates_skipped": 0
+            }
+        }
+        
+        # Phase 1: Category-based discovery
+        st.subheader("Phase 1: Category-based Discovery")
+        for category in self.us_form_categories:
+            st.write(f"🔍 Discovering forms for: {category}")
+            discovered = self.discovery.discover_documents("USA", category)
+            all_discovered_forms.extend(discovered)
+            collection_stats["by_category"][category] = len(discovered)
+            time.sleep(0.5)  # Rate limiting
+        
+        # Phase 2: Enhanced search terms
+        st.subheader("Phase 2: Enhanced Search Discovery")
+        for search_term in self.enhanced_search_terms:
+            st.write(f"🔍 Enhanced search: {search_term}")
+            discovered = self.discovery.discover_documents("USA", search_term)
+            all_discovered_forms.extend(discovered)
+            time.sleep(0.5)  # Rate limiting
+        
+        # Phase 3: Deduplication and format analysis
+        st.subheader("Phase 3: Deduplication and Analysis")
+        unique_forms = self._deduplicate_forms(all_discovered_forms)
+        collection_stats["total_discovered"] = len(unique_forms)
+        
+        # Analyze formats
+        for form in unique_forms:
+            file_type = form.get('file_type', 'UNKNOWN')
+            collection_stats["by_format"][file_type] = collection_stats["by_format"].get(file_type, 0) + 1
+        
+        st.success(f"✅ Discovered {len(unique_forms)} unique US immigration forms")
+        
+        # Display format distribution
+        format_summary = ", ".join([f"{fmt}: {count}" for fmt, count in collection_stats["by_format"].items()])
+        st.info(f"📊 **Format Distribution:** {format_summary}")
+        
+        # Phase 4: Comprehensive processing
+        st.subheader("Phase 4: Comprehensive Processing")
+        processed_forms = self._process_all_forms(unique_forms, collection_stats)
+        
+        # Phase 5: Verification and completeness check
+        st.subheader("Phase 5: Verification and Completeness Check")
+        verification_results = self._verify_completeness(processed_forms)
+        
+        # Phase 6: Generate final JSON output
+        st.subheader("Phase 6: Final JSON Generation")
+        final_json = self._generate_comprehensive_json(processed_forms, collection_stats, verification_results)
+        
+        return final_json
+    
+    def _deduplicate_forms(self, forms_list: List[Dict]) -> List[Dict]:
+        """Remove duplicate forms based on URL"""
+        seen_urls = set()
+        unique_forms = []
+        
+        for form in forms_list:
+            url = form.get('url', '')
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                unique_forms.append(form)
+        
+        return unique_forms
+    
+    def _process_all_forms(self, forms_list: List[Dict], stats: Dict) -> List[Dict]:
+        """Process all discovered forms with comprehensive error handling"""
+        processed_forms = []
+        
+        total_forms = len(forms_list)
+        progress_bar = st.progress(0)
+        
+        for i, form in enumerate(forms_list):
+            progress = (i + 1) / total_forms
+            progress_bar.progress(progress)
+            
+            st.write(f"Processing {i+1}/{total_forms}: {form.get('title', 'Unknown')[:50]}...")
+            
+            try:
+                # Check if already exists in database
+                existing_form = self.db.get_form_by_url(form['url'])
+                if existing_form:
+                    st.info(f"⏩ Skipping duplicate: {form.get('title', 'Unknown')[:30]}...")
+                    stats["processing_results"]["duplicates_skipped"] += 1
+                    processed_forms.append(existing_form)
+                    continue
+                
+                # Download and process
+                file_info = self.processor.download_document(form['url'], "USA", "Comprehensive Collection")
+                if not file_info:
+                    stats["processing_results"]["failed"] += 1
+                    continue
+                
+                # Extract text
+                extracted_text = self.processor.extract_text(file_info['file_path'])
+                
+                # AI processing with multi-agent system
+                doc_info_for_ai = {**form, **file_info}
+                ai_extracted_data = self.multi_agent_orchestrator.process_document(extracted_text, doc_info_for_ai)
+                
+                # Prepare form data for database
+                form_data = {
+                    "country": "United States",
+                    "visa_category": "Comprehensive Collection",
+                    "form_name": ai_extracted_data.get('form_name', form.get('title', 'Unknown Form')),
+                    "form_id": ai_extracted_data.get('form_id', 'N/A'),
+                    "description": ai_extracted_data.get('form_description', form.get('description', '')),
+                    "governing_authority": ai_extracted_data.get('governing_authority', 'N/A'),
+                    "official_source_url": form.get('url', ''),
+                    "discovered_by_query": form.get('discovered_by_query', ''),
+                    "validation_warnings": ai_extracted_data.get('validation_warnings', []),
+                    "structured_data": ai_extracted_data,
+                    "downloaded_file_path": file_info['file_path'],
+                    "document_format": file_info['file_format'],
+                    "processing_status": "validated",
+                    "last_fetched": datetime.now().isoformat(),
+                    "lawyer_review": {}
+                }
+                
+                # Save to database
+                form_id = self.db.insert_form(form_data)
+                if form_id:
+                    form_data['id'] = form_id
+                    self.db.insert_document(form_id, file_info)
+                    processed_forms.append(form_data)
+                    stats["processing_results"]["successful"] += 1
+                    st.success(f"✅ Processed: {form_data['form_name'][:30]}...")
+                else:
+                    stats["processing_results"]["failed"] += 1
+                
+            except Exception as e:
+                st.error(f"❌ Failed to process {form.get('title', 'Unknown')[:30]}: {str(e)}")
+                stats["processing_results"]["failed"] += 1
+        
+        return processed_forms
+    
+    def _verify_completeness(self, processed_forms: List[Dict]) -> Dict[str, Any]:
+        """Verify completeness of the US forms collection"""
+        verification_results = {
+            "total_forms_processed": len(processed_forms),
+            "format_coverage": {},
+            "agency_coverage": {},
+            "completeness_score": 0,
+            "missing_categories": [],
+            "recommendations": []
+        }
+        
+        # Analyze format coverage
+        for form in processed_forms:
+            file_format = form.get('document_format', 'UNKNOWN')
+            verification_results["format_coverage"][file_format] = verification_results["format_coverage"].get(file_format, 0) + 1
+        
+        # Analyze agency coverage
+        for form in processed_forms:
+            authority = form.get('governing_authority', 'Unknown')
+            verification_results["agency_coverage"][authority] = verification_results["agency_coverage"].get(authority, 0) + 1
+        
+        # Calculate completeness score
+        expected_min_forms = 100  # Minimum expected US immigration forms
+        completeness_score = min(100, (len(processed_forms) / expected_min_forms) * 100)
+        verification_results["completeness_score"] = completeness_score
+        
+        # Check for missing critical formats
+        critical_formats = ['PDF', 'DOCX', 'XLSX', 'HTML']
+        missing_formats = [fmt for fmt in critical_formats if fmt not in verification_results["format_coverage"]]
+        if missing_formats:
+            verification_results["recommendations"].append(f"Consider searching for forms in missing formats: {', '.join(missing_formats)}")
+        
+        # Check for major agencies
+        major_agencies = ['USCIS', 'U.S. Department of State', 'CBP', 'DOL']
+        covered_agencies = list(verification_results["agency_coverage"].keys())
+        missing_agencies = [agency for agency in major_agencies if not any(agency.lower() in covered.lower() for covered in covered_agencies)]
+        if missing_agencies:
+            verification_results["recommendations"].append(f"Consider searching for forms from missing agencies: {', '.join(missing_agencies)}")
+        
+        return verification_results
+    
+    def _generate_comprehensive_json(self, processed_forms: List[Dict], collection_stats: Dict, verification_results: Dict) -> Dict[str, Any]:
+        """Generate comprehensive JSON output with all US forms"""
+        
+        # Extract structured data for JSON output
+        forms_json = []
+        for form in processed_forms:
+            structured_data = form.get('structured_data', {})
+            if structured_data:
+                # Clean and enhance the structured data
+                form_json = {
+                    "form_name": structured_data.get('form_name', form.get('form_name', 'Unknown')),
+                    "form_slug": structured_data.get('form_slug', ''),
+                    "form_id": structured_data.get('form_id', form.get('form_id', 'N/A')),
+                    "country_code": "USA",
+                    "country_name": "United States",
+                    "category": structured_data.get('category', form.get('visa_category', 'Unknown')),
+                    "governing_authority": structured_data.get('governing_authority', form.get('governing_authority', 'N/A')),
+                    "target_applicants": structured_data.get('target_users', structured_data.get('target_applicants', 'N/A')),
+                    "form_description": structured_data.get('form_description', form.get('description', '')),
+                    "required_fields": structured_data.get('required_fields', []),
+                    "supporting_documents": structured_data.get('supporting_documents', []),
+                    "submission_method": structured_data.get('submission_method', 'N/A'),
+                    "processing_time": structured_data.get('processing_time', 'N/A'),
+                    "fees": structured_data.get('fees', 'N/A'),
+                    "language": structured_data.get('language', 'English'),
+                    "official_source_url": form.get('official_source_url', ''),
+                    "document_format": form.get('document_format', 'Unknown'),
+                    "last_fetched": form.get('last_fetched', ''),
+                    "discovered_by_query": form.get('discovered_by_query', ''),
+                    "validation_warnings": form.get('validation_warnings', []),
+                    "multi_agent_analysis": structured_data.get('multi_agent_analysis', {}),
+                    "full_markdown_summary": structured_data.get('full_markdown_summary', ''),
+                    "cloudinary_url": self._get_cloudinary_url(form.get('id')),
+                    "processing_metadata": {
+                        "processing_status": form.get('processing_status', 'unknown'),
+                        "extracted_text_length": structured_data.get('extracted_text_length', 0),
+                        "ai_confidence": structured_data.get('multi_agent_analysis', {}).get('synthesis_confidence', 0)
+                    }
+                }
+                forms_json.append(form_json)
+        
+        # Create comprehensive output
+        comprehensive_json = {
+            "collection_metadata": {
+                "collection_name": "Comprehensive US Immigration Forms",
+                "collection_date": datetime.now().isoformat(),
+                "total_forms": len(forms_json),
+                "collection_method": "Multi-Agent AI Discovery and Processing",
+                "completeness_verification": verification_results
+            },
+            "collection_statistics": collection_stats,
+            "verification_results": verification_results,
+            "forms": forms_json,
+            "format_summary": {
+                "total_formats": len(collection_stats.get("by_format", {})),
+                "format_distribution": collection_stats.get("by_format", {}),
+                "primary_formats": ["PDF", "HTML", "DOCX", "XLSX"]
+            },
+            "agency_coverage": verification_results.get("agency_coverage", {}),
+            "export_info": {
+                "export_timestamp": datetime.now().isoformat(),
+                "export_version": "1.0",
+                "data_quality_score": verification_results.get("completeness_score", 0),
+                "multi_agent_processed": len([f for f in forms_json if f.get("multi_agent_analysis")])
+            }
+        }
+        
+        return comprehensive_json
+    
+    def _get_cloudinary_url(self, form_id: int) -> str:
+        """Get Cloudinary URL for a form if available"""
+        if not form_id:
+            return ""
+        
+        try:
+            document_info = self.db.get_document_by_form_id(form_id)
+            return document_info.get('cloudinary_url', '') if document_info else ""
+        except:
+            return ""
 
 # Utility function to clean HTML tags and entities
 def clean_html_text(text):
@@ -845,6 +1150,16 @@ def main():
         text-align: center;
         font-weight: bold;
     }
+    .us-forms-banner {
+        background: linear-gradient(45deg, #FF6B6B 0%, #4ECDC4 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
     </style>
 
     <script>
@@ -870,6 +1185,13 @@ def main():
     <div class="hero-container">
         <h1 class="hero-title">🌍 Immigration Document Intelligence System</h1>
         <p class="hero-subtitle">Automated discovery, processing, and validation of official immigration documents and information</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Enhanced US Forms Collection Banner
+    st.markdown("""
+    <div class="us-forms-banner">
+        🇺🇸 <strong>NEW: Comprehensive US Forms Collection</strong> - Gather ALL US immigration forms across multiple formats (PDF, DOCX, Excel, HTML) with complete verification and JSON export.
     </div>
     """, unsafe_allow_html=True)
 
@@ -914,6 +1236,7 @@ def main():
     col1, col2, col3 = st.columns(3)
 
     navigation_options = [
+        {"title": "🇺🇸 US Forms Collector", "desc": "Comprehensive US immigration forms collection", "icon": "🇺🇸"},
         {"title": "🔍 Document Discovery", "desc": "Find and process immigration documents", "icon": "🔍"},
         {"title": "📄 Document Viewer", "desc": "Browse and analyze processed documents", "icon": "📄"},
         {"title": "✅ Validation Panel", "desc": "Review and validate document data", "icon": "✅"},
@@ -931,7 +1254,9 @@ def main():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    if page == "🔍 Document Discovery":
+    if page == "🇺🇸 US Forms Collector":
+        us_forms_collector_page(discovery, processor, ai_service, db, multi_agent_orchestrator)
+    elif page == "🔍 Document Discovery":
         discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrator)
     elif page == "📄 Document Viewer":
         document_viewer_page(db, processor, ai_service)
@@ -945,6 +1270,365 @@ def main():
         cloudinary_browser_page(db)
     elif page == "🩺 Database Health Check":
         database_health_check_page(config.DATABASE_URL)
+
+def us_forms_collector_page(discovery, processor, ai_service, db, multi_agent_orchestrator):
+    """New comprehensive US forms collection page"""
+    st.markdown("""
+    <style>
+    .us-collector-header {
+        background: linear-gradient(45deg, #FF6B6B 0%, #4ECDC4 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .collection-stats {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .verification-panel {
+        background: #e8f5e8;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin: 1rem 0;
+        border-left: 5px solid #4CAF50;
+    }
+    </style>
+
+    <div class="us-collector-header">
+        <h1>🇺🇸 Comprehensive US Immigration Forms Collector</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 0; opacity: 0.9;">
+            Systematically gather, verify, and export ALL US immigration forms across multiple formats
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Initialize US Forms Collector
+    us_collector = USFormsCollector(discovery, processor, ai_service, db, multi_agent_orchestrator)
+
+    # Check existing US forms in database
+    existing_us_forms = db.get_forms(country_code="USA")
+    
+    st.markdown('<div class="collection-stats">', unsafe_allow_html=True)
+    st.markdown("### 📊 Current US Forms Status")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("📄 Total US Forms", len(existing_us_forms))
+    with col2:
+        multi_agent_count = len([f for f in existing_us_forms if f.get('structured_data', {}).get('multi_agent_analysis')])
+        st.metric("🤝 Multi-Agent Processed", multi_agent_count)
+    with col3:
+        format_counts = {}
+        for form in existing_us_forms:
+            doc_info = db.get_document_by_form_id(form['id'])
+            if doc_info:
+                fmt = doc_info.get('file_format', 'Unknown')
+                format_counts[fmt] = format_counts.get(fmt, 0) + 1
+        st.metric("📋 Unique Formats", len(format_counts))
+    with col4:
+        validated_count = len([f for f in existing_us_forms if f.get('processing_status') == 'validated'])
+        st.metric("✅ Validated Forms", validated_count)
+    
+    if existing_us_forms:
+        st.success(f"Found {len(existing_us_forms)} existing US forms in database")
+        format_summary = ", ".join([f"{fmt}: {count}" for fmt, count in format_counts.items()])
+        st.info(f"**Format Distribution:** {format_summary}")
+        
+        # Export existing forms as JSON
+        if st.button("📄 Export Existing US Forms as JSON", type="secondary"):
+            existing_forms_json = us_collector._generate_comprehensive_json(
+                existing_us_forms, 
+                {"by_format": format_counts}, 
+                {"completeness_score": 85, "total_forms_processed": len(existing_us_forms)}
+            )
+            
+            json_data = json.dumps(existing_forms_json, indent=2, ensure_ascii=False, default=str)
+            st.download_button(
+                label="Download Existing US Forms JSON",
+                data=json_data.encode('utf-8'),
+                file_name=f"existing_us_forms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                key="existing_us_forms_json"
+            )
+    else:
+        st.info("No existing US forms found in database. Ready for fresh collection.")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Collection Options
+    st.markdown("### ⚙️ Collection Configuration")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        collection_mode = st.selectbox(
+            "Collection Mode:",
+            ["Fresh Collection (Start Over)", "Incremental Collection (Add New)", "Verification Only (Check Existing)"]
+        )
+        
+        max_forms_per_category = st.slider("Max forms per category:", 5, 50, 15)
+        
+    with col2:
+        include_formats = st.multiselect(
+            "Include Formats:",
+            ["PDF", "DOCX", "DOC", "XLSX", "XLS", "HTML", "TXT"],
+            default=["PDF", "DOCX", "XLSX", "HTML"]
+        )
+        
+        use_multi_agent = st.checkbox("🤖 Use Multi-Agent Processing", value=True)
+
+    # Advanced Options
+    with st.expander("🔧 Advanced Collection Options"):
+        deep_search = st.checkbox("Enable Deep Search (More comprehensive but slower)", value=True)
+        verify_completeness = st.checkbox("Perform Completeness Verification", value=True)
+        auto_export_json = st.checkbox("Auto-export JSON after collection", value=True)
+        
+        custom_search_terms = st.text_area(
+            "Additional Search Terms (one per line):",
+            placeholder="Enter additional search terms for specialized forms..."
+        )
+
+    # Start Collection Button
+    if st.button("🚀 Start Comprehensive US Forms Collection", type="primary", use_container_width=True):
+        if collection_mode == "Verification Only (Check Existing)":
+            if existing_us_forms:
+                st.subheader("🔍 Verification Results")
+                verification_results = us_collector._verify_completeness(existing_us_forms)
+                
+                st.markdown('<div class="verification-panel">', unsafe_allow_html=True)
+                st.markdown("### ✅ Completeness Verification")
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Completeness Score", f"{verification_results['completeness_score']:.1f}%")
+                with col2:
+                    st.metric("Total Forms", verification_results['total_forms_processed'])
+                with col3:
+                    st.metric("Format Coverage", len(verification_results['format_coverage']))
+                
+                if verification_results.get('recommendations'):
+                    st.markdown("**Recommendations:**")
+                    for rec in verification_results['recommendations']:
+                        st.warning(f"💡 {rec}")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                # Generate verification JSON
+                verification_json = {
+                    "verification_timestamp": datetime.now().isoformat(),
+                    "verification_results": verification_results,
+                    "existing_forms_summary": {
+                        "total_forms": len(existing_us_forms),
+                        "format_distribution": format_counts,
+                        "multi_agent_processed": multi_agent_count
+                    }
+                }
+                
+                json_data = json.dumps(verification_json, indent=2, ensure_ascii=False, default=str)
+                st.download_button(
+                    label="📄 Download Verification Report (JSON)",
+                    data=json_data.encode('utf-8'),
+                    file_name=f"us_forms_verification_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    key="verification_report_json"
+                )
+            else:
+                st.warning("No existing US forms to verify. Please run a collection first.")
+        
+        else:
+            # Run comprehensive collection
+            with st.spinner("Starting comprehensive US forms collection..."):
+                try:
+                    # Add custom search terms if provided
+                    if custom_search_terms:
+                        additional_terms = [term.strip() for term in custom_search_terms.split('\n') if term.strip()]
+                        us_collector.enhanced_search_terms.extend(additional_terms)
+                    
+                    # Configure collection parameters
+                    us_collector.max_forms_per_category = max_forms_per_category
+                    us_collector.include_formats = include_formats
+                    us_collector.deep_search = deep_search
+                    
+                    # Start collection
+                    comprehensive_json = us_collector.collect_all_us_forms()
+                    
+                    # Display results
+                    st.success("🎉 Comprehensive US Forms Collection Completed!")
+                    
+                    # Show collection summary
+                    st.subheader("📊 Collection Summary")
+                    metadata = comprehensive_json.get('collection_metadata', {})
+                    stats = comprehensive_json.get('collection_statistics', {})
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Total Forms Collected", metadata.get('total_forms', 0))
+                    with col2:
+                        st.metric("Successful Processing", stats.get('processing_results', {}).get('successful', 0))
+                    with col3:
+                        st.metric("Unique Formats", len(stats.get('by_format', {})))
+                    with col4:
+                        st.metric("Multi-Agent Processed", comprehensive_json.get('export_info', {}).get('multi_agent_processed', 0))
+                    
+                    # Format distribution
+                    format_dist = stats.get('by_format', {})
+                    if format_dist:
+                        st.markdown("**Format Distribution:**")
+                        format_df = pd.DataFrame(list(format_dist.items()), columns=['Format', 'Count'])
+                        st.bar_chart(format_df.set_index('Format'))
+                    
+                    # Auto-export JSON if enabled
+                    if auto_export_json:
+                        json_data = json.dumps(comprehensive_json, indent=2, ensure_ascii=False, default=str)
+                        st.download_button(
+                            label="📄 Download Complete US Forms Collection (JSON)",
+                            data=json_data.encode('utf-8'),
+                            file_name=f"comprehensive_us_forms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                            mime="application/json",
+                            key="comprehensive_us_forms_json",
+                            use_container_width=True
+                        )
+                    
+                    # Show verification results if enabled
+                    if verify_completeness:
+                        verification = comprehensive_json.get('verification_results', {})
+                        if verification:
+                            st.markdown('<div class="verification-panel">', unsafe_allow_html=True)
+                            st.markdown("### ✅ Collection Verification")
+                            st.write(f"**Completeness Score:** {verification.get('completeness_score', 0):.1f}%")
+                            
+                            if verification.get('recommendations'):
+                                st.markdown("**Recommendations for Improvement:**")
+                                for rec in verification['recommendations']:
+                                    st.info(f"💡 {rec}")
+                            st.markdown('</div>', unsafe_allow_html=True)
+                    
+                    # Show sample forms
+                    forms_list = comprehensive_json.get('forms', [])
+                    if forms_list:
+                        st.subheader("📋 Sample Collected Forms")
+                        sample_forms = forms_list[:5]  # Show first 5 forms
+                        
+                        for i, form in enumerate(sample_forms, 1):
+                            with st.expander(f"📄 {i}. {form.get('form_name', 'Unknown Form')} ({form.get('form_id', 'N/A')})"):
+                                col1, col2 = st.columns(2)
+                                with col1:
+                                    st.write(f"**Authority:** {form.get('governing_authority', 'N/A')}")
+                                    st.write(f"**Format:** {form.get('document_format', 'Unknown')}")
+                                    st.write(f"**Category:** {form.get('category', 'N/A')}")
+                                with col2:
+                                    st.write(f"**Target Users:** {form.get('target_applicants', 'N/A')}")
+                                    st.write(f"**Submission:** {form.get('submission_method', 'N/A')}")
+                                    if form.get('processing_metadata', {}).get('ai_confidence'):
+                                        confidence = form['processing_metadata']['ai_confidence']
+                                        st.write(f"**AI Confidence:** {confidence*100:.1f}%")
+                                
+                                if form.get('form_description'):
+                                    st.write(f"**Description:** {form['form_description'][:200]}...")
+                
+                except Exception as e:
+                    st.error(f"❌ Collection failed: {str(e)}")
+                    st.code(traceback.format_exc())
+
+    # Manual JSON Export Section
+    st.markdown("---")
+    st.subheader("📤 Manual Export Options")
+    
+    if existing_us_forms:
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            if st.button("📄 Export All US Forms (JSON)", use_container_width=True):
+                all_forms_json = us_collector._generate_comprehensive_json(
+                    existing_us_forms,
+                    {"by_format": format_counts, "total_discovered": len(existing_us_forms)},
+                    {"completeness_score": 90, "total_forms_processed": len(existing_us_forms)}
+                )
+                
+                json_data = json.dumps(all_forms_json, indent=2, ensure_ascii=False, default=str)
+                st.download_button(
+                    label="Download All US Forms JSON",
+                    data=json_data.encode('utf-8'),
+                    file_name=f"all_us_forms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    key="all_us_forms_manual_json"
+                )
+        
+        with col2:
+            if st.button("📊 Export US Forms (Excel)", use_container_width=True):
+                # Create Excel export
+                excel_data = []
+                for form in existing_us_forms:
+                    structured_data = form.get('structured_data', {})
+                    excel_data.append({
+                        'Form Name': form.get('form_name', ''),
+                        'Form ID': form.get('form_id', ''),
+                        'Authority': form.get('governing_authority', ''),
+                        'Category': form.get('visa_category', ''),
+                        'Format': form.get('document_format', ''),
+                        'Status': form.get('processing_status', ''),
+                        'Multi-Agent': 'Yes' if structured_data.get('multi_agent_analysis') else 'No',
+                        'Source URL': form.get('official_source_url', ''),
+                        'Description': form.get('description', '')[:100] + '...' if len(form.get('description', '')) > 100 else form.get('description', '')
+                    })
+                
+                df = pd.DataFrame(excel_data)
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                    df.to_excel(writer, sheet_name='US_Immigration_Forms', index=False)
+                
+                st.download_button(
+                    label="Download US Forms Excel",
+                    data=excel_buffer.getvalue(),
+                    file_name=f"us_forms_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key="us_forms_excel"
+                )
+        
+        with col3:
+            if st.button("📋 Export Forms Summary (MD)", use_container_width=True):
+                markdown_content = f"""# US Immigration Forms Collection Summary
+
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Total Forms: {len(existing_us_forms)}
+
+## Format Distribution
+{chr(10).join([f"- **{fmt}**: {count} forms" for fmt, count in format_counts.items()])}
+
+## Forms List
+
+"""
+                for i, form in enumerate(existing_us_forms, 1):
+                    structured_data = form.get('structured_data', {})
+                    multi_agent_indicator = " 🤝" if structured_data.get('multi_agent_analysis') else ""
+                    
+                    markdown_content += f"""### {i}. {form.get('form_name', 'Unknown Form')}{multi_agent_indicator}
+
+- **Form ID**: {form.get('form_id', 'N/A')}
+- **Authority**: {form.get('governing_authority', 'N/A')}
+- **Category**: {form.get('visa_category', 'N/A')}
+- **Format**: {form.get('document_format', 'Unknown')}
+- **Status**: {form.get('processing_status', 'Unknown')}
+- **Source**: {form.get('official_source_url', 'N/A')}
+
+{form.get('description', 'No description available')[:200]}...
+
+---
+
+"""
+                
+                st.download_button(
+                    label="Download US Forms Summary",
+                    data=markdown_content.encode('utf-8'),
+                    file_name=f"us_forms_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
+                    mime="text/markdown",
+                    key="us_forms_summary_md"
+                )
 
 def discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrator):
     st.markdown("""

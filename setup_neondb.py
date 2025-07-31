@@ -94,6 +94,35 @@ def setup_database(database_url):
                 cloudinary_url TEXT
             )
         """)
+
+        # NEW: US Forms Collection tracking table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.us_forms_collections (
+                id SERIAL PRIMARY KEY,
+                collection_name VARCHAR(200) NOT NULL,
+                collection_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                total_forms_targeted INTEGER,
+                total_forms_collected INTEGER,
+                completeness_score DECIMAL(5,2),
+                collection_status VARCHAR(50),
+                verification_results JSONB,
+                collection_metadata JSONB,
+                created_by VARCHAR(100) DEFAULT 'System'
+            )
+        """)
+
+        # NEW: Form collection relationships table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.form_collection_items (
+                id SERIAL PRIMARY KEY,
+                collection_id INTEGER REFERENCES public.us_forms_collections(id) ON DELETE CASCADE,
+                form_id INTEGER REFERENCES public.forms(id) ON DELETE CASCADE,
+                collection_priority INTEGER DEFAULT 1,
+                format_preference VARCHAR(20),
+                collection_notes TEXT,
+                added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         
         # Create indexes
         print("🔍 Creating indexes...")
@@ -107,10 +136,18 @@ def setup_database(database_url):
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
         
+        # NEW: Indexes for US forms collection tables
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_date ON public.us_forms_collections(collection_date)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_status ON public.us_forms_collections(collection_status)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_form_collection_items_collection_id ON public.form_collection_items(collection_id)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_form_collection_items_form_id ON public.form_collection_items(form_id)")
+        
         # Create JSONB indexes for better performance
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_structured_data ON public.forms USING GIN(structured_data)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_validation_warnings ON public.forms USING GIN(validation_warnings)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_lawyer_review ON public.forms USING GIN(lawyer_review)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_verification ON public.us_forms_collections USING GIN(verification_results)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_metadata ON public.us_forms_collections USING GIN(collection_metadata)")
         
         # Create function to update updated_at timestamp
         cur.execute("""
@@ -140,6 +177,8 @@ def setup_database(database_url):
         print("   - documents (file metadata)")
         print("   - sources (provenance tracking)")
         print("   - export_logs (export history)")
+        print("   - us_forms_collections (US forms collection tracking)")
+        print("   - form_collection_items (collection relationships)")
         
         # --- NEW DIAGNOSTIC STEP ---
         print("\n--- Verifying created tables and columns ---")
@@ -147,7 +186,7 @@ def setup_database(database_url):
             SELECT table_name, column_name, data_type
             FROM information_schema.columns
             WHERE table_schema = 'public'
-            AND table_name IN ('forms', 'documents', 'sources', 'export_logs')
+            AND table_name IN ('forms', 'documents', 'sources', 'export_logs', 'us_forms_collections', 'form_collection_items')
             ORDER BY table_name, column_name;
         """)
         verified_schema = cur.fetchall()
@@ -166,8 +205,15 @@ def setup_database(database_url):
             result = cur.fetchone()
             forms_count = result[0] if result else 0
             print(f"📋 Current forms in database: {forms_count}")
+            
+            # Test US forms collections table
+            cur.execute("SELECT COUNT(*) FROM public.us_forms_collections")
+            result = cur.fetchone()
+            collections_count = result[0] if result else 0
+            print(f"📦 Current US forms collections: {collections_count}")
+            
         except Exception as e:
-            print(f"⚠️ Warning: Could not count forms: {e}")
+            print(f"⚠️ Warning: Could not count records: {e}")
             # This is not a critical error, continue
         
         return True
@@ -227,6 +273,10 @@ def main():
         if setup_database(database_url):
             print("\n🎉 Setup completed! You can now run the Streamlit app:")
             print("   streamlit run app.py")
+            print("\n🆕 New Features Added:")
+            print("   - US Forms Collection tracking")
+            print("   - Enhanced export capabilities")
+            print("   - Collection verification and reporting")
         else:
             print("\n❌ Setup failed. Please check your database credentials and permissions.")
             sys.exit(1) # Exit with error code

@@ -1,42 +1,63 @@
 import os
 import streamlit as st
-from dataclasses import dataclass
-from typing import Optional
 
-@dataclass
 class Config:
-    # API Keys - Strictly load from Streamlit secrets or environment variables
-    TAVILY_API_KEY: str = ""
-    OPENAI_API_KEY: str = ""
-    OPENROUTER_API_KEY: str = ""
-    GEMINI_API_KEY: str = ""
-    DATABASE_URL: str = ""
-    CLOUDINARY_URL: str = "" # NEW: Added Cloudinary URL
-    
-    # Storage
-    DOWNLOADS_DIR: str = "downloads"
-    OUTPUTS_DIR: str = "output"
-    
-    # Processing
-    MAX_FILE_SIZE_MB: int = 50
-    SUPPORTED_FORMATS: list = None
-    
-    def __post_init__(self):
-        # Attempt to load from Streamlit secrets first (for deployed apps)
-        # Fallback to os.getenv (for local development or other environments)
-        self.TAVILY_API_KEY = st.secrets.get("tavily_api_key", os.getenv("TAVILY_API_KEY", ""))
-        self.OPENAI_API_KEY = st.secrets.get("openai_api_key", os.getenv("OPENAI_API_KEY", ""))
-        self.OPENROUTER_API_KEY = st.secrets.get("openrouter_api_key", os.getenv("OPENROUTER_API_KEY", ""))
-        self.GEMINI_API_KEY = st.secrets.get("gemini_api_key", os.getenv("GEMINI_API_KEY", ""))
-        self.DATABASE_URL = st.secrets.get("database_url", os.getenv("DATABASE_URL", ""))
-        self.CLOUDINARY_URL = st.secrets.get("cloudinary_url", os.getenv("CLOUDINARY_URL", "")) # NEW: Load Cloudinary URL
+    def __init__(self):
+        # Database Configuration
+        self.DATABASE_URL = self._get_config_value("DATABASE_URL")
         
-        if self.SUPPORTED_FORMATS is None:
-            self.SUPPORTED_FORMATS = ['.pdf', '.docx', '.xlsx', '.doc', '.xls', '.html', '.htm']
+        # API Keys
+        self.TAVILY_API_KEY = self._get_config_value("TAVILY_API_KEY")
+        self.OPENAI_API_KEY = self._get_config_value("OPENAI_API_KEY")
+        self.OPENROUTER_API_KEY = self._get_config_value("OPENROUTER_API_KEY")
+        self.GEMINI_API_KEY = self._get_config_value("GEMINI_API_KEY")
+        self.CLOUDINARY_URL = self._get_config_value("CLOUDINARY_URL")
         
-        # Create directories
+        # Directory Configuration
+        self.DOWNLOADS_DIR = "downloads"
+        self.OUTPUTS_DIR = "outputs"
+        
+        # Create directories if they don't exist
         os.makedirs(self.DOWNLOADS_DIR, exist_ok=True)
         os.makedirs(self.OUTPUTS_DIR, exist_ok=True)
-        os.makedirs(f"{self.OUTPUTS_DIR}/forms", exist_ok=True)
+    
+    def _get_config_value(self, key: str) -> str:
+        """Get configuration value from environment variables or Streamlit secrets"""
+        # Try environment variables first
+        value = os.getenv(key)
+        if value:
+            return value
+        
+        # Try Streamlit secrets
+        try:
+            return st.secrets[key]
+        except (KeyError, FileNotFoundError):
+            return ""
+    
+    def validate_config(self):
+        """Validate that required configuration is present"""
+        required_configs = {
+            "DATABASE_URL": self.DATABASE_URL,
+            "TAVILY_API_KEY": self.TAVILY_API_KEY,
+            "CLOUDINARY_URL": self.CLOUDINARY_URL
+        }
+        
+        missing_configs = []
+        for config_name, config_value in required_configs.items():
+            if not config_value:
+                missing_configs.append(config_name)
+        
+        if missing_configs:
+            st.error(f"Missing required configuration: {', '.join(missing_configs)}")
+            st.info("Please set these values in your environment variables or Streamlit secrets.")
+            return False
+        
+        # Check if at least one AI service is configured
+        ai_services = [self.OPENAI_API_KEY, self.OPENROUTER_API_KEY, self.GEMINI_API_KEY]
+        if not any(ai_services):
+            st.warning("No AI service API keys configured. AI processing will be unavailable.")
+        
+        return True
 
+# Create global config instance
 config = Config()

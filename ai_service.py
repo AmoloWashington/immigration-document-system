@@ -172,6 +172,7 @@ For the "full_markdown_summary" field, provide an extensive summary of the docum
 3. For country_code: Use the official 3-letter ISO code (e.g., "USA", "CAN", "GBR", "AUS"). Never use "UNK" unless absolutely no country can be determined.
 4. For category: Use specific immigration categories like "Work Visa", "Student Visa", "Tourist Visa", "Family Visa", "Permanent Residence", "Citizenship", "Business Visa". Never use "Unknown" unless the document type cannot be determined.
 5. Extract country and category information from URLs, filenames, and any text content available. Look for patterns like "uscis.gov" (USA), "canada.ca" (Canada), "gov.uk" (United Kingdom), etc.
+6. Make sure the document even the forms you see there I need the because they're in pdf formats I see so make sure to get there and include the all.
 
 JSON Schema:
 {json.dumps(json_schema, indent=2)}
@@ -213,18 +214,18 @@ Extract all relevant information according to the JSON schema provided in the sy
         response_content = None
         error_message = None
 
-        # Try OpenAI first
-        if self.openai_client:
-            st.info("Attempting AI extraction with OpenAI...")
-            response_content, error_message = self._call_openai_compatible_service(
-                self.openai_client, system_prompt, user_prompt, model_name="gpt-4o-mini", max_tokens=2500, response_format={"type": "json_object"}
+        # Try Gemini first (as requested in priority order)
+        if self.gemini_model:
+            st.info("Attempting AI extraction with Gemini...")
+            response_content, error_message = self._call_gemini_service(
+                self.gemini_model, system_prompt, user_prompt, max_tokens=2500
             )
             if response_content:
-                st.success("AI extraction successful using OpenAI.")
+                st.success("AI extraction successful using Gemini.")
             else:
-                st.warning(f"OpenAI extraction failed: {error_message}. Attempting OpenRouter fallback...")
+                st.warning(f"Gemini extraction failed: {error_message}. Attempting OpenRouter fallback...")
         
-        # Fallback to OpenRouter if OpenAI failed or was not available
+        # Fallback to OpenRouter if Gemini failed or was not available
         if not response_content and self.openrouter_client:
             st.info("Attempting AI extraction with OpenRouter...")
             response_content, error_message = self._call_openai_compatible_service(
@@ -233,18 +234,18 @@ Extract all relevant information according to the JSON schema provided in the sy
             if response_content:
                 st.success("AI extraction successful using OpenRouter fallback.")
             else:
-                st.warning(f"OpenRouter extraction also failed: {error_message}. Attempting Gemini fallback...")
+                st.warning(f"OpenRouter extraction also failed: {error_message}. Attempting OpenAI fallback...")
         
-        # Fallback to Gemini if OpenRouter failed or was not available
-        if not response_content and self.gemini_model:
-            st.info("Attempting AI extraction with Gemini...")
-            response_content, error_message = self._call_gemini_service(
-                self.gemini_model, system_prompt, user_prompt, max_tokens=2500
+        # Fallback to OpenAI if OpenRouter failed or was not available
+        if not response_content and self.openai_client:
+            st.info("Attempting AI extraction with OpenAI...")
+            response_content, error_message = self._call_openai_compatible_service(
+                self.openai_client, system_prompt, user_prompt, model_name="gpt-4o-mini", max_tokens=2500, response_format={"type": "json_object"}
             )
             if response_content:
-                st.success("AI extraction successful using Gemini fallback.")
+                st.success("AI extraction successful using OpenAI fallback.")
             else:
-                st.error(f"Gemini extraction also failed: {error_message}.")
+                st.error(f"OpenAI extraction also failed: {error_message}.")
 
         if not response_content:
             st.error(f"AI extraction failed after trying all available services. Last error: {error_message}")
@@ -326,23 +327,21 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
         response_content = None
         error_message = None
 
-        # Try OpenAI first
-        if self.openai_client:
-            st.info("Attempting AI validation with OpenAI...")
-            response_content, error_message = self._call_openai_compatible_service(
-                self.openai_client, 
+        # Try Gemini first (as requested in priority order)
+        if self.gemini_model:
+            st.info("Attempting AI validation with Gemini...")
+            response_content, error_message = self._call_gemini_service(
+                self.gemini_model, 
                 "You are an expert immigration document validator. Respond only with a JSON object containing a 'validation_warnings' array.", 
                 validation_prompt, 
-                model_name="gpt-4o-mini", 
-                max_tokens=800,
-                response_format={"type": "json_object"}
+                max_tokens=800
             )
             if response_content:
-                st.success("AI validation successful using OpenAI.")
+                st.success("AI validation successful using Gemini.")
             else:
-                st.warning(f"OpenAI validation failed: {error_message}. Attempting OpenRouter fallback...")
+                st.warning(f"Gemini validation failed: {error_message}. Attempting OpenRouter fallback...")
         
-        # Fallback to OpenRouter if OpenAI failed or was not available
+        # Fallback to OpenRouter if Gemini failed or was not available
         if not response_content and self.openrouter_client:
             st.info("Attempting AI validation with OpenRouter...")
             response_content, error_message = self._call_openai_compatible_service(
@@ -356,21 +355,23 @@ Example: ["Fee amount missing", "Processing time not specified", "Submission met
             if response_content:
                 st.success("AI validation successful using OpenRouter fallback.")
             else:
-                st.warning(f"OpenRouter validation also failed: {error_message}. Attempting Gemini fallback...")
+                st.warning(f"OpenRouter validation also failed: {error_message}. Attempting OpenAI fallback...")
         
-        # Fallback to Gemini if OpenRouter failed or was not available
-        if not response_content and self.gemini_model:
-            st.info("Attempting AI validation with Gemini...")
-            response_content, error_message = self._call_gemini_service(
-                self.gemini_model, 
+        # Fallback to OpenAI if OpenRouter failed or was not available
+        if not response_content and self.openai_client:
+            st.info("Attempting AI validation with OpenAI...")
+            response_content, error_message = self._call_openai_compatible_service(
+                self.openai_client, 
                 "You are an expert immigration document validator. Respond only with a JSON object containing a 'validation_warnings' array.", 
                 validation_prompt, 
-                max_tokens=800
+                model_name="gpt-4o-mini", 
+                max_tokens=800,
+                response_format={"type": "json_object"}
             )
             if response_content:
-                st.success("AI validation successful using Gemini fallback.")
+                st.success("AI validation successful using OpenAI fallback.")
             else:
-                st.error(f"Gemini validation also failed: {error_message}.")
+                st.error(f"OpenAI validation also failed: {error_message}.")
 
         if not response_content:
             st.error(f"AI validation failed after trying all available services. Last error: {error_message}")

@@ -639,3 +639,246 @@ class ExportService:
             import traceback
             st.error(f"Full traceback: {traceback.format_exc()}")
             return "", None, None
+
+    # NEW: US Forms Collection Export Methods
+    def export_us_forms_collection_json(self, us_forms_data: List[Dict[str, Any]], verification_results: Dict[str, Any]) -> Tuple[str, Optional[bytes], Optional[str]]:
+        """Export comprehensive US forms collection as structured JSON with verification results"""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"usa_immigration_forms_complete_collection_{timestamp}.json"
+        file_path = self.output_dir / filename
+        cloudinary_url = None
+
+        try:
+            # Prepare comprehensive export data
+            export_data = {
+                "collection_metadata": {
+                    "export_timestamp": datetime.now().isoformat(),
+                    "export_version": "2.0",
+                    "collection_type": "USA Immigration Forms - Complete Collection",
+                    "total_forms": len(us_forms_data),
+                    "verification_status": verification_results.get('overall_status', 'Unknown'),
+                    "completeness_score": verification_results.get('completeness_score', 0),
+                    "coverage_analysis": verification_results.get('coverage_analysis', {}),
+                    "format_distribution": verification_results.get('format_distribution', {}),
+                    "recommendations": verification_results.get('recommendations', [])
+                },
+                "forms": []
+            }
+
+            # Process each form with enhanced structure
+            for form in us_forms_data:
+                structured_data = form.get('structured_data', {})
+                
+                enhanced_form = {
+                    "basic_info": {
+                        "form_name": form.get('form_name', ''),
+                        "form_id": form.get('form_id', ''),
+                        "form_slug": structured_data.get('form_slug', ''),
+                        "country_code": "USA",
+                        "governing_authority": form.get('governing_authority', ''),
+                        "category": form.get('category', ''),
+                        "description": form.get('form_description', '')
+                    },
+                    "document_info": {
+                        "official_source_url": form.get('official_source_url', ''),
+                        "document_format": form.get('document_format', ''),
+                        "file_size_bytes": structured_data.get('file_size_bytes', 0),
+                        "last_fetched": form.get('last_fetched', ''),
+                        "cloudinary_url": self._get_cloudinary_url_for_form(form.get('id'))
+                    },
+                    "processing_details": {
+                        "target_applicants": structured_data.get('target_applicants', ''),
+                        "submission_method": structured_data.get('submission_method', ''),
+                        "processing_time": structured_data.get('processing_time', ''),
+                        "fees": structured_data.get('fees', ''),
+                        "language": structured_data.get('language', 'English')
+                    },
+                    "form_structure": {
+                        "required_fields": structured_data.get('required_fields', []),
+                        "supporting_documents": structured_data.get('supporting_documents', []),
+                        "field_count": len(structured_data.get('required_fields', [])),
+                        "supporting_doc_count": len(structured_data.get('supporting_documents', []))
+                    },
+                    "ai_analysis": {
+                        "multi_agent_processed": bool(structured_data.get('multi_agent_analysis')),
+                        "confidence_score": structured_data.get('multi_agent_analysis', {}).get('synthesis_confidence', 0),
+                        "ai_summary_available": bool(structured_data.get('full_markdown_summary')),
+                        "extracted_text_length": structured_data.get('extracted_text_length', 0)
+                    },
+                    "quality_assurance": {
+                        "validation_warnings": form.get('validation_warnings', []),
+                        "validation_warning_count": len(form.get('validation_warnings', [])),
+                        "processing_status": form.get('processing_status', ''),
+                        "lawyer_review_status": form.get('lawyer_review', {}).get('approval_status', 'Pending Review')
+                    },
+                    "discovery_metadata": {
+                        "discovered_by_query": form.get('discovered_by_query', ''),
+                        "discovery_method": structured_data.get('discovery_method', ''),
+                        "source_reliability": structured_data.get('source_reliability', 'Unknown'),
+                        "created_at": str(form.get('created_at', '')),
+                        "updated_at": str(form.get('updated_at', ''))
+                    }
+                }
+                
+                export_data["forms"].append(enhanced_form)
+
+            # Write JSON file
+            json_content = json.dumps(export_data, indent=2, ensure_ascii=False, default=self._json_serializer)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(json_content)
+
+            st.success(f"US Forms Collection JSON exported: {file_path}")
+
+            # Upload to Cloudinary
+            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder="immigration_exports/us_collection")
+
+            # Log export
+            if self.db_manager:
+                exported_form_ids = [form.get('id') for form in us_forms_data if form.get('id')]
+                self.db_manager.insert_export_log(
+                    document_ids=exported_form_ids,
+                    export_formats=["us_collection_json"],
+                    file_path=str(file_path),
+                    cloudinary_url=cloudinary_url
+                )
+
+            return str(file_path), json_content.encode('utf-8'), cloudinary_url
+
+        except Exception as e:
+            st.error(f"Error exporting US forms collection JSON: {e}")
+            return "", None, None
+
+    def export_us_forms_verification_report(self, verification_results: Dict[str, Any], us_forms_data: List[Dict[str, Any]]) -> Tuple[str, Optional[bytes], Optional[str]]:
+        """Export US forms collection verification report as Markdown"""
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"usa_forms_verification_report_{timestamp}.md"
+        file_path = self.output_dir / filename
+        cloudinary_url = None
+
+        try:
+            report_lines = []
+            
+            # Header
+            report_lines.append("# USA Immigration Forms Collection - Verification Report\n\n")
+            report_lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            report_lines.append(f"**Total Forms Collected:** {len(us_forms_data)}\n")
+            report_lines.append(f"**Overall Status:** {verification_results.get('overall_status', 'Unknown')}\n")
+            report_lines.append(f"**Completeness Score:** {verification_results.get('completeness_score', 0):.1f}%\n\n")
+
+            # Executive Summary
+            report_lines.append("## Executive Summary\n\n")
+            report_lines.append("This verification report analyzes the completeness and quality of the USA immigration forms collection. ")
+            report_lines.append("The system has systematically gathered forms across multiple formats and categories to ensure comprehensive coverage.\n\n")
+
+            # Coverage Analysis
+            coverage = verification_results.get('coverage_analysis', {})
+            if coverage:
+                report_lines.append("## Coverage Analysis\n\n")
+                for category, details in coverage.items():
+                    if isinstance(details, dict):
+                        report_lines.append(f"### {category}\n")
+                        report_lines.append(f"- **Forms Found:** {details.get('count', 0)}\n")
+                        report_lines.append(f"- **Coverage Status:** {details.get('status', 'Unknown')}\n")
+                        if details.get('examples'):
+                            report_lines.append(f"- **Examples:** {', '.join(details['examples'][:3])}\n")
+                        report_lines.append("\n")
+
+            # Format Distribution
+            format_dist = verification_results.get('format_distribution', {})
+            if format_dist:
+                report_lines.append("## Format Distribution\n\n")
+                report_lines.append("| Format | Count | Percentage |\n")
+                report_lines.append("|--------|-------|------------|\n")
+                total_forms = sum(format_dist.values())
+                for format_type, count in format_dist.items():
+                    percentage = (count / total_forms * 100) if total_forms > 0 else 0
+                    report_lines.append(f"| {format_type} | {count} | {percentage:.1f}% |\n")
+                report_lines.append("\n")
+
+            # Quality Metrics
+            report_lines.append("## Quality Metrics\n\n")
+            
+            # Calculate quality metrics
+            forms_with_ai_analysis = len([f for f in us_forms_data if f.get('structured_data', {}).get('multi_agent_analysis')])
+            forms_with_warnings = len([f for f in us_forms_data if f.get('validation_warnings')])
+            forms_with_summaries = len([f for f in us_forms_data if f.get('structured_data', {}).get('full_markdown_summary')])
+            
+            report_lines.append(f"- **Forms with AI Analysis:** {forms_with_ai_analysis} ({forms_with_ai_analysis/len(us_forms_data)*100:.1f}%)\n")
+            report_lines.append(f"- **Forms with Validation Warnings:** {forms_with_warnings} ({forms_with_warnings/len(us_forms_data)*100:.1f}%)\n")
+            report_lines.append(f"- **Forms with AI Summaries:** {forms_with_summaries} ({forms_with_summaries/len(us_forms_data)*100:.1f}%)\n\n")
+
+            # Recommendations
+            recommendations = verification_results.get('recommendations', [])
+            if recommendations:
+                report_lines.append("## Recommendations\n\n")
+                for i, rec in enumerate(recommendations, 1):
+                    report_lines.append(f"{i}. {rec}\n")
+                report_lines.append("\n")
+
+            # Detailed Form Listing
+            report_lines.append("## Detailed Form Inventory\n\n")
+            
+            # Group by category
+            by_category = {}
+            for form in us_forms_data:
+                category = form.get('category', 'Uncategorized')
+                if category not in by_category:
+                    by_category[category] = []
+                by_category[category].append(form)
+
+            for category, forms in sorted(by_category.items()):
+                report_lines.append(f"### {category} ({len(forms)} forms)\n\n")
+                
+                for form in forms:
+                    form_name = form.get('form_name', 'Unknown')
+                    form_id = form.get('form_id', 'N/A')
+                    doc_format = form.get('document_format', 'Unknown')
+                    has_ai = "🤖" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
+                    warnings_count = len(form.get('validation_warnings', []))
+                    warning_indicator = f" ⚠️({warnings_count})" if warnings_count > 0 else ""
+                    
+                    report_lines.append(f"- **{form_name}** ({form_id}) - {doc_format}{has_ai}{warning_indicator}\n")
+                
+                report_lines.append("\n")
+
+            # Footer
+            report_lines.append("---\n\n")
+            report_lines.append("*This report was generated by the Immigration Document Intelligence System*\n")
+            report_lines.append(f"*Report ID: {timestamp}*\n")
+
+            # Write report
+            report_content = "".join(report_lines)
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(report_content)
+
+            st.success(f"US Forms Verification Report exported: {file_path}")
+
+            # Upload to Cloudinary
+            cloudinary_url = self._upload_to_cloudinary(str(file_path), folder="immigration_exports/verification_reports")
+
+            # Log export
+            if self.db_manager:
+                exported_form_ids = [form.get('id') for form in us_forms_data if form.get('id')]
+                self.db_manager.insert_export_log(
+                    document_ids=exported_form_ids,
+                    export_formats=["verification_report"],
+                    file_path=str(file_path),
+                    cloudinary_url=cloudinary_url
+                )
+
+            return str(file_path), report_content.encode('utf-8'), cloudinary_url
+
+        except Exception as e:
+            st.error(f"Error exporting verification report: {e}")
+            return "", None, None
+
+    def _get_cloudinary_url_for_form(self, form_id: int) -> Optional[str]:
+        """Get Cloudinary URL for a form's document"""
+        if not form_id:
+            return None
+        
+        try:
+            document_info = self.db_manager.get_document_by_form_id(form_id)
+            return document_info.get('cloudinary_url') if document_info else None
+        except:
+            return None
