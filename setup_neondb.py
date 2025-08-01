@@ -95,7 +95,7 @@ def setup_database(database_url):
             )
         """)
 
-        # NEW: US Forms Collection tracking table
+        # US Forms Collection tracking table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS public.us_forms_collections (
                 id SERIAL PRIMARY KEY,
@@ -111,7 +111,7 @@ def setup_database(database_url):
             )
         """)
 
-        # NEW: Form collection relationships table
+        # Form collection relationships table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS public.form_collection_items (
                 id SERIAL PRIMARY KEY,
@@ -136,7 +136,7 @@ def setup_database(database_url):
         cur.execute("CREATE INDEX IF NOT EXISTS idx_sources_domain ON public.sources(domain)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
         
-        # NEW: Indexes for US forms collection tables
+        # Indexes for US forms collection tables
         cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_date ON public.us_forms_collections(collection_date)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_status ON public.us_forms_collections(collection_status)")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_form_collection_items_collection_id ON public.form_collection_items(collection_id)")
@@ -180,7 +180,7 @@ def setup_database(database_url):
         print("   - us_forms_collections (US forms collection tracking)")
         print("   - form_collection_items (collection relationships)")
         
-        # --- NEW DIAGNOSTIC STEP ---
+        # Verify created tables and columns
         print("\n--- Verifying created tables and columns ---")
         cur.execute("""
             SELECT table_name, column_name, data_type
@@ -196,8 +196,7 @@ def setup_database(database_url):
             print("--- Schema verification complete ---")
         else:
             print("⚠️ No tables found in 'public' schema after creation. This indicates a problem.")
-            return False # Indicate failure
-        # --- END NEW DIAGNOSTIC STEP ---
+            return False
 
         # Test the setup
         try:
@@ -205,23 +204,15 @@ def setup_database(database_url):
             result = cur.fetchone()
             forms_count = result[0] if result else 0
             print(f"📋 Current forms in database: {forms_count}")
-            
-            # Test US forms collections table
-            cur.execute("SELECT COUNT(*) FROM public.us_forms_collections")
-            result = cur.fetchone()
-            collections_count = result[0] if result else 0
-            print(f"📦 Current US forms collections: {collections_count}")
-            
         except Exception as e:
-            print(f"⚠️ Warning: Could not count records: {e}")
-            # This is not a critical error, continue
+            print(f"⚠️ Warning: Could not count forms: {e}")
         
         return True
         
     except Exception as e:
         print(f"❌ Error setting up database: {e}")
         if conn:
-            conn.rollback() # Ensure rollback on error
+            conn.rollback()
         return False
     finally:
         if cur:
@@ -234,27 +225,23 @@ def main():
     print("=" * 60)
     
     database_url = None
-    # Try to get database URL from Streamlit secrets or environment
+    
+    # Try to get database URL from environment or Streamlit secrets
     try:
-        # This block will only work if run within a Streamlit context or if secrets.toml is loaded
-        # For standalone script, os.getenv is more reliable.
-        # We'll prioritize os.getenv for setup_neondb.py
         database_url = os.getenv("DATABASE_URL")
         if not database_url:
-            # Fallback to Streamlit secrets if not in env (e.g., local dev)
             try:
                 import streamlit as st
                 database_url = st.secrets.get("database_url")
                 if database_url:
                     print("📡 Using database URL from Streamlit secrets")
             except ImportError:
-                pass # Streamlit not installed or not in Streamlit context
+                pass
         else:
             print("📡 Using database URL from environment variable")
-
     except Exception as e:
         print(f"Error trying to get database URL from secrets/env: {e}")
-        
+    
     if not database_url:
         # Manual configuration if no URL found
         print("🔧 Manual NeonDB Configuration")
@@ -266,23 +253,19 @@ def main():
         password = input("Password: ")
         
         database_url = create_database_url(host, database, username, password)
-    
+
     if database_url:
         print(f"🔗 Connecting to: {database_url.split('@')[1].split('?')[0]}")  # Hide credentials
         
         if setup_database(database_url):
             print("\n🎉 Setup completed! You can now run the Streamlit app:")
             print("   streamlit run app.py")
-            print("\n🆕 New Features Added:")
-            print("   - US Forms Collection tracking")
-            print("   - Enhanced export capabilities")
-            print("   - Collection verification and reporting")
         else:
             print("\n❌ Setup failed. Please check your database credentials and permissions.")
-            sys.exit(1) # Exit with error code
+            sys.exit(1)
     else:
         print("❌ No database URL provided. Cannot proceed with setup.")
-        sys.exit(1) # Exit with error code
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

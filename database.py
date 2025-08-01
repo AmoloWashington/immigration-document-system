@@ -94,7 +94,7 @@ class DatabaseManager:
                         )
                     """)
 
-                    # NEW: US Forms Collection tracking table
+                    # US Forms Collection tracking table
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS public.us_forms_collections (
                             id SERIAL PRIMARY KEY,
@@ -110,7 +110,7 @@ class DatabaseManager:
                         )
                     """)
 
-                    # NEW: Form collection relationships table
+                    # Form collection relationships table
                     cur.execute("""
                         CREATE TABLE IF NOT EXISTS public.form_collection_items (
                             id SERIAL PRIMARY KEY,
@@ -134,7 +134,7 @@ class DatabaseManager:
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_forms_processing_status ON public.forms(processing_status)")
                     cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_forms_official_source_url ON public.forms(official_source_url)")
                     
-                    # NEW: Indexes for US forms collection tables
+                    # Indexes for US forms collection tables
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_date ON public.us_forms_collections(collection_date)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_us_collections_status ON public.us_forms_collections(collection_status)")
                     cur.execute("CREATE INDEX IF NOT EXISTS idx_form_collection_items_collection_id ON public.form_collection_items(collection_id)")
@@ -511,7 +511,7 @@ class DatabaseManager:
             st.error(f"Error inserting export log: {e}")
             return None
 
-    # NEW: US Forms Collection Database Methods
+    # US Forms Collection Database Methods
     def create_us_forms_collection(self, collection_name: str, total_targeted: int, verification_results: Dict[str, Any], metadata: Dict[str, Any]) -> Optional[int]:
         """Create a new US forms collection record"""
         if not self.database_url:

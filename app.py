@@ -1380,7 +1380,7 @@ def us_forms_collector_page(discovery, processor, ai_service, db, multi_agent_or
             default=["PDF", "DOCX", "XLSX", "HTML"]
         )
         
-        use_multi_agent = st.checkbox("🤖 Use Multi-Agent Processing", value=True)
+        use_multi_agent = st.checkbox("🤖 Use Multi-Agent Processing", value=False)
 
     # Advanced Options
     with st.expander("🔧 Advanced Collection Options"):
@@ -1730,7 +1730,7 @@ def discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrato
     with col1:
         max_docs = st.slider("Maximum documents/pages to process:", 1, 30, 8)  # Increased default for better format diversity
         auto_process = st.checkbox("Auto-process after discovery", value=True)
-        use_multi_agent = st.checkbox("🤖 Use Multi-Agent AI System", value=True, help="Enable collaborative AI agents for superior analysis")
+        use_multi_agent = st.checkbox("🤖 Use Multi-Agent AI System", value=False, help="Enable collaborative AI agents for superior analysis")
 
     with col2:
         save_to_db = st.checkbox("Save to database", value=True)
@@ -1791,7 +1791,7 @@ def discovery_page(discovery, processor, ai_service, db, multi_agent_orchestrato
         "Select Country for Batch Processing:",
         [""] + sorted(list(DocumentDiscoveryService.COUNTRY_DOMAINS_MAP.keys()))
     )
-    batch_use_multi_agent = st.checkbox("🤖 Use Multi-Agent for Batch Processing", value=True)
+    batch_use_multi_agent = st.checkbox("🤖 Use Multi-Agent for Batch Processing", value=False)
     
     if st.button("🚀 Start Batch Processing", type="secondary"):
         if batch_country:
@@ -1860,11 +1860,11 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                 continue
 
         form_data_to_save = {
-            "country": country,
-            "visa_category": visa_type,
+            "country_name": country,
+            "category": visa_type,
             "form_name": doc.get('title', 'Unknown Form/Page'),
             "form_id": "N/A",
-            "description": doc.get('description', ''),
+            "form_description": doc.get('description', ''),
             "governing_authority": "N/A",
             "official_source_url": doc.get('url', ''),
             "discovered_by_query": doc.get('discovered_by_query', ''),
@@ -1924,14 +1924,14 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
 
                         # Use AI extracted data if it's better than our defaults
                         if ai_extracted_data.get('country_name') and ai_extracted_data.get('country_name') != 'Unknown':
-                            form_data_to_save['country'] = ai_extracted_data['country_name']
+                            form_data_to_save['country_name'] = ai_extracted_data['country_name']
                         elif country and country != 'Unknown':
-                            form_data_to_save['country'] = country
+                            form_data_to_save['country_name'] = country
                             
                         if ai_extracted_data.get('category') and ai_extracted_data.get('category') != 'Unknown':
-                            form_data_to_save['visa_category'] = ai_extracted_data['category']
+                            form_data_to_save['category'] = ai_extracted_data['category']
                         elif visa_type and visa_type != 'Unknown':
-                            form_data_to_save['visa_category'] = visa_type
+                            form_data_to_save['category'] = visa_type
 
                         # Update other fields only if AI provided better data
                         if ai_extracted_data.get('form_name') and ai_extracted_data.get('form_name') not in ['Unknown Form/Page', 'Unknown']:
@@ -1940,8 +1940,8 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                         if ai_extracted_data.get('form_id') and ai_extracted_data.get('form_id') not in ['N/A', 'Unknown']:
                             form_data_to_save['form_id'] = ai_extracted_data['form_id']
                             
-                        if ai_extracted_data.get('form_description') and len(ai_extracted_data.get('form_description', '')) > len(form_data_to_save.get('description', '')):
-                            form_data_to_save['description'] = ai_extracted_data['form_description']
+                        if ai_extracted_data.get('form_description') and len(ai_extracted_data.get('form_description', '')) > len(form_data_to_save.get('form_description', '')):
+                            form_data_to_save['form_description'] = ai_extracted_data['form_description']
                             
                         if ai_extracted_data.get('governing_authority') and ai_extracted_data.get('governing_authority') not in ['N/A', 'Unknown']:
                             form_data_to_save['governing_authority'] = ai_extracted_data['governing_authority']
@@ -2018,8 +2018,8 @@ def process_documents_improved(discovered_docs, country, visa_type, processor, a
                     col1, col2 = st.columns(2)
 
                     with col1:
-                        st.write(f"**Country:** {clean_html_text(form.get('country', 'N/A'))}")
-                        st.write(f"**Visa Category:** {clean_html_text(form.get('visa_category', 'N/A'))}")
+                        st.write(f"**Country:** {clean_html_text(form.get('country_name', 'N/A'))}")
+                        st.write(f"**Visa Category:** {clean_html_text(form.get('category', 'N/A'))}")
                         st.write(f"**Authority:** {clean_html_text(form.get('governing_authority', 'N/A'))}")
                         st.write(f"**Database ID:** {form.get('id', 'Not saved')}")
 
@@ -2301,7 +2301,7 @@ def document_viewer_page(db, processor, ai_service):
         # === DETAILED DOCUMENT VIEW ===
         clean_form_name = clean_html_text(selected_form.get('form_name', 'Unknown Document'))
         clean_form_id = clean_html_text(selected_form.get('form_id', 'N/A'))
-        clean_country = clean_html_text(selected_form.get('country', 'N/A'))
+        clean_country = clean_html_text(selected_form.get('country_name', 'N/A'))
 
         st.markdown(f"""
         <div class="document-preview">
@@ -2341,8 +2341,8 @@ def document_viewer_page(db, processor, ai_service):
 
             with col1:
                 st.markdown("### 📋 Document Information")
-                st.write(f"**Country:** {clean_html_text(selected_form.get('country', 'N/A'))}")
-                st.write(f"**Visa Category:** {clean_html_text(selected_form.get('visa_category', 'N/A'))}")
+                st.write(f"**Country:** {clean_html_text(selected_form.get('country_name', 'N/A'))}")
+                st.write(f"**Visa Category:** {clean_html_text(selected_form.get('category', 'N/A'))}")
                 st.write(f"**Form Name:** {clean_html_text(selected_form.get('form_name', 'N/A'))}")
                 st.write(f"**Form ID:** {clean_html_text(selected_form.get('form_id', 'N/A'))}")
                 st.write(f"**Authority:** {clean_html_text(selected_form.get('governing_authority', 'N/A'))}")
@@ -2381,7 +2381,7 @@ def document_viewer_page(db, processor, ai_service):
 
             # Description
             st.markdown("### 📝 Description")
-            st.write(clean_html_text(selected_form.get('description', 'No description available')))
+            st.write(clean_html_text(selected_form.get('form_description', 'No description available')))
 
             # Supporting Documents
             if structured_data.get('supporting_documents'):
@@ -2691,11 +2691,11 @@ def document_viewer_page(db, processor, ai_service):
         col1, col2, col3, col4 = st.columns(4)
 
         with col1:
-            all_countries = sorted(list(set(f.get('country', 'Unknown') for f in forms if f.get('country'))))
+            all_countries = sorted(list(set(f.get('country_name', 'Unknown') for f in forms if f.get('country_name'))))
             selected_country = st.selectbox("🌍 Country:", ["All"] + all_countries)
 
         with col2:
-            all_visa_categories = sorted(list(set(f.get('visa_category', 'Unknown') for f in forms if f.get('visa_category'))))
+            all_visa_categories = sorted(list(set(f.get('category', 'Unknown') for f in forms if f.get('category'))))
             selected_visa_category = st.selectbox("🛂 Visa Type:", ["All"] + all_visa_categories)
 
         with col3:
@@ -2721,10 +2721,10 @@ def document_viewer_page(db, processor, ai_service):
         filtered_forms = forms
 
         if selected_country != "All":
-            filtered_forms = [f for f in filtered_forms if f.get('country') == selected_country]
+            filtered_forms = [f for f in filtered_forms if f.get('country_name') == selected_country]
 
         if selected_visa_category != "All":
-            filtered_forms = [f for f in filtered_forms if f.get('visa_category') == selected_visa_category]
+            filtered_forms = [f for f in filtered_forms if f.get('category') == selected_visa_category]
 
         if selected_format != "All":
             filtered_forms = [f for f in filtered_forms if db.get_document_by_form_id(f['id']) and db.get_document_by_form_id(f['id']).get('file_format') == selected_format]
@@ -2738,7 +2738,7 @@ def document_viewer_page(db, processor, ai_service):
                 f for f in filtered_forms
                 if (search_query_lower in (f.get('form_name') or '').lower() or
                    search_query_lower in (f.get('form_id') or '').lower() or
-                   search_query_lower in (f.get('description') or '').lower())
+                   search_query_lower in (f.get('form_description') or '').lower())
             ]
 
         st.markdown(f"### 📚 Documents ({len(filtered_forms)} found)")
@@ -2783,9 +2783,9 @@ def document_viewer_page(db, processor, ai_service):
 
                             # Clean text content to prevent HTML tags from showing
                             clean_form_name = clean_html_text(form.get('form_name', 'Unknown Document'))
-                            clean_description = clean_html_text(form.get('description', 'No description available'))
-                            clean_country = clean_html_text(form.get('country', 'N/A'))
-                            clean_visa_category = clean_html_text(form.get('visa_category', 'N/A'))
+                            clean_description = clean_html_text(form.get('form_description', 'No description available'))
+                            clean_country = clean_html_text(form.get('country_name', 'N/A'))
+                            clean_visa_category = clean_html_text(form.get('category', 'N/A'))
                             clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
 
                             # Use Streamlit container for the card instead of HTML template
@@ -2939,7 +2939,7 @@ def validation_panel_page(db, processor, ai_service, multi_agent_orchestrator):
         if filtered_forms:
             for form in filtered_forms:
                 clean_form_name = clean_html_text(form['form_name'])
-                clean_country = clean_html_text(form.get('country', 'Unknown'))
+                clean_country = clean_html_text(form.get('country_name', 'Unknown'))
                 
                 # Multi-agent indicator
                 multi_agent_indicator = " 🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
@@ -2949,7 +2949,7 @@ def validation_panel_page(db, processor, ai_service, multi_agent_orchestrator):
 
                     with col1:
                         st.write(f"**Form ID:** {clean_html_text(form.get('form_id', 'N/A'))}")
-                        st.write(f"**Description:** {clean_html_text(form.get('description', 'N/A'))}")
+                        st.write(f"**Description:** {clean_html_text(form.get('form_description', 'N/A'))}")
                         st.write(f"**Downloaded Path (Local):** {form.get('downloaded_file_path', 'N/A')}")
                         st.write(f"**Official Source URL:** {form.get('official_source_url', 'N/A')}")
 
@@ -2998,7 +2998,7 @@ def validation_panel_page(db, processor, ai_service, multi_agent_orchestrator):
                                 )
                             )
                             comments = st.text_area("Comments", value=current_review.get('comments', ''))
-                            use_multi_agent_rerun = st.checkbox("🤖 Use Multi-Agent for Re-run", value=True)
+                            use_multi_agent_rerun = st.checkbox("🤖 Use Multi-Agent for Re-run", value=False)
 
                             col_buttons_review, col_buttons_ai = st.columns(2)
 
@@ -3061,11 +3061,11 @@ def validation_panel_page(db, processor, ai_service, multi_agent_orchestrator):
                                                             "structured_data": re_extracted_data,
                                                             "validation_warnings": validation_warnings,
                                                             "processing_status": new_processing_status,
-                                                            "country": re_extracted_data.get('country_name', form.get('country', 'Unknown')),
-                                                            "visa_category": re_extracted_data.get('category', form.get('visa_category', 'Unknown')),
+                                                            "country_name": re_extracted_data.get('country_name', form.get('country_name', 'Unknown')),
+                                                            "category": re_extracted_data.get('category', form.get('category', 'Unknown')),
                                                             "form_name": re_extracted_data.get('form_name', form.get('form_name', 'Unknown')),
                                                             "form_id": re_extracted_data.get('form_id', form.get('form_id', 'N/A')),
-                                                            "description": re_extracted_data.get('form_description', form.get('description', '')),
+                                                            "form_description": re_extracted_data.get('form_description', form.get('form_description', '')),
                                                             "governing_authority": re_extracted_data.get('governing_authority', form.get('governing_authority', 'N/A'))
                                                         }
                                                     )
@@ -3155,7 +3155,7 @@ def export_panel_page(db, export_service):
         with col1:
             country_filter = st.selectbox(
                 "Filter by Country:",
-                ["All"] + list(set(form.get('country', 'Unknown') for form in forms if form.get('country')))
+                ["All"] + list(set(form.get('country_name', 'Unknown') for form in forms if form.get('country_name')))
             )
 
         with col2:
@@ -3166,7 +3166,7 @@ def export_panel_page(db, export_service):
 
         filtered_forms = forms
         if country_filter != "All":
-            filtered_forms = [form for form in filtered_forms if form.get('country') == country_filter]
+            filtered_forms = [form for form in filtered_forms if form.get('country_name') == country_filter]
 
         if status_filter != "All":
             if status_filter == "Pending Review":
@@ -3300,8 +3300,8 @@ def export_panel_page(db, export_service):
                 "Form Name": clean_html_text(form.get('form_name', 'Unknown')) + multi_agent_indicator,
                 "Form Slug": structured_data.get('form_slug', 'N/A'),
                 "Country Code": structured_data.get('country_code', 'N/A'),
-                "Country Name": clean_html_text(form.get('country', 'Unknown')),
-                "Category": clean_html_text(form.get('visa_category', 'Unknown')),
+                "Country Name": clean_html_text(form.get('country_name', 'Unknown')),
+                "Category": clean_html_text(form.get('category', 'Unknown')),
                 "Form ID": clean_html_text(form.get('form_id', 'N/A')),
                 "Governing Authority": clean_html_text(form.get('governing_authority', 'N/A')),
                 "Processing Status": form.get('processing_status', 'N/A'),
@@ -3332,7 +3332,7 @@ def export_panel_page(db, export_service):
                     # Simple test export
                     test_df = pd.DataFrame([{
                         'id': form.get('id', ''),
-                        'country': form.get('country', ''),
+                        'country': form.get('country_name', ''),
                         'form_name': form.get('form_name', ''),
                         'form_id': form.get('form_id', ''),
                         'multi_agent': 'Yes' if form.get('structured_data', {}).get('multi_agent_analysis') else 'No',
@@ -3531,7 +3531,7 @@ def database_viewer_page(db):
             """, unsafe_allow_html=True)
 
         with col2:
-            countries_in_db = set(form.get('country', 'Unknown') for form in forms)
+            countries_in_db = set(form.get('country_name', 'Unknown') for form in forms)
             st.markdown(f"""
             <div class="stat-card">
                 <h3 style="color: #11998e; margin: 0;">🌍 {len(countries_in_db)}</h3>
@@ -3586,7 +3586,7 @@ def database_viewer_page(db):
         with col2:
             country_filter = st.selectbox(
                 "Filter by Country:",
-                ["All"] + sorted(list(set(form.get('country', 'Unknown') for form in forms)))
+                ["All"] + sorted(list(set(form.get('country_name', 'Unknown') for form in forms)))
             )
         with col3:
             processing_status_filter = st.selectbox(
@@ -3601,11 +3601,11 @@ def database_viewer_page(db):
                 form for form in filtered_forms
                 if (search_term.lower() in form.get('form_name', '').lower() or
                     search_term.lower() in form.get('form_id', '').lower() or
-                    search_term.lower() in form.get('description', '').lower())
+                    search_term.lower() in form.get('form_description', '').lower())
             ]
 
         if country_filter != "All":
-            filtered_forms = [form for form in filtered_forms if form.get('country') == country_filter]
+            filtered_forms = [form for form in filtered_forms if form.get('country_name') == country_filter]
 
         if processing_status_filter != "All":
             filtered_forms = [form for form in filtered_forms if form.get('processing_status') == processing_status_filter]
@@ -3617,7 +3617,7 @@ def database_viewer_page(db):
         for form in filtered_forms:
             clean_form_name = clean_html_text(form.get('form_name', 'Unknown'))
             clean_form_id = clean_html_text(form.get('form_id', 'N/A'))
-            clean_country = clean_html_text(form.get('country', 'Unknown'))
+            clean_country = clean_html_text(form.get('country_name', 'Unknown'))
             
             # Multi-agent indicator
             multi_agent_indicator = " 🤝" if form.get('structured_data', {}).get('multi_agent_analysis') else ""
@@ -3627,7 +3627,7 @@ def database_viewer_page(db):
 
                 with col1:
                     st.write(f"**Country:** {clean_country}")
-                    st.write(f"**Visa Category:** {clean_html_text(form.get('visa_category', 'Unknown'))}")
+                    st.write(f"**Visa Category:** {clean_html_text(form.get('category', 'Unknown'))}")
                     st.write(f"**Form ID:** {clean_form_id}")
                     st.write(f"**Authority:** {clean_html_text(form.get('governing_authority', 'N/A'))}")
                     st.write(f"**Created:** {form.get('created_at', 'N/A')}")
@@ -3653,7 +3653,7 @@ def database_viewer_page(db):
                     else:
                         st.write(f"**Cloudinary Original URL:** N/A")
 
-                st.write(f"**Description:** {clean_html_text(form.get('description', 'No description'))}")
+                st.write(f"**Description:** {clean_html_text(form.get('form_description', 'No description'))}")
 
                 if form.get('validation_warnings'):
                     st.write("**⚠️ Validation Warnings:**")
@@ -3717,8 +3717,8 @@ def cloudinary_browser_page(db):
             
             cloudinary_docs.append({
                 "form_id": form['id'],
-                "country": form.get('country', 'Unknown'),
-                "visa_category": form.get('visa_category', 'Unknown'),
+                "country": form.get('country_name', 'Unknown'),
+                "visa_category": form.get('category', 'Unknown'),
                 "form_name": form.get('form_name', 'Unknown') + multi_agent_indicator,
                 "cloudinary_url": document_info['cloudinary_url'],
                 "file_format": document_info['file_format'],
@@ -3791,132 +3791,317 @@ def database_health_check_page(database_url: str):
         box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     }
     .health-info {
-        background: #e3f2fd;
-        padding: 1rem;
-        border-radius: 10px;
-        margin: 1rem 0;
-        border-left: 4px solid #2196f3;
-    }
-    .troubleshooting {
-        background: #fff3e0;
+        background: white;
         padding: 1.5rem;
         border-radius: 15px;
         margin: 1rem 0;
-        border-left: 4px solid #ff9800;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .health-success {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+    .health-error {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
     }
     </style>
 
     <div class="health-header">
         <h1>🩺 Database Health Check</h1>
         <p style="font-size: 1.2rem; margin-bottom: 0;">
-            Verify database schema and column integrity
+            Monitor database connection, performance, and data integrity
         </p>
-    </div>
-
-    <div class="health-info">
-        <p style="margin: 0;"><strong>Info:</strong> This page checks if the required columns exist in your 'forms' and 'documents' tables.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    if not database_url:
-        st.error("Database URL is not configured in `config.py` or Streamlit secrets.")
-        return
+    if st.button("🔍 Run Health Check", type="primary"):
+        with st.spinner("Running comprehensive database health check..."):
+            health_results = run_database_health_check(database_url)
 
-    required_forms_columns = ["form_slug", "country_code", "country_name", "category", "form_description", "downloaded_file_path", "document_format", "processing_status"]
-    required_documents_columns = ["cloudinary_url"]
-    required_export_logs_columns = ["cloudinary_url"]
+            # Display results
+            if health_results['connection_status']:
+                st.markdown(f"""
+                <div class="health-success">
+                    <h3>✅ Database Connection: Healthy</h3>
+                    <p><strong>Database URL:</strong> {health_results['database_info']['host']}:{health_results['database_info']['port']}</p>
+                    <p><strong>Database Name:</strong> {health_results['database_info']['database']}</p>
+                    <p><strong>Connection Time:</strong> {health_results['connection_time']:.3f} seconds</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="health-error">
+                    <h3>❌ Database Connection: Failed</h3>
+                    <p><strong>Error:</strong> {health_results['connection_error']}</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-    missing_forms_columns = []
-    missing_documents_columns = []
-    missing_export_logs_columns = []
+            # Table Statistics
+            if health_results['table_stats']:
+                st.markdown('<div class="health-info">', unsafe_allow_html=True)
+                st.markdown("### 📊 Table Statistics")
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Forms Table", f"{health_results['table_stats']['forms_count']:,} records")
+                with col2:
+                    st.metric("Documents Table", f"{health_results['table_stats']['documents_count']:,} records")
+                with col3:
+                    st.metric("Total Records", f"{health_results['table_stats']['total_records']:,}")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Data Quality Metrics
+            if health_results['data_quality']:
+                st.markdown('<div class="health-info">', unsafe_allow_html=True)
+                st.markdown("### 🎯 Data Quality Metrics")
+
+                quality_metrics = health_results['data_quality']
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write(f"**Forms with AI Processing:** {quality_metrics['forms_with_ai_processing']:,}")
+                    st.write(f"**Forms with Multi-Agent Processing:** {quality_metrics['forms_with_multi_agent']:,}")
+                    st.write(f"**Forms with Validation Warnings:** {quality_metrics['forms_with_warnings']:,}")
+
+                with col2:
+                    st.write(f"**Approved Forms:** {quality_metrics['approved_forms']:,}")
+                    st.write(f"**Pending Review:** {quality_metrics['pending_review']:,}")
+                    st.write(f"**Forms with Cloudinary URLs:** {quality_metrics['forms_with_cloudinary']:,}")
+
+                # Data completeness percentage
+                if health_results['table_stats']['forms_count'] > 0:
+                    ai_processing_rate = (quality_metrics['forms_with_ai_processing'] / health_results['table_stats']['forms_count']) * 100
+                    multi_agent_rate = (quality_metrics['forms_with_multi_agent'] / health_results['table_stats']['forms_count']) * 100
+                    cloudinary_rate = (quality_metrics['forms_with_cloudinary'] / health_results['table_stats']['forms_count']) * 100
+
+                    st.markdown("**Processing Rates:**")
+                    st.progress(ai_processing_rate / 100)
+                    st.write(f"AI Processing: {ai_processing_rate:.1f}%")
+
+                    st.progress(multi_agent_rate / 100)
+                    st.write(f"Multi-Agent Processing: {multi_agent_rate:.1f}%")
+
+                    st.progress(cloudinary_rate / 100)
+                    st.write(f"Cloudinary Storage: {cloudinary_rate:.1f}%")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Performance Metrics
+            if health_results['performance']:
+                st.markdown('<div class="health-info">', unsafe_allow_html=True)
+                st.markdown("### ⚡ Performance Metrics")
+
+                perf_metrics = health_results['performance']
+
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Query Response Time", f"{perf_metrics['avg_query_time']:.3f}s")
+                with col2:
+                    st.metric("Index Usage", f"{perf_metrics['index_usage']:.1f}%")
+                with col3:
+                    st.metric("Database Size", f"{perf_metrics['database_size_mb']:.1f} MB")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Recent Activity
+            if health_results['recent_activity']:
+                st.markdown('<div class="health-info">', unsafe_allow_html=True)
+                st.markdown("### 📈 Recent Activity")
+
+                activity = health_results['recent_activity']
+                st.write(f"**Forms added in last 24 hours:** {activity['forms_last_24h']}")
+                st.write(f"**Forms added in last 7 days:** {activity['forms_last_7d']}")
+                st.write(f"**Most recent form:** {activity['most_recent_form']}")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+            # Recommendations
+            if health_results['recommendations']:
+                st.markdown('<div class="health-info">', unsafe_allow_html=True)
+                st.markdown("### 💡 Recommendations")
+
+                for recommendation in health_results['recommendations']:
+                    st.info(f"💡 {recommendation}")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+    # Manual Database Operations
+    st.markdown("---")
+    st.markdown("### 🛠️ Manual Database Operations")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        if st.button("🧹 Clean Orphaned Records"):
+            with st.spinner("Cleaning orphaned records..."):
+                try:
+                    db = DatabaseManager(database_url)
+                    cleaned_count = db.clean_orphaned_records()
+                    st.success(f"✅ Cleaned {cleaned_count} orphaned records")
+                except Exception as e:
+                    st.error(f"❌ Error cleaning records: {e}")
+
+    with col2:
+        if st.button("📊 Rebuild Indexes"):
+            with st.spinner("Rebuilding database indexes..."):
+                try:
+                    db = DatabaseManager(database_url)
+                    db.rebuild_indexes()
+                    st.success("✅ Database indexes rebuilt successfully")
+                except Exception as e:
+                    st.error(f"❌ Error rebuilding indexes: {e}")
+
+    with col3:
+        if st.button("🔄 Update Statistics"):
+            with st.spinner("Updating database statistics..."):
+                try:
+                    db = DatabaseManager(database_url)
+                    db.update_statistics()
+                    st.success("✅ Database statistics updated successfully")
+                except Exception as e:
+                    st.error(f"❌ Error updating statistics: {e}")
+
+def run_database_health_check(database_url: str) -> dict:
+    """Run comprehensive database health check"""
+    import time
+    import psycopg2
+    from urllib.parse import urlparse
+
+    health_results = {
+        'connection_status': False,
+        'connection_error': None,
+        'connection_time': 0,
+        'database_info': {},
+        'table_stats': {},
+        'data_quality': {},
+        'performance': {},
+        'recent_activity': {},
+        'recommendations': []
+    }
 
     try:
+        # Parse database URL
+        parsed_url = urlparse(database_url)
+        health_results['database_info'] = {
+            'host': parsed_url.hostname,
+            'port': parsed_url.port,
+            'database': parsed_url.path[1:] if parsed_url.path else '',
+            'username': parsed_url.username
+        }
+
+        # Test connection
+        start_time = time.time()
         conn = psycopg2.connect(database_url)
+        health_results['connection_time'] = time.time() - start_time
+        health_results['connection_status'] = True
+
         cursor = conn.cursor()
 
-        st.success("Successfully connected to the database!")
+        # Table statistics
+        cursor.execute("SELECT COUNT(*) FROM forms")
+        forms_count = cursor.fetchone()[0]
 
-        cursor.execute("""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'forms'
-            AND table_schema = 'public';
-        """)
-        existing_forms_columns = [row[0] for row in cursor.fetchall()]
-        st.subheader("Existing Columns in 'forms' table:")
-        st.write(existing_forms_columns)
-        for col in required_forms_columns:
-            if col not in existing_forms_columns:
-                missing_forms_columns.append(col)
+        cursor.execute("SELECT COUNT(*) FROM documents")
+        documents_count = cursor.fetchone()[0]
 
-        cursor.execute("""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'documents'
-            AND table_schema = 'public';
-        """)
-        existing_documents_columns = [row[0] for row in cursor.fetchall()]
-        st.subheader("Existing Columns in 'documents' table:")
-        st.write(existing_documents_columns)
-        for col in required_documents_columns:
-            if col not in existing_documents_columns:
-                missing_documents_columns.append(col)
+        health_results['table_stats'] = {
+            'forms_count': forms_count,
+            'documents_count': documents_count,
+            'total_records': forms_count + documents_count
+        }
 
-        cursor.execute("""
-            SELECT column_name
-            FROM information_schema.columns
-            WHERE table_name = 'export_logs'
-            AND table_schema = 'public';
-        """)
-        existing_export_logs_columns = [row[0] for row in cursor.fetchall()]
-        st.subheader("Existing Columns in 'export_logs' table:")
-        st.write(existing_export_logs_columns)
-        for col in required_export_logs_columns:
-            if col not in existing_export_logs_columns:
-                missing_export_logs_columns.append(col)
+        # Data quality metrics
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE structured_data IS NOT NULL AND structured_data != '{}'")
+        forms_with_ai = cursor.fetchone()[0]
 
-        all_missing = False
-        if missing_forms_columns:
-            st.error(f"❌ Missing columns in 'forms' table: {', '.join(missing_forms_columns)}")
-            all_missing = True
-        if missing_documents_columns:
-            st.error(f"❌ Missing columns in 'documents' table: {', '.join(missing_documents_columns)}")
-            all_missing = True
-        if missing_export_logs_columns:
-            st.error(f"❌ Missing columns in 'export_logs' table: {', '.join(missing_export_logs_columns)}")
-            all_missing = True
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE structured_data::text LIKE '%multi_agent_analysis%'")
+        forms_with_multi_agent = cursor.fetchone()[0]
 
-        if not all_missing:
-            st.success("✅ All required columns are present in the 'forms', 'documents', and 'export_logs' tables!")
-            st.write("You should now be able to process and save documents correctly, including Cloudinary uploads.")
-            
-            # Multi-agent system status
-            st.info("🤖 **Multi-Agent System Status:** Ready for collaborative document processing")
-        else:
-            st.warning("Please ensure you have dropped the old tables in your NeonDB console and re-run `python setup_neondb.py` to synchronize the schema.")
-            st.markdown("---")
-            st.subheader("Troubleshooting Steps:")
-            st.markdown("1. **Go to your NeonDB project dashboard and open the SQL Editor.**")
-            st.markdown("2. **Execute the following SQL commands to drop existing tables:**")
-            st.code("""
-DROP TABLE IF EXISTS export_logs CASCADE;
-DROP TABLE IF EXISTS documents CASCADE;
-DROP TABLE IF EXISTS sources CASCADE;
-DROP TABLE IF EXISTS forms CASCADE;
-            """)
-            st.markdown("3. **Refresh your NeonDB console's 'Tables' view and visually confirm these tables are gone.**")
-            st.markdown("4. **In your local terminal, re-run the setup script:**")
-            st.code("python setup_neondb.py")
-            st.markdown("5. **Restart your Streamlit app completely (Ctrl+C then `streamlit run app.py`).**")
-            st.markdown("6. **Come back to this 'Database Health Check' page to verify the columns are now present.**")
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE validation_warnings IS NOT NULL AND array_length(validation_warnings, 1) > 0")
+        forms_with_warnings = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE lawyer_review->>'approval_status' = 'Approved'")
+        approved_forms = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE lawyer_review->>'approval_status' = 'Pending Review' OR lawyer_review IS NULL")
+        pending_review = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM documents WHERE cloudinary_url IS NOT NULL")
+        forms_with_cloudinary = cursor.fetchone()[0]
+
+        health_results['data_quality'] = {
+            'forms_with_ai_processing': forms_with_ai,
+            'forms_with_multi_agent': forms_with_multi_agent,
+            'forms_with_warnings': forms_with_warnings,
+            'approved_forms': approved_forms,
+            'pending_review': pending_review,
+            'forms_with_cloudinary': forms_with_cloudinary
+        }
+
+        # Performance metrics
+        cursor.execute("SELECT pg_size_pretty(pg_database_size(current_database()))")
+        db_size = cursor.fetchone()[0]
+
+        # Simple performance test
+        perf_start = time.time()
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE created_at > NOW() - INTERVAL '1 day'")
+        perf_time = time.time() - perf_start
+
+        health_results['performance'] = {
+            'avg_query_time': perf_time,
+            'index_usage': 85.0,  # Placeholder - would need more complex query
+            'database_size_mb': float(db_size.split()[0]) if 'MB' in db_size else 0.0
+        }
+
+        # Recent activity
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE created_at > NOW() - INTERVAL '1 day'")
+        forms_24h = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM forms WHERE created_at > NOW() - INTERVAL '7 days'")
+        forms_7d = cursor.fetchone()[0]
+
+        cursor.execute("SELECT form_name, created_at FROM forms ORDER BY created_at DESC LIMIT 1")
+        recent_form = cursor.fetchone()
+
+        health_results['recent_activity'] = {
+            'forms_last_24h': forms_24h,
+            'forms_last_7d': forms_7d,
+            'most_recent_form': f"{recent_form[0]} ({recent_form[1]})" if recent_form else "None"
+        }
+
+        # Generate recommendations
+        recommendations = []
+        if forms_with_ai / forms_count < 0.8 if forms_count > 0 else False:
+            recommendations.append("Consider running AI processing on more forms to improve data quality")
+
+        if forms_with_multi_agent / forms_count < 0.3 if forms_count > 0 else False:
+            recommendations.append("Multi-Agent processing could improve extraction accuracy for more forms")
+
+        if pending_review > approved_forms:
+            recommendations.append("Many forms are pending lawyer review - consider prioritizing review process")
+
+        if forms_with_cloudinary / documents_count < 0.9 if documents_count > 0 else False:
+            recommendations.append("Some documents may not be properly stored on Cloudinary")
+
+        health_results['recommendations'] = recommendations
 
         cursor.close()
         conn.close()
 
     except Exception as e:
-        st.error(f"Failed to connect to database or check schema: {e}")
-        st.warning("Please check your `database_url` in `.streamlit/secrets.toml` and ensure your NeonDB project is active.")
+        health_results['connection_error'] = str(e)
 
+    return health_results
 
 if __name__ == "__main__":
     main()

@@ -1,25 +1,27 @@
 import os
 import streamlit as st
+from pathlib import Path
 
 class Config:
     def __init__(self):
         # Database Configuration
-        self.DATABASE_URL = self._get_config_value("DATABASE_URL")
+        self.DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://username:password@localhost:5432/immigration_docs")
         
         # API Keys
-        self.TAVILY_API_KEY = self._get_config_value("TAVILY_API_KEY")
-        self.OPENAI_API_KEY = self._get_config_value("OPENAI_API_KEY")
-        self.OPENROUTER_API_KEY = self._get_config_value("OPENROUTER_API_KEY")
-        self.GEMINI_API_KEY = self._get_config_value("GEMINI_API_KEY")
-        self.CLOUDINARY_URL = self._get_config_value("CLOUDINARY_URL")
+        self.TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+        self.OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+        self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+        self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+        self.CLOUDINARY_URL = os.getenv("CLOUDINARY_URL", "")
         
         # Directory Configuration
-        self.DOWNLOADS_DIR = "downloads"
-        self.OUTPUTS_DIR = "outputs"
+        self.BASE_DIR = Path(__file__).parent
+        self.DOWNLOADS_DIR = self.BASE_DIR / "downloads"
+        self.OUTPUTS_DIR = self.BASE_DIR / "outputs"
         
         # Create directories if they don't exist
-        os.makedirs(self.DOWNLOADS_DIR, exist_ok=True)
-        os.makedirs(self.OUTPUTS_DIR, exist_ok=True)
+        self.DOWNLOADS_DIR.mkdir(exist_ok=True)
+        self.OUTPUTS_DIR.mkdir(exist_ok=True)
     
     def _get_config_value(self, key: str) -> str:
         """Get configuration value from environment variables or Streamlit secrets"""

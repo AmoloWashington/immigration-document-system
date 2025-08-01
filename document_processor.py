@@ -34,7 +34,7 @@ class DocumentProcessor:
         """Validate URL accessibility before attempting download"""
         try:
             # Make a HEAD request to check if URL is accessible
-            response = requests.head(url, timeout=10, allow_redirects=True)
+            response = requests.head(url, timeout=30, allow_redirects=True)
             
             # Consider 2xx and 3xx status codes as valid
             if 200 <= response.status_code < 400:
@@ -327,7 +327,7 @@ class DocumentProcessor:
             st.error(f"Error reading file {file_path}: {e}")
             return None
 
-    # NEW: Enhanced US Forms Collection Methods
+    # Enhanced US Forms Collection Methods
     def batch_download_us_forms(self, form_urls: List[Dict[str, Any]], progress_callback=None) -> List[Dict[str, Any]]:
         """Batch download US immigration forms with enhanced format detection and validation"""
         downloaded_forms = []
